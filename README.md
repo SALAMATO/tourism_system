@@ -1,221 +1,317 @@
-基于 Django 的低空旅游安全信息管理系统
-Graduation Project – Low-altitude Tourism Safety Information Management System
+# 基于 Django 的低空旅游安全信息管理系统
 
-一、项目简介
-本项目基于 Python + Django + Django REST Framework 开发，实现了一个低空旅游安全信息管理系统。
-系统围绕低空旅游行业发展需求，构建了政策法规管理、新闻资讯发布、安全隐患预警、互动交流及数据统计分析等功能模块。
-项目采用 前后端分离架构，前端使用 HTML + CSS + JavaScript 实现页面展示与交互，后端使用 Django 提供 RESTful API，实现数据的统一管理与持久化存储。
-本项目使用了Tailwind CSS以及Apple的配色方案，使用极简风格设计，加入毛玻璃、动态阴影等效果，网站显得十分简洁大气
-具体的配色方案参考如以下网站：
-https://developer.apple.com/cn/design/human-interface-guidelines/color
+### Graduation Project – Low-altitude Tourism Safety Information Management System
 
+---
 
-二、项目背景与研究意义
+## 📌 目录
 
-随着低空经济的快速发展，低空旅游逐渐成为新兴旅游形态。
-然而在实际发展过程中存在：
-政策信息分散
-安全隐患管理不足
-数据统计不直观
-信息交互效率低
-本系统旨在构建一个集信息管理、数据统计、安全预警与互动交流于一体的综合平台，提高低空旅游安全信息管理效率。
+* [一、项目简介](#一项目简介)
+* [二、项目背景与研究意义](#二项目背景与研究意义)
+* [三、系统总体架构](#三系统总体架构)
+* [四、技术栈](#四技术栈)
+* [五、系统功能模块](#五系统功能模块)
+* [六、数据库设计](#六数据库设计)
+* [七、项目文件结构](#七项目文件结构)
+* [八、系统运行环境](#八系统运行环境)
+* [九、项目创新点](#九项目创新点)
+* [十、系统不足与优化方向](#十系统不足与优化方向)
+* [十一、数据库导出与导入](#十一数据库导出与导入)
+* [十二、总结](#十二总结)
 
-三、系统总体架构
-技术架构图
+---
+
+## 一、项目简介
+
+本项目基于 **Python + Django + Django REST Framework** 开发，实现了一个低空旅游安全信息管理系统。
+
+系统包含：
+
+* 政策法规管理
+* 新闻资讯发布
+* 安全隐患预警
+* 互动交流
+* 数据统计分析
+
+采用 **前后端分离架构**：
+
+* 前端：HTML + Tailwind CSS + JavaScript
+* 后端：Django REST Framework
+* 数据库：MySQL
+
+整体设计风格采用 Apple Human Interface Guidelines 极简风格，加入毛玻璃与动态阴影效果。
+
+---
+
+## 二、项目背景与研究意义
+
+随着低空经济的快速发展，低空旅游成为新兴产业形态。
+
+目前存在问题：
+
+* 政策信息分散
+* 安全隐患管理不足
+* 数据统计不直观
+* 信息交互效率低
+
+本系统旨在构建一体化信息管理平台，提高行业管理效率。
+
+---
+
+## 三、系统总体架构
+
+```
 浏览器（前端页面）
-Tailwind CSS+HTML
     │
-    │ Fetch API（JSON）
+    │  Fetch API（JSON）
     ↓
 Django REST Framework（后端API）
     │
     ↓
 MySQL 数据库
+```
 
-四、技术栈
-后端技术
-Python 3.x
-Django 6.0
-Django REST Framework
-MySQL 数据库
-Django ORM
-前端技术
-HTML5
-JavaScript (ES6)
-Fetch API
-ECharts 数据可视化
-React
-Tailwind CSS4.2
+---
 
-五、系统功能模块
-1️⃣ 首页模块
-系统功能导航
-最新信息展示
-数据概览统计
+## 四、技术栈
 
-2️⃣ 政策法规管理模块
-政策新增 / 修改 / 删除
-分类展示
-搜索功能
-详情查看
+### 后端技术
 
-接口示例：
+* Python 3.x
+* Django 6.0
+* Django REST Framework
+* MySQL
+* Django ORM
+
+### 前端技术
+
+* HTML5
+* JavaScript (ES6)
+* Fetch API
+* ECharts
+* React
+* Tailwind CSS 4.2
+
+---
+
+## 五、系统功能模块
+
+### 1️⃣ 首页模块
+
+* 系统功能导航
+* 最新信息展示
+* 数据概览统计
+
+---
+
+### 2️⃣ 政策法规管理模块
+
+接口：
+
+```
 GET     /api/policies/
 POST    /api/policies/
 PUT     /api/policies/{id}/
 DELETE  /api/policies/{id}/
+```
 
-3️⃣ 新闻资讯管理模块
-新闻发布
-新闻列表展示
-分类筛选
-新闻详情页
+功能：
 
-接口示例：
+* 新增 / 修改 / 删除
+* 分类展示
+* 搜索
+* 详情查看
+
+---
+
+### 3️⃣ 新闻资讯管理模块
+
+接口：
+
+```
 GET     /api/news/
 POST    /api/news/
 GET     /api/news/{id}/
+```
 
-4️⃣ 安全隐患预警模块
-隐患上报
-风险等级管理
-状态更新
-分类筛选
+功能：
 
-接口示例：
+* 新闻发布
+* 分类筛选
+* 详情页展示
+
+---
+
+### 4️⃣ 安全隐患预警模块
+
+接口：
+
+```
 GET     /api/safety-alerts/
 POST    /api/safety-alerts/
+```
 
-5️⃣ 互动交流模块
-用户留言提交
-留言回复
-状态管理
+功能：
 
-接口示例：
+* 隐患上报
+* 风险等级管理
+* 状态更新
+* 分类筛选
+
+---
+
+### 5️⃣ 互动交流模块
+
+接口：
+
+```
 GET     /api/messages/
 POST    /api/messages/
+```
 
-6️⃣ 数据统计模块
-信息数量统计
-分类统计
-可视化图表展示
+功能：
 
-六、数据库设计
+* 用户留言提交
+* 留言回复
+* 状态管理
 
-主要数据模型：
-模型名称	说明
-Policy	政策法规
-News	新闻资讯
-SafetyAlert	安全隐患
-Message	留言反馈
-Statistic	统计数据
+---
+
+### 6️⃣ 数据统计模块
+
+* 信息数量统计
+* 分类统计
+* 图表可视化
+
+---
+
+## 六、数据库设计
+
+### 主要数据模型
+
+| 模型名称        | 说明   |
+| ----------- | ---- |
+| Policy      | 政策法规 |
+| News        | 新闻资讯 |
+| SafetyAlert | 安全隐患 |
+| Message     | 留言反馈 |
+| Statistic   | 统计数据 |
 
 示例字段：
+
+```python
 title = models.CharField(max_length=200)
 content = models.TextField()
 created_at = models.DateTimeField(auto_now_add=True)
 updated_at = models.DateTimeField(auto_now=True)
+```
 
-数据库采用 Django ORM 自动迁移管理。
+---
 
-七、项目文件结构
+## 七、项目文件结构
+
+```bash
 tourism_system/
 │
 ├── manage.py
 │
-├── tourism_system/                # 主项目配置
+├── tourism_system/
 │   ├── __init__.py
-│   ├── settings.py                # 项目配置
-│   ├── urls.py                    # 主路由
+│   ├── settings.py
+│   ├── urls.py
 │   ├── asgi.py
 │   └── wsgi.py
 │
-├── api/                           # 核心业务应用
+├── api/
 │   ├── migrations/
-│   ├── __init__.py
-│   ├── admin.py                   # 后台注册
-│   ├── apps.py
-│   ├── models.py                  # 数据模型
-│   ├── serializers.py             # 序列化器
-│   ├── views.py                   # API视图
-│   ├── urls.py                    # API路由
-│   └── tests.py
+│   ├── admin.py
+│   ├── models.py
+│   ├── serializers.py
+│   ├── views.py
+│   ├── urls.py
 │
-├── templates/                     # 前端页面
-│   ├── index.html
-│   ├── policies.html
-│   ├── news.html
-│   ├── news-detail.html
-│   ├── safety.html
-│   ├── community.html
-│   ├── statistics.html
-│   └── admin.html
+├── templates/
 │
 ├── static/
-│   ├── css/
-│   │   └── style.css
-│   └── js/
-│       ├── api.js
-│       ├── policies.js
-│       ├── news.js
-│       ├── safety.js
-│       ├── community.js
-│       ├── statistics.js
-│       └── admin.js
 │
 ├── db.sqlite3
 └── README.md
+```
 
+---
 
-八、系统运行环境
-开发环境
-Windows 10
-PyCharm
-Python 3.x
+## 八、系统运行环境
 
-运行步骤
+### 开发环境
+
+* Windows 10
+* PyCharm
+* Python 3.x
+
+### 运行步骤
+
+```bash
 python -m venv .venv
 .venv\Scripts\activate
 pip install django djangorestframework
 python manage.py makemigrations
 python manage.py migrate
 python manage.py runserver
-访问地址：
+```
+
+访问：
+
+```
 http://127.0.0.1:8000/
+```
 
-或者直接运行run.bat文件
+---
 
-九、项目创新点
-采用前后端分离架构
-RESTful API 标准设计
-模块化开发结构
-Django ORM 自动数据库管理
-数据可视化统计分析
-安全隐患风险分级设计
+## 九、项目创新点
 
-十、系统不足与优化方向
+* 前后端分离架构
+* RESTful API 标准化设计
+* 模块化开发结构
+* Django ORM 自动迁移管理
+* 数据可视化统计
+* 安全隐患风险分级设计
 
-增加用户登录认证（JWT）
-增加权限分级控制
-部署至云服务器
-引入 Vue/React 优化前端体验
+---
 
-十一、数据库导出与导入
-1️⃣ 导出指定数据库到指定路径
-mysqldump -u root -p tourism_system_db > C:\Users\用户\PycharmProjects\tourism_system\sql\db_dump.sql
-2️⃣ 导入进指定路径
-进入 bin 目录
-cd "C:\Program Files\MySQL\MySQL Server 8.0\bin"
-导入
-mysql -u root -p low_altitude_tourism < "C:\Users\用户\PycharmProjects\tourism_system\sql\db_dump.sql"
+## 十、系统不足与优化方向
 
-十二、总结
+* 增加 JWT 用户认证
+* 权限分级控制
+* 云服务器部署
+* 引入 Vue / React 优化前端
 
-本系统完整实现了低空旅游安全信息的管理与展示功能。
-通过本项目开发，掌握了：
-Django 项目结构
-RESTful API 设计规范
-前后端数据交互机制
-数据库建模方法
-Web 系统整体开发流程
-该系统具有较强的扩展性和实践应用价值。
+---
+
+## 十一、数据库导出与导入
+
+### 导出
+
+```bash
+mysqldump -u root -p tourism_system_db > db_dump.sql
+```
+
+### 导入
+
+```bash
+mysql -u root -p low_altitude_tourism < db_dump.sql
+```
+
+---
+
+## 十二、总结
+
+本系统完整实现了低空旅游安全信息管理功能。
+
+通过本项目掌握：
+
+* Django 项目结构
+* RESTful API 设计规范
+* 前后端数据交互机制
+* 数据库建模方法
+* Web 系统开发流程
+具有较强扩展性与实践应用价值。
