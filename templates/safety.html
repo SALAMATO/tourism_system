@@ -1,0 +1,96 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>安全隐患预警 - 低空旅游信息管理系统</title>
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+</head>
+<body>
+  <!-- 导航栏 -->
+  <nav class="navbar">
+    <div class="navbar-container">
+      <a href="{% url 'home' %}" class="navbar-brand"><i class="fas fa-plane-departure"></i> 低空旅游</a>
+      <ul class="navbar-menu">
+        <li><a href="{% url 'home' %}">首页</a></li>
+        <li><a href="{% url 'policies' %}">政策法规</a></li>
+        <li><a href="{% url 'statistics' %}">发展现状</a></li>
+        <li><a href="{% url 'safety' %}">安全预警</a></li>
+        <li><a href="{% url 'news' %}">新闻资讯</a></li>
+        <li><a href="{% url 'community' %}">互动交流</a></li>
+        <li><a href="{% url 'admin_page' %}">管理后台</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- 页面头部 -->
+  <div class="page-header">
+    <h1>⚠️ 安全隐患预警</h1>
+    <p>建立风险评估体系和应急预案库</p>
+  </div>
+
+  <!-- 主要内容 -->
+  <main class="container">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-value" id="high-risk-count" style="color: var(--danger-color);">--</div>
+        <div class="stat-label">高风险隐患</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="medium-risk-count" style="color: var(--warning-color);">--</div>
+        <div class="stat-label">中风险隐患</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="low-risk-count" style="color: var(--success-color);">--</div>
+        <div class="stat-label">低风险隐患</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="resolved-count">--</div>
+        <div class="stat-label">已解决</div>
+      </div>
+    </div>
+
+    <div class="category-tabs">
+      <button class="category-tab active" data-risk="all">全部</button>
+      <button class="category-tab" data-risk="高">高风险</button>
+      <button class="category-tab" data-risk="中">中风险</button>
+      <button class="category-tab" data-risk="低">低风险</button>
+      <button class="category-tab" data-risk="已解决">已解决</button>
+    </div>
+
+    <div id="alerts-container">
+      <div class="loading"><div class="spinner"></div><div>加载中...</div></div>
+    </div>
+  </main>
+
+  <!-- 隐患详情模态框 -->
+  <div id="alert-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">隐患详情</h2>
+        <button class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body" id="alert-detail"></div>
+    </div>
+  </div>
+
+  <!-- 底部 -->
+  <footer class="footer">
+    <div class="footer-links">
+      <a href="{% url 'policies' %}">政策法规</a>
+      <a href="{% url 'statistics' %}">发展现状</a>
+      <a href="{% url 'safety' %}">安全预警</a>
+      <a href="{% url 'news' %}">新闻资讯</a>
+      <a href="{% url 'community' %}">互动交流</a>
+      <a href="{% url 'admin_page' %}">管理后台</a>
+    </div>
+    <p>&copy; 2024 低空旅游信息管理系统. All rights reserved.</p>
+  </footer>
+  
+<script src="{% static 'js/utils.js' %}"></script>
+<script src="{% static 'js/api.js' %}"></script>
+<script src="{% static 'js/safety.js' %}"></script>
+</body>
+</html>

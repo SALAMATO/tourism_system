@@ -1,0 +1,101 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>发展现状 - 低空旅游信息管理系统</title>
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+</head>
+<body>
+  <!-- 导航栏 -->
+  <nav class="navbar">
+    <div class="navbar-container">
+      <a href="{% url 'home' %}" class="navbar-brand"><i class="fas fa-plane-departure"></i> 低空旅游</a>
+      <ul class="navbar-menu">
+        <li><a href="{% url 'home' %}">首页</a></li>
+        <li><a href="{% url 'policies' %}">政策法规</a></li>
+        <li><a href="{% url 'statistics' %}">发展现状</a></li>
+        <li><a href="{% url 'safety' %}">安全预警</a></li>
+        <li><a href="{% url 'news' %}">新闻资讯</a></li>
+        <li><a href="{% url 'community' %}">互动交流</a></li>
+        <li><a href="{% url 'admin_page' %}">管理后台</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- 页面头部 -->
+  <div class="page-header">
+    <h1>📊 发展现状</h1>
+    <p>数据可视化展示各地低空旅游发展情况</p>
+  </div>
+
+  <!-- 主要内容 -->
+  <main class="container">
+    <!-- 统计卡片 -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-value" id="total-tourists">--</div>
+        <div class="stat-label">总游客数（万人次）</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="total-revenue">--</div>
+        <div class="stat-label">总营收（亿元）</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="total-flights">--</div>
+        <div class="stat-label">总航班次数</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="avg-growth">--</div>
+        <div class="stat-label">平均增长率（%）</div>
+      </div>
+    </div>
+
+    <!-- 图表区域 -->
+    <div class="chart-container">
+      <h3 class="chart-title">各地区游客数量对比</h3>
+      <div id="chart-tourists" class="chart-wrapper" style="height: 400px;"></div>
+    </div>
+
+    <div class="chart-container">
+      <h3 class="chart-title">营收趋势分析</h3>
+      <div id="chart-revenue" class="chart-wrapper" style="height: 400px;"></div>
+    </div>
+
+    <div class="chart-container">
+      <h3 class="chart-title">航班运营情况</h3>
+      <div id="chart-flights" class="chart-wrapper" style="height: 400px;"></div>
+    </div>
+
+    <div class="chart-container">
+      <h3 class="chart-title">各地区增长率对比</h3>
+      <div id="chart-growth" class="chart-wrapper" style="height: 400px;"></div>
+    </div>
+
+    <div class="chart-container">
+      <h3 class="chart-title">地区发展综合对比</h3>
+      <div id="chart-radar" class="chart-wrapper" style="height: 500px;"></div>
+    </div>
+  </main>
+
+  <!-- 底部 -->
+  <footer class="footer">
+    <div class="footer-links">
+      <a href="{% url 'policies' %}">政策法规</a>
+      <a href="{% url 'statistics' %}">发展现状</a>
+      <a href="{% url 'safety' %}">安全预警</a>
+      <a href="{% url 'news' %}">新闻资讯</a>
+      <a href="{% url 'community' %}">互动交流</a>
+      <a href="{% url 'admin_page' %}">管理后台</a>
+    </div>
+    <p>&copy; 2024 低空旅游信息管理系统. All rights reserved.</p>
+  </footer>
+  
+<script src="{% static 'js/utils.js' %}"></script>
+<script src="{% static 'js/api.js' %}"></script>
+<script src="{% static 'js/statistics.js' %}"></script>
+</body>
+</html>

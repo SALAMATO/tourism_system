@@ -1,0 +1,100 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>政策法规库 - 低空旅游信息管理系统</title>
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+</head>
+<body>
+  <!-- 导航栏 -->
+  <nav class="navbar">
+    <div class="navbar-container">
+      <a href="{% url 'home' %}" class="navbar-brand">
+        <i class="fas fa-plane-departure"></i>
+        低空旅游
+      </a>
+      <ul class="navbar-menu">
+        <li><a href="{% url 'home' %}">首页</a></li>
+        <li><a href="{% url 'policies' %}">政策法规</a></li>
+        <li><a href="{% url 'statistics' %}">发展现状</a></li>
+        <li><a href="{% url 'safety' %}">安全预警</a></li>
+        <li><a href="{% url 'news' %}">新闻资讯</a></li>
+        <li><a href="{% url 'community' %}">互动交流</a></li>
+        <li><a href="{% url 'admin_page' %}">管理后台</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- 页面头部 -->
+  <div class="page-header">
+    <h1>📚 政策法规库</h1>
+    <p>分类管理国家及地方低空旅游相关政策文件</p>
+  </div>
+
+  <!-- 主要内容 -->
+  <main class="container">
+    <!-- 搜索栏 -->
+    <div class="search-bar">
+      <input type="text" id="search-input" class="search-input" placeholder="搜索政策标题、部门或内容...">
+      <button class="search-btn" onclick="handleSearch()">
+        <i class="fas fa-search"></i>
+      </button>
+    </div>
+
+    <!-- 分类标签 -->
+    <div class="category-tabs">
+      <button class="category-tab active" data-category="all">全部</button>
+      <button class="category-tab" data-category="国家级">国家级</button>
+      <button class="category-tab" data-category="省级">省级</button>
+      <button class="category-tab" data-category="市级">市级</button>
+      <button class="category-tab" data-category="安全管理">安全管理</button>
+      <button class="category-tab" data-category="运营规范">运营规范</button>
+      <button class="category-tab" data-category="空域管理">空域管理</button>
+    </div>
+
+    <!-- 政策列表 -->
+    <div id="policies-container">
+      <div class="loading">
+        <div class="spinner"></div>
+        <div>加载中...</div>
+      </div>
+    </div>
+
+    <!-- 分页 -->
+    <div id="pagination-container"></div>
+  </main>
+
+  <!-- 政策详情模态框 -->
+  <div id="policy-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">政策详情</h2>
+        <button class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body" id="policy-detail">
+        <!-- 详情内容将通过JavaScript填充 -->
+      </div>
+    </div>
+  </div>
+
+  <!-- 底部 -->
+  <footer class="footer">
+    <div class="footer-links">
+      <a href="{% url 'policies' %}">政策法规</a>
+      <a href="{% url 'statistics' %}">发展现状</a>
+      <a href="{% url 'safety' %}">安全预警</a>
+      <a href="{% url 'news' %}">新闻资讯</a>
+      <a href="{% url 'community' %}">互动交流</a>
+      <a href="{% url 'admin_page' %}">管理后台</a>
+    </div>
+    <p>&copy; 2024 低空旅游信息管理系统. All rights reserved.</p>
+  </footer>
+  
+<script src="{% static 'js/utils.js' %}"></script>
+<script src="{% static 'js/api.js' %}"></script>
+<script src="{% static 'js/policies.js' %}"></script>
+</body>
+</html>

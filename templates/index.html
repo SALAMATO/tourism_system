@@ -1,0 +1,152 @@
+{% load static %}  {# 必须在模板最上面加载 static 标签 #}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>低空旅游信息管理系统</title>
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+</head>
+<body>
+  <!-- 导航栏 -->
+  <nav class="navbar">
+    <div class="navbar-container">
+      <a href="{% url 'home' %}" class="navbar-brand">
+        <i class="fas fa-plane-departure"></i>
+        低空旅游
+      </a>
+      <ul class="navbar-menu">
+        <li><a href="{% url 'home' %}">首页</a></li> 
+        <li><a href="{% url 'policies' %}">政策法规</a></li>
+        <li><a href="{% url 'statistics' %}">发展现状</a></li>
+        <li><a href="{% url 'safety' %}">安全预警</a></li>
+        <li><a href="{% url 'news' %}">新闻资讯</a></li>
+        <li><a href="{% url 'community' %}">互动交流</a></li>
+        <li><a href="{% url 'admin_page' %}">管理后台</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- 主要内容 -->
+  <main class="main-content">
+    <!-- Hero区域 -->
+    <section class="hero-section">
+      <h1>低空旅游信息管理</h1>
+      <p>换个高度看风景，开启低空经济新时代</p>
+      <div class="hero-cta">
+        <a href="{% url 'policies' %}" class="btn btn-primary">浏览政策法规</a>
+        <a href="{% url 'statistics' %}" class="btn btn-secondary">查看发展数据</a>
+      </div>
+    </section>
+
+    <!-- 功能模块 -->
+    <section class="features-section">
+      <h2 class="section-title">核心功能</h2>
+      <p class="section-subtitle">全方位低空旅游信息管理与服务平台</p>
+      
+      <div class="features-grid">
+        <a href="{% url 'policies' %}" class="feature-card">
+          <span class="feature-icon">📚</span>
+          <h3>政策法规库</h3>
+          <p>分类管理国家及地方低空旅游相关政策文件，便捷查询与检索</p>
+        </a>
+
+        <a href="{% url 'statistics' %}" class="feature-card">
+          <span class="feature-icon">📊</span>
+          <h3>发展现状</h3>
+          <p>数据可视化展示各地低空旅游发展情况，实时掌握行业动态</p>
+        </a>
+
+        <a href="{% url 'safety' %}" class="feature-card">
+          <span class="feature-icon">⚠️</span>
+          <h3>安全隐患预警</h3>
+          <p>建立风险评估体系和应急预案库，保障低空旅游安全</p>
+        </a>
+
+        <a href="{% url 'news' %}" class="feature-card">
+          <span class="feature-icon">📰</span>
+          <h3>新闻资讯</h3>
+          <p>分享低空旅游的最新讯息、事件与行业发展趋势</p>
+        </a>
+
+        <a href="{% url 'community' %}" class="feature-card">
+          <span class="feature-icon">💬</span>
+          <h3>互动交流</h3>
+          <p>专家答疑、企业经验分享、公众意见反馈的综合交流平台</p>
+        </a>
+
+        <a href="{% url 'admin_page' %}" class="feature-card">
+          <span class="feature-icon">⚙️</span>
+          <h3>管理后台</h3>
+          <p>统一管理平台内容、数据录入与系统配置</p>
+        </a>
+      </div>
+    </section>
+
+    <!-- 最新动态 -->
+    <section class="container">
+      <h2 class="section-title">最新动态</h2>
+      <p class="section-subtitle">了解低空旅游行业最新资讯</p>
+      
+      <div id="latest-news-container">
+        <div class="loading">
+          <div class="spinner"></div>
+          <div>加载中...</div>
+        </div>
+      </div>
+
+      <div style="text-align: center; margin-top: 40px;">
+        <a href="{% url 'news' %}" class="btn btn-primary">查看更多新闻</a>
+      </div>
+    </section>
+
+    <!-- 统计概览 -->
+    <section class="container" style="background: var(--background-secondary); padding: 60px 20px;">
+      <h2 class="section-title">发展概览</h2>
+      <p class="section-subtitle">2024年低空旅游行业数据</p>
+      
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-value" id="stat-tourists">--</div>
+          <div class="stat-label">游客总数（万人次）</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-revenue">--</div>
+          <div class="stat-label">营收总额（亿元）</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-flights">--</div>
+          <div class="stat-label">总航班次数</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-growth">--</div>
+          <div class="stat-label">同比增长率（%）</div>
+        </div>
+      </div>
+
+      <div style="text-align: center; margin-top: 40px;">
+        <a href="{% url 'statistics' %}" class="btn btn-primary">查看详细数据</a>
+      </div>
+    </section>
+  </main>
+
+  <!-- 底部 -->
+  <footer class="footer">
+    <div class="footer-links">
+      <a href="{% url 'policies' %}">政策法规</a>
+      <a href="{% url 'statistics' %}">发展现状</a>
+      <a href="{% url 'safety' %}">安全预警</a>
+      <a href="{% url 'news' %}">新闻资讯</a>
+      <a href="{% url 'community' %}">互动交流</a>
+      <a href="{% url 'admin_page' %}">管理后台</a>
+    </div>
+    <p>&copy; 2024 低空旅游信息管理系统. All rights reserved.</p>
+    <p style="margin-top: 8px; font-size: 12px;">&copy; 2024 Low-altitude Tourism Information Management System. All rights reserved.</p>
+  </footer>
+  
+  <script src="{% static 'js/utils.js' %}"></script>
+  <script src="{% static 'js/api.js' %}"></script>
+  <script src="{% static 'js/home.js' %}"></script>
+</body>
+</html>

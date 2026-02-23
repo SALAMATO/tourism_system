@@ -1,0 +1,53 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>新闻详情 - 低空旅游信息管理系统</title>
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="navbar-container">
+      <a href="{% url 'home' %}" class="navbar-brand"><i class="fas fa-plane-departure"></i> 低空旅游</a>
+      <ul class="navbar-menu">
+        <li><a href="{% url 'home' %}">首页</a></li>
+        <li><a href="{% url 'policies' %}">政策法规</a></li>
+        <li><a href="{% url 'statistics' %}">发展现状</a></li>
+        <li><a href="{% url 'safety' %}">安全预警</a></li>
+        <li><a href="{% url 'news' %}">新闻资讯</a></li>
+        <li><a href="{% url 'community' %}">互动交流</a></li>
+        <li><a href="{% url 'admin_page' %}">管理后台</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="container" style="padding-top: 80px;">
+    <div style="margin-bottom: 20px;">
+      <a href="{% url 'news' %}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> 返回列表</a>
+    </div>
+
+    <div id="news-detail-container">
+      <div class="loading"><div class="spinner"></div><div>加载中...</div></div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-links">
+      <a href="{% url 'policies' %}">政策法规</a>
+      <a href="{% url 'statistics' %}">发展现状</a>
+      <a href="{% url 'safety' %}">安全预警</a>
+      <a href="{% url 'news' %}">新闻资讯</a>
+      <a href="{% url 'community' %}">互动交流</a>
+      <a href="{% url 'admin_page' %}">管理后台</a>
+    </div>
+    <p>&copy; 2024 低空旅游信息管理系统. All rights reserved.</p>
+  </footer>
+  
+<script src="{% static 'js/utils.js' %}"></script>
+<script src="{% static 'js/api.js' %}"></script>
+<script src="{% static 'js/news-detail.js' %}"></script>
+</body>
+</html>

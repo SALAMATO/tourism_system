@@ -1,0 +1,341 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>管理后台 - 低空旅游信息管理系统</title>
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="navbar-container">
+      <a href="{% url 'home' %}" class="navbar-brand"><i class="fas fa-plane-departure"></i> 低空旅游</a>
+      <ul class="navbar-menu">
+        <li><a href="{% url 'home' %}">首页</a></li>
+        <li><a href="{% url 'policies' %}">政策法规</a></li>
+        <li><a href="{% url 'statistics' %}">发展现状</a></li>
+        <li><a href="{% url 'safety' %}">安全预警</a></li>
+        <li><a href="{% url 'news' %}">新闻资讯</a></li>
+        <li><a href="{% url 'community' %}">互动交流</a></li>
+        <li><a href="{% url 'admin_page' %}">管理后台</a></li>
+        <li>
+          <a href="{% url 'logout' %}">退出登录</a>
+        </li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="page-header">
+    <h1>⚙️ 管理后台</h1>
+    <p>统一管理平台内容、数据录入与系统配置</p>
+  </div>
+
+  <main class="container">
+    <!-- 管理模块选择 -->
+    <div class="features-grid" style="margin-bottom: 40px;">
+      <div class="feature-card" onclick="showModule('policy')">
+        <span class="feature-icon">📚</span>
+        <h3>政策法规管理</h3>
+        <p>添加、编辑、删除政策法规</p>
+      </div>
+
+      <div class="feature-card" onclick="showModule('news')">
+        <span class="feature-icon">📰</span>
+        <h3>新闻资讯管理</h3>
+        <p>发布和管理新闻资讯</p>
+      </div>
+
+      <div class="feature-card" onclick="showModule('safety')">
+        <span class="feature-icon">⚠️</span>
+        <h3>安全隐患管理</h3>
+        <p>记录和处理安全隐患</p>
+      </div>
+
+      <div class="feature-card" onclick="showModule('statistics')">
+        <span class="feature-icon">📊</span>
+        <h3>统计数据管理</h3>
+        <p>录入和更新统计数据</p>
+      </div>
+
+      <div class="feature-card" onclick="showModule('message')">
+        <span class="feature-icon">💬</span>
+        <h3>留言管理</h3>
+        <p>查看和回复用户留言</p>
+      </div>
+    </div>
+
+    <!-- 政策法规管理 -->
+    <div id="policy-module" class="admin-module" style="display:none;">
+      <h2 class="section-title">政策法规管理</h2>
+      <div class="card">
+        <h3 class="card-title">添加政策法规</h3>
+        <form id="policy-form">
+          <div class="form-group">
+            <label class="form-label">政策标题 *</label>
+            <input type="text" id="policy-title" class="form-input" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">政策级别 *</label>
+            <select id="policy-level" class="form-select" required>
+              <option value="国家级">国家级</option>
+              <option value="省级">省级</option>
+              <option value="市级">市级</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">分类 *</label>
+            <input type="text" id="policy-category" class="form-input" placeholder="如：安全管理、运营规范等" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">发布部门 *</label>
+            <input type="text" id="policy-department" class="form-input" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">发布日期 *</label>
+            <input type="date" id="policy-date" class="form-input" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">政策内容 *</label>
+            <textarea id="policy-content" class="form-textarea" rows="8" required></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">文件链接（选填）</label>
+            <input type="url" id="policy-url" class="form-input" placeholder="https://...">
+          </div>
+          <div class="form-group">
+            <label class="form-label">标签（用逗号分隔）</label>
+            <input type="text" id="policy-tags" class="form-input" placeholder="低空旅游,航空安全,政策解读">
+          </div>
+          <div style="margin-top: 8px;">
+            <button type="submit" class="btn btn-primary">提交</button>
+            <!-- 删除按钮事件由 admin.js 中的事件委托统一绑定，这里不再使用 inline onclick，避免触发两次 -->
+            <button type="button" id="policy-delete-btn" class="btn btn-danger" style="display:none; margin-left: 12px;">
+              删除
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card" style="margin-top: 24px;">
+        <h3 class="card-title">已发布政策（最近）</h3>
+        <div id="policy-list-container">
+          <div class="loading"><div class="spinner"></div><div>加载中...</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 新闻资讯管理 -->
+    <div id="news-module" class="admin-module" style="display:none;">
+      <h2 class="section-title">新闻资讯管理</h2>
+      <div class="card">
+        <h3 class="card-title">发布新闻</h3>
+        <form id="news-form">
+          <div class="form-group">
+            <label class="form-label">新闻标题 *</label>
+            <input type="text" id="news-title" class="form-input" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">分类 *</label>
+            <select id="news-category" class="form-select" required>
+              <option value="行业动态">行业动态</option>
+              <option value="政策解读">政策解读</option>
+              <option value="技术创新">技术创新</option>
+              <option value="企业新闻">企业新闻</option>
+              <option value="市场分析">市场分析</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">作者 *</label>
+            <input type="text" id="news-author" class="form-input" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">封面图片URL（选填）</label>
+            <input type="url" id="news-cover" class="form-input" placeholder="https://...">
+          </div>
+          <div class="form-group">
+            <label class="form-label">新闻内容 *</label>
+            <textarea id="news-content" class="form-textarea" rows="10" required></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">标签（用逗号分隔）</label>
+            <input type="text" id="news-tags" class="form-input" placeholder="低空旅游,行业发展">
+          </div>
+          <div style="margin-top: 8px;">
+            <button type="submit" class="btn btn-primary">发布</button>
+            <button type="button" id="news-delete-btn" class="btn btn-danger" style="display:none; margin-left: 12px;">
+              删除
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card" style="margin-top: 24px;">
+        <h3 class="card-title">已发布新闻（最近）</h3>
+        <div id="news-list-container">
+          <div class="loading"><div class="spinner"></div><div>加载中...</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 安全隐患管理 -->
+    <div id="safety-module" class="admin-module" style="display:none;">
+      <h2 class="section-title">安全隐患管理</h2>
+      <div class="card">
+        <h3 class="card-title">添加安全隐患</h3>
+        <form id="safety-form">
+          <div class="form-group">
+            <label class="form-label">隐患标题 *</label>
+            <input type="text" id="safety-title" class="form-input" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">风险等级 *</label>
+            <select id="safety-risk" class="form-select" required>
+              <option value="高">高</option>
+              <option value="中">中</option>
+              <option value="低">低</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">隐患类别 *</label>
+            <input type="text" id="safety-category" class="form-input" placeholder="如：天气因素、设备故障等" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">详细描述 *</label>
+            <textarea id="safety-description" class="form-textarea" rows="5" required></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">预防措施 *</label>
+            <textarea id="safety-prevention" class="form-textarea" rows="5" required></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">应急预案 *</label>
+            <textarea id="safety-plan" class="form-textarea" rows="5" required></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">状态 *</label>
+            <select id="safety-status" class="form-select" required>
+              <option value="待处理">待处理</option>
+              <option value="处理中">处理中</option>
+              <option value="已解决">已解决</option>
+            </select>
+          </div>
+          <div style="margin-top: 8px;">
+            <button type="submit" class="btn btn-primary">提交</button>
+            <button type="button" id="safety-delete-btn" class="btn btn-danger" style="display:none; margin-left: 12px;">
+              删除
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card" style="margin-top: 24px;">
+        <h3 class="card-title">已登记隐患（最近）</h3>
+        <div id="safety-list-container">
+          <div class="loading"><div class="spinner"></div><div>加载中...</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 统计数据管理 -->
+    <div id="statistics-module" class="admin-module" style="display:none;">
+      <h2 class="section-title">统计数据管理</h2>
+      <div class="card">
+        <h3 class="card-title">添加统计数据</h3>
+        <form id="statistics-form">
+          <div class="form-group">
+            <label class="form-label">地区 *</label>
+            <input type="text" id="stat-region" class="form-input" placeholder="如：北京、上海等" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">年份 *</label>
+            <input type="number" id="stat-year" class="form-input" min="2020" max="2030" value="2024" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">游客数量（万人次）*</label>
+            <input type="number" id="stat-tourists" class="form-input" min="0" step="0.1" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">营收（万元）*</label>
+            <input type="number" id="stat-revenue" class="form-input" min="0" step="0.01" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">航班次数 *</label>
+            <input type="number" id="stat-flights" class="form-input" min="0" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">航空器数量 *</label>
+            <input type="number" id="stat-aircraft" class="form-input" min="0" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">增长率（%）*</label>
+            <input type="number" id="stat-growth" class="form-input" min="-100" max="1000" step="0.1" required>
+          </div>
+          <div style="margin-top: 8px;">
+            <button type="submit" class="btn btn-primary">提交</button>
+            <button type="button" id="statistics-delete-btn" class="btn btn-danger" style="display:none; margin-left: 12px;">
+              删除
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card" style="margin-top: 24px;">
+        <h3 class="card-title">统计数据（最近）</h3>
+        <div id="statistics-list-container">
+          <div class="loading"><div class="spinner"></div><div>加载中...</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 留言管理 -->
+    <div id="message-module" class="admin-module" style="display:none;">
+      <h2 class="section-title">留言管理</h2>
+      <div id="messages-admin-container">
+        <div class="loading"><div class="spinner"></div><div>加载中...</div></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- 回复留言模态框 -->
+  <div id="reply-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">回复留言</h2>
+        <button class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="reply-message-info"></div>
+        <div class="form-group" style="margin-top: 20px;">
+          <label class="form-label">回复内容 *</label>
+          <textarea id="reply-content" class="form-textarea" rows="6" required></textarea>
+        </div>
+        <div style="margin-top: 8px;">
+          <button id="reply-submit-btn" onclick="submitReply()" class="btn btn-primary">提交回复</button>
+          <button type="button" id="reply-delete-btn" class="btn btn-danger" style="margin-left: 12px;">
+            删除
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="footer-links">
+      <a href="{% url 'policies' %}">政策法规</a>
+      <a href="{% url 'statistics' %}">发展现状</a>
+      <a href="{% url 'safety' %}">安全预警</a>
+      <a href="{% url 'news' %}">新闻资讯</a>
+      <a href="{% url 'community' %}">互动交流</a>
+      <a href="{% url 'admin_page' %}">管理后台</a>
+    </div>
+    <p>&copy; 2024 低空旅游信息管理系统. All rights reserved.</p>
+  </footer>
+  
+
+<script src="{% static 'js/utils.js' %}"></script>
+<script src="{% static 'js/api.js' %}"></script>
+<script src="{% static 'js/admin.js' %}"></script>
+</body>
+</html>
