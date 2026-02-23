@@ -1,6 +1,6 @@
 -- MySQL dump 10.13  Distrib 8.0.44, for Win64 (x86_64)
 --
--- Host: 127.0.0.1    Database: low_altitude_tourism
+-- Host: localhost    Database: low_altitude_tourism
 -- ------------------------------------------------------
 -- Server version	8.0.44
 
@@ -471,4 +471,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-02-24  2:40:17
+-- Dump completed on 2026-02-24  3:22:02
