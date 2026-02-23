@@ -125,7 +125,7 @@ CREATE TABLE `auth_user` (
 
 LOCK TABLES `auth_user` WRITE;
 /*!40000 ALTER TABLE `auth_user` DISABLE KEYS */;
-INSERT INTO `auth_user` VALUES (1,'pbkdf2_sha256$1200000$OyjYSVd6dZRy4vfXa027CS$IYNQtmfs/NNKw/GbKanxBRugjgIFBmwVTkinaVMHc7A=','2026-02-14 21:34:17.573602',1,'slmt','','','',1,1,'2026-02-14 21:10:59.369069'),(2,'pbkdf2_sha256$1200000$p3ZO1ECI1GqjnCzpL93mzZ$Zby8EtmerHb22aXrOU4HSytu/ksePEgNqq3Sm9ZzNic=','2026-02-23 12:25:28.366030',1,'admin','','','admin@qq.com',1,1,'2026-02-23 09:25:24.616777');
+INSERT INTO `auth_user` VALUES (1,'pbkdf2_sha256$1200000$MaFMSyc0v5BMH3e3zLXZSA$bebyXhPUwCe8SlZUhnykajoLH6FtoyH6YsqckIOnfhY=','2026-02-23 16:16:15.707819',1,'slmt','','','',1,1,'2026-02-14 21:10:59.369069'),(2,'pbkdf2_sha256$1200000$p3ZO1ECI1GqjnCzpL93mzZ$Zby8EtmerHb22aXrOU4HSytu/ksePEgNqq3Sm9ZzNic=','2026-02-23 15:26:14.572467',0,'admin','','','admin@qq.com',0,1,'2026-02-23 09:25:00.000000');
 /*!40000 ALTER TABLE `auth_user` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -173,7 +173,7 @@ CREATE TABLE `auth_user_user_permissions` (
   KEY `auth_user_user_permi_permission_id_1fbb5f2c_fk_auth_perm` (`permission_id`),
   CONSTRAINT `auth_user_user_permi_permission_id_1fbb5f2c_fk_auth_perm` FOREIGN KEY (`permission_id`) REFERENCES `auth_permission` (`id`),
   CONSTRAINT `auth_user_user_permissions_user_id_a95ead1b_fk_auth_user_id` FOREIGN KEY (`user_id`) REFERENCES `auth_user` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=45 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -182,6 +182,7 @@ CREATE TABLE `auth_user_user_permissions` (
 
 LOCK TABLES `auth_user_user_permissions` WRITE;
 /*!40000 ALTER TABLE `auth_user_user_permissions` DISABLE KEYS */;
+INSERT INTO `auth_user_user_permissions` VALUES (1,2,1),(2,2,2),(3,2,3),(4,2,4),(5,2,5),(6,2,6),(7,2,7),(8,2,8),(9,2,9),(10,2,10),(11,2,11),(12,2,12),(13,2,13),(14,2,14),(15,2,15),(16,2,16),(17,2,17),(18,2,18),(19,2,19),(20,2,20),(21,2,21),(22,2,22),(23,2,23),(24,2,24),(25,2,25),(26,2,26),(27,2,27),(28,2,28),(29,2,29),(30,2,30),(31,2,31),(32,2,32),(33,2,33),(34,2,34),(35,2,35),(36,2,36),(37,2,37),(38,2,38),(39,2,39),(40,2,40),(41,2,41),(42,2,42),(43,2,43),(44,2,44);
 /*!40000 ALTER TABLE `auth_user_user_permissions` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -207,7 +208,7 @@ CREATE TABLE `django_admin_log` (
   CONSTRAINT `django_admin_log_content_type_id_c4bce8eb_fk_django_co` FOREIGN KEY (`content_type_id`) REFERENCES `django_content_type` (`id`),
   CONSTRAINT `django_admin_log_user_id_c564eba6_fk_auth_user_id` FOREIGN KEY (`user_id`) REFERENCES `auth_user` (`id`),
   CONSTRAINT `django_admin_log_chk_1` CHECK ((`action_flag` >= 0))
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -216,6 +217,7 @@ CREATE TABLE `django_admin_log` (
 
 LOCK TABLES `django_admin_log` WRITE;
 /*!40000 ALTER TABLE `django_admin_log` DISABLE KEYS */;
+INSERT INTO `django_admin_log` VALUES (1,'2026-02-23 15:23:10.542335','2','admin',2,'[{\"changed\": {\"fields\": [\"Staff status\", \"Superuser status\", \"User permissions\", \"Last login\"]}}]',4,1);
 /*!40000 ALTER TABLE `django_admin_log` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -293,6 +295,7 @@ CREATE TABLE `django_session` (
 
 LOCK TABLES `django_session` WRITE;
 /*!40000 ALTER TABLE `django_session` DISABLE KEYS */;
+INSERT INTO `django_session` VALUES ('5em0q14qx10pxjmq882p3mk2bo4g0s9a','.eJxVjMEOgjAQBf9lz6apWywuR-98A3lLu4IaSCicjP9uSDjodWYyb-qwrUO3lbx0Y6KGmE6_TNE_87SL9MB0n10_T-syqtsTd9ji2jnl1-1o_wYDykANQe1qwaCmEYEVSbP0ERCp4L2PIiIhJGM9syn4orHSXBsYWa2mzxcsJzmn:1vuWls:1L_JxbzteW3m794lnlURREEJIsuyrrh-2YKIlIfBvc8','2026-03-09 14:18:48.258828'),('cihrf3wd3wbljioplo448fgms7o6opll','.eJxVjDkOwjAQAP-yNbJiO3bslPS8IVrvgQMokXJUiL-jSCmgnRnNGwbctzrsqyzDyNCDhcsvK0hPmQ7BD5zus6F52paxmCMxp13NbWZ5Xc_2b1BxrdCDSy1SR43FoFZi8M43Kl6k1dRxcC7HZGPKSJZaVc_oOHp1jCU34i18vt22N_w:1vuXvu:xsPSB1g7yXYtT82pUx4oYc0IXQOuVvDmkI0m0amSLmw','2026-03-09 15:33:14.004039'),('dpxa83eon4eiege7ttptwfy0whrp3zdy','.eJxVjDkOwjAQAP-yNbJiO3bslPS8IVrvgQMokXJUiL-jSCmgnRnNGwbctzrsqyzDyNCDhcsvK0hPmQ7BD5zus6F52paxmCMxp13NbWZ5Xc_2b1BxrdCDSy1SR43FoFZi8M43Kl6k1dRxcC7HZGPKSJZaVc_oOHp1jCU34i18vt22N_w:1vuYbX:v3XtfzV6sCEnZ1eDwZiGEyIilq2fuA2Stu7ncvxk254','2026-03-09 16:16:15.710109');
 /*!40000 ALTER TABLE `django_session` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -314,7 +317,7 @@ CREATE TABLE `messages` (
   `created_at` datetime(6) NOT NULL,
   `updated_at` datetime(6) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -323,7 +326,7 @@ CREATE TABLE `messages` (
 
 LOCK TABLES `messages` WRITE;
 /*!40000 ALTER TABLE `messages` DISABLE KEYS */;
-INSERT INTO `messages` VALUES (2,'李四','lisi@example.com','建议','建议增加更多的低空旅游项目，尤其是在二三线城市，让更多人能够体验低空飞行的乐趣。','收到您的建议，我们会在二三线城市添加更多的旅游项目，能让人体验更多低空旅行的乐趣','已回复','2026-02-15 02:11:23.764138','2026-02-16 08:33:29.196534'),(5,'张三','zhangsan@qq.com','建议','我对低空旅游非常感兴趣，想了解如何办理飞行员资质证书？需要什么条件和流程？','您好！办理飞行员资质证书需要：1.年满18周岁以上；2.身体健康，通过航空体检；3.完成指定培训机构的理论和实际飞行培训；4.通过民航局考试。具体可咨询当地航空协会或培训机构。','已回复','2026-02-15 03:25:55.001835','2026-02-15 03:34:04.665616'),(7,'王五','wangwu@example.com','建议','希望加强对低空旅游安全的监管，建立更加严格的安全标准和审查机制。','感谢您的建议！安全是低空旅游的生命线。我们已将您的建议反馈给相关部门，并将持续加强安全监管体系建设。','已回复','2026-02-23 11:27:34.039871','2026-02-23 11:28:14.654066'),(8,'赵六','zhaoliu@163.com','咨询','请问如何获取无人机操作资格证','','待回复','2026-02-23 12:23:58.184513','2026-02-23 12:23:58.184535');
+INSERT INTO `messages` VALUES (2,'李四','lisi@example.com','建议','建议增加更多的低空旅游项目，尤其是在二三线城市，让更多人能够体验低空飞行的乐趣。','收到您的建议，我们会在二三线城市添加更多的旅游项目，能让人体验更多低空旅行的乐趣','已回复','2026-02-15 02:11:23.764138','2026-02-16 08:33:29.196534'),(5,'张三','zhangsan@qq.com','建议','我对低空旅游非常感兴趣，想了解如何办理飞行员资质证书？需要什么条件和流程？','您好！办理飞行员资质证书需要：1.年满18周岁以上；2.身体健康，通过航空体检；3.完成指定培训机构的理论和实际飞行培训；4.通过民航局考试。具体可咨询当地航空协会或培训机构。','已回复','2026-02-15 03:25:55.001835','2026-02-15 03:34:04.665616'),(7,'王五','wangwu@example.com','建议','希望加强对低空旅游安全的监管，建立更加严格的安全标准和审查机制。','感谢您的建议！安全是低空旅游的生命线。我们已将您的建议反馈给相关部门，并将持续加强安全监管体系建设。','已回复','2026-02-23 11:27:34.039871','2026-02-23 11:28:14.654066'),(8,'赵六','zhaoliu@163.com','咨询','请问如何获取无人机操作资格证','','待回复','2026-02-23 12:23:58.184513','2026-02-23 12:23:58.184535'),(9,'远航智能飞行公司','yuanhang@gmail.com','合作','根据行业实践与调研情况，目前低空旅游在发展过程中存在以下问题：\n（一）空域审批流程复杂\n审批周期较长\n跨部门协调难度较大\n临时飞行申请流程不够灵活\n\n（二）安全监管标准不统一\n\n不同地区执行标准存在差异\n应急预案体系尚不完善\n数据共享机制不足\n\n（三）配套基础设施不足\n\n起降点规划不足\n低空航线网络建设滞后\n智能调度系统缺乏统一平台\n\n（四）产业扶持政策不明确\n\n财政补贴与税收优惠政策有限\n融资渠道较窄\n企业创新支持力度不足','','待回复','2026-02-23 13:54:21.646232','2026-02-23 13:54:21.646257');
 /*!40000 ALTER TABLE `messages` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -347,7 +350,7 @@ CREATE TABLE `news` (
   `created_at` datetime(6) NOT NULL,
   `updated_at` datetime(6) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -356,7 +359,7 @@ CREATE TABLE `news` (
 
 LOCK TABLES `news` WRITE;
 /*!40000 ALTER TABLE `news` DISABLE KEYS */;
-INSERT INTO `news` VALUES (1,'2024低空经济元年：上半年游客突破500万人次','行业动态','张记者','https://img.remit.ee/api/file/BQACAgUAAyEGAASHRsPbAAERG5NpnER93SyiRTzTXK4I8nW_uHDsWAACeSMAAulJ4VQuJFijio_-uToE.jpg','2024年被业界称为“低空经济元年”，各地低空旅游项目陷入热潮。据统计，今年上半年全国低空旅游游客突破500万人次，同比增长45%。\n直升机观光、热气球体验、滑翔伞飞行等项目受到广大游客青睐。业内人士认为，随着政策支持和技术进步，低空旅游将迎来更大发展机遇。\n作为一种新兴的综合性经济形态，今年低空经济尚未“展翅腾飞”，但已处于“滑行”“蓄势”的阶段。宏观上，重要会议给予低空经济极高的定位，工信部等部门明确了一系列发展目标，各地力争成为低空经济“头雁”。微观上，资本如群蜂逐蜜涌现低空经济产业链，明星融资事件层出不穷，一批独角兽诞生。在产业链终端，应用如百花齐放，低空经济触角伸向物流配送、农林植保、交通接驳等场景，正渐渐走向成熟。','2024-06-15 00:00:00.000000',1312,'[\"低空经济\", \"行业报告\", \"数据统计\"]','2024-06-15 00:00:00.000000','2026-02-23 13:38:14.706712'),(3,'国家新政释放重大利好，低空旅游迎来黄金发展期','政策解读','李专家','https://img.remit.ee/api/file/BQACAgUAAyEGAASHRsPbAAERG21pnD3tAy6_rzNFqq7PhDBm3JgvAwACLiMAAulJ4VRs3-HnZdpABjoE.jpg','近日，国务院办公厅发布了关于促进低空经济发展的指导意见，从多个方面为低空旅游发展提供了政策支持。\n在政策红利持续释放与市场需求加速升级的双重驱动下，我国低空经济与文旅产业融合发展呈现出多维特征，为相关产业绘就高质量发展新图景。一方面，政策支撑体系日趋完善，形成全国统筹、地方协同的发展格局。低空经济连续两年被写入《政府工作报告》，《无人驾驶航空器飞行管理暂行条例》等政策相继出台，从空域管理、基础设施、安全监管等方面提供系统性保障。\n另一方面，“低空+文旅”应用场景不断丰富，从单一观光向多元融合拓展。既有直升机低空游览、热气球环游等传统项目升级，也有无人机灯光秀、低空演艺等新业态涌现。\n此外，区域协同特征凸显，产业链联动效应逐步显现。川渝构建“审批一体化、管理协同化”的跨省低空飞行机制，打造3条低空大通道，推动文旅资源跨区域整合，助力餐饮、住宿、文创等关联产业升级，构建起立体化文旅发展网络。','2026-02-23 11:29:42.171000',24,'[\"政策解读\", \"国家政策\"]','2026-02-23 11:29:42.178486','2026-02-23 13:38:29.231349'),(4,'新型电动飞行器亮相博览会，引领低空旅游新潮流','行业动态','王编辑','https://img.remit.ee/api/file/BQACAgUAAyEGAASHRsPbAAERG3ZpnD9w0WSvt-cvk-SJ2fHTPe7sgAACQiMAAulJ4VQKjEzeaQqMODoE.jpg','在今年的低空经济博览会上，多家企业展示了最新的eVTOL（电动垂直起降飞行器）技术，引发广泛关注；\n未来，随着eVTOL的制造和运营成本规模化后，花5分钟、60元“打飞的”的跨城交通新模式，将逐步走进人们的日常生活。\n为了加快推动低空经济产业发展布局，上海已出台相关行动方案，计划到2027年，核心产业规模达到500亿元以上，在全球低空经济创新发展中走在前列。\n12月19日上午，新兴载人eVTOL（电动垂直起降）飞行器在鹿城区江心屿西园稳稳升至空中30米，完成在鹿城的首次公开演示飞行。\n此次完成首次无人驾驶载人飞行演示的亿航EH216-S航空器，是获得中国民航局颁发的型号合格证、生产许可证、标准适航证三大“通行证”的无人驾驶载人电动垂直起降航空器（eVTOL），是全球首款也是唯一一款获得“三证”的载人eVTOL。\n其最大特点是，可以实现无人驾驶，乘客（可承载两人）无需做任何操作，航空器会根据提前设置好的航线，实现空中点对点飞行。记者在现场看到，亿航EH216-S航空器启动后垂直上升，在空中沿三角形轨道平稳完成演示飞行后垂直降落回江心屿兴龙航空停机坪。\n据鹿城区交通运输局相关负责人介绍，江心屿可以利用现有起降场地且空域条件好，飞行安全系数高。1933年，近代温州乃至浙江最早及唯一的民用机场便诞生于江心屿水上机场，在温州可以搭乘水上飞机去广州、上海，乃至香港。本次新兴载人eVTOL（电动垂直起降）飞行器在江心屿首飞，更是现代科技对历史记忆的延续。\n今年6月，亿航EH216-S航空器在文成首飞。广州亿航智能技术有限公司相关工作人员介绍，目前，亿航EH216-S航空器正在进行民用无人驾驶航空器运营合格证取证工作，未来将开拓更多实用飞行场景，稳步推进EH216-S的商业运营。','2026-02-23 11:31:48.480000',28,'[\"eVTOL\", \"技术创新\", \"绿色飞行\"]','2026-02-23 11:31:48.494019','2026-02-23 12:26:45.949827');
+INSERT INTO `news` VALUES (1,'2024低空经济元年：上半年游客突破500万人次','行业动态','张记者','https://img.remit.ee/api/file/BQACAgUAAyEGAASHRsPbAAERG5NpnER93SyiRTzTXK4I8nW_uHDsWAACeSMAAulJ4VQuJFijio_-uToE.jpg','2024年被业界称为“低空经济元年”，各地低空旅游项目陷入热潮。据统计，今年上半年全国低空旅游游客突破500万人次，同比增长45%。\n直升机观光、热气球体验、滑翔伞飞行等项目受到广大游客青睐。业内人士认为，随着政策支持和技术进步，低空旅游将迎来更大发展机遇。\n作为一种新兴的综合性经济形态，今年低空经济尚未“展翅腾飞”，但已处于“滑行”“蓄势”的阶段。宏观上，重要会议给予低空经济极高的定位，工信部等部门明确了一系列发展目标，各地力争成为低空经济“头雁”。微观上，资本如群蜂逐蜜涌现低空经济产业链，明星融资事件层出不穷，一批独角兽诞生。在产业链终端，应用如百花齐放，低空经济触角伸向物流配送、农林植保、交通接驳等场景，正渐渐走向成熟。','2024-06-15 00:00:00.000000',1326,'[\"低空经济\", \"行业报告\", \"数据统计\"]','2024-06-15 00:00:00.000000','2026-02-23 16:48:06.631939'),(3,'国家新政释放重大利好，低空旅游迎来黄金发展期','政策解读','李专家','https://img.remit.ee/api/file/BQACAgUAAyEGAASHRsPbAAERG21pnD3tAy6_rzNFqq7PhDBm3JgvAwACLiMAAulJ4VRs3-HnZdpABjoE.jpg','近日，国务院办公厅发布了关于促进低空经济发展的指导意见，从多个方面为低空旅游发展提供了政策支持。\n在政策红利持续释放与市场需求加速升级的双重驱动下，我国低空经济与文旅产业融合发展呈现出多维特征，为相关产业绘就高质量发展新图景。一方面，政策支撑体系日趋完善，形成全国统筹、地方协同的发展格局。低空经济连续两年被写入《政府工作报告》，《无人驾驶航空器飞行管理暂行条例》等政策相继出台，从空域管理、基础设施、安全监管等方面提供系统性保障。\n另一方面，“低空+文旅”应用场景不断丰富，从单一观光向多元融合拓展。既有直升机低空游览、热气球环游等传统项目升级，也有无人机灯光秀、低空演艺等新业态涌现。\n此外，区域协同特征凸显，产业链联动效应逐步显现。川渝构建“审批一体化、管理协同化”的跨省低空飞行机制，打造3条低空大通道，推动文旅资源跨区域整合，助力餐饮、住宿、文创等关联产业升级，构建起立体化文旅发展网络。','2026-02-23 11:29:42.171000',36,'[\"政策解读\", \"国家政策\"]','2026-02-23 11:29:42.178486','2026-02-23 15:12:30.518506'),(4,'新型电动飞行器亮相博览会，引领低空旅游新潮流','行业动态','王编辑','https://img.remit.ee/api/file/BQACAgUAAyEGAASHRsPbAAERG3ZpnD9w0WSvt-cvk-SJ2fHTPe7sgAACQiMAAulJ4VQKjEzeaQqMODoE.jpg','在今年的低空经济博览会上，多家企业展示了最新的eVTOL（电动垂直起降飞行器）技术，引发广泛关注；\n未来，随着eVTOL的制造和运营成本规模化后，花5分钟、60元“打飞的”的跨城交通新模式，将逐步走进人们的日常生活。\n为了加快推动低空经济产业发展布局，上海已出台相关行动方案，计划到2027年，核心产业规模达到500亿元以上，在全球低空经济创新发展中走在前列。\n12月19日上午，新兴载人eVTOL（电动垂直起降）飞行器在鹿城区江心屿西园稳稳升至空中30米，完成在鹿城的首次公开演示飞行。\n此次完成首次无人驾驶载人飞行演示的亿航EH216-S航空器，是获得中国民航局颁发的型号合格证、生产许可证、标准适航证三大“通行证”的无人驾驶载人电动垂直起降航空器（eVTOL），是全球首款也是唯一一款获得“三证”的载人eVTOL。\n其最大特点是，可以实现无人驾驶，乘客（可承载两人）无需做任何操作，航空器会根据提前设置好的航线，实现空中点对点飞行。记者在现场看到，亿航EH216-S航空器启动后垂直上升，在空中沿三角形轨道平稳完成演示飞行后垂直降落回江心屿兴龙航空停机坪。\n据鹿城区交通运输局相关负责人介绍，江心屿可以利用现有起降场地且空域条件好，飞行安全系数高。1933年，近代温州乃至浙江最早及唯一的民用机场便诞生于江心屿水上机场，在温州可以搭乘水上飞机去广州、上海，乃至香港。本次新兴载人eVTOL（电动垂直起降）飞行器在江心屿首飞，更是现代科技对历史记忆的延续。\n今年6月，亿航EH216-S航空器在文成首飞。广州亿航智能技术有限公司相关工作人员介绍，目前，亿航EH216-S航空器正在进行民用无人驾驶航空器运营合格证取证工作，未来将开拓更多实用飞行场景，稳步推进EH216-S的商业运营。','2026-02-23 11:31:48.480000',37,'[\"eVTOL\", \"技术创新\", \"绿色飞行\"]','2026-02-23 11:31:48.494019','2026-02-23 15:12:08.364065');
 /*!40000 ALTER TABLE `news` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -380,7 +383,7 @@ CREATE TABLE `policies` (
   `created_at` datetime(6) NOT NULL,
   `updated_at` datetime(6) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -389,7 +392,7 @@ CREATE TABLE `policies` (
 
 LOCK TABLES `policies` WRITE;
 /*!40000 ALTER TABLE `policies` DISABLE KEYS */;
-INSERT INTO `policies` VALUES (1,'广东省低空旅游产业发展规划（2024-2030年）','省级','产业规划','广东省发展和改革委员会','2024-03-01 00:00:00.000000','根据国家低空经济发展战略，结合广东省实际，制定本规划。\n发展目标：到2030年，建成全国领先的低空旅游示范省，形成完善的产业体系。\n重点布局：珠三角核心区、粤东粤西粤北特色区。\n保障措施：政策支持、资金扶持、人才引进。','','[\"产业规划\", \"地方政策\", \"广东省\"]','2024-03-01 00:00:00.000000','2026-02-23 12:06:24.494592'),(2,'低空旅游飞行活动安全管理规定','国家级','安全管理','中国民用航空局','2024-01-31 00:00:00.000000','根据《民用航空法》的条文\n第一条 为规范低空旅游飞行活动，保障飞行安全，根据《民用航空法》等法律法规，制定本规定。\n第二条 本规定适用于在中国境内从事低空旅游飞行活动的单位和个人。\n第三条 从事低空旅游飞行活动应当具备相应资质，遵守飞行规则，确保飞行安全。','','[\"安全管理\", \"飞行规范\", \"资质要求\"]','2024-01-31 00:00:00.000000','2026-02-23 12:17:32.941064'),(3,'《大连市低空飞行服务管理暂行办法》','市级','安全管理、政策办法','大连市','2026-02-23 00:00:00.000000','本市行政区域内低空飞行运营及相关服务管理活动，适用《暂行办法》。本市设立低空飞行服务管理中心，在空中交通管理机构和市交通运输局指导下，开展本市低空飞行服务管理工作，协助承担低空飞行服务保障和低空空域的协同管理相关工作。','','[\"政策解读\"]','2026-02-23 09:06:45.798278','2026-02-23 12:06:17.391431');
+INSERT INTO `policies` VALUES (1,'广东省低空旅游产业发展规划（2024-2026年）','省级','产业规划','广东省发展和改革委员会','2024-03-01 00:00:00.000000','根据国家低空经济发展战略，结合广东省实际，制定本规划。\n发展目标：到2026年，建成全国领先的低空旅游示范省，形成完善的产业体系。\n重点布局：珠三角核心区、粤东粤西粤北特色区。\n保障措施：政策支持、资金扶持、人才引进。','https://www.gd.gov.cn/zwgk/wjk/qbwj/yfb/content/post_4427812.html','[\"产业规划\", \"地方政策\", \"广东省\"]','2024-03-01 00:00:00.000000','2026-02-23 13:59:57.893421'),(2,'低空旅游飞行活动安全管理规定','国家级','安全管理','中国民用航空局','2024-01-31 00:00:00.000000','根据《民用航空法》的条文\n第一条 为规范低空旅游飞行活动，保障飞行安全，根据《民用航空法》等法律法规，制定本规定。\n第二条 本规定适用于在中国境内从事低空旅游飞行活动的单位和个人。\n第三条 从事低空旅游飞行活动应当具备相应资质，遵守飞行规则，确保飞行安全。','https://xxgk.mot.gov.cn/2020/gz/202112/W020211224389643228440.pdf','[\"安全管理\", \"飞行规范\", \"资质要求\"]','2024-01-31 00:00:00.000000','2026-02-23 14:00:53.247538'),(3,'《大连市低空飞行服务管理暂行办法》','市级','安全管理、政策办法','大连市','2026-02-23 00:00:00.000000','本市行政区域内低空飞行运营及相关服务管理活动，适用《暂行办法》。本市设立低空飞行服务管理中心，在空中交通管理机构和市交通运输局指导下，开展本市低空飞行服务管理工作，协助承担低空飞行服务保障和低空空域的协同管理相关工作。','https://www.dl.gov.cn/art/2025/6/13/art_8741_2444791.html','[\"政策解读\"]','2026-02-23 09:06:45.798278','2026-02-23 13:58:59.245064');
 /*!40000 ALTER TABLE `policies` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -468,4 +471,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-02-23 21:47:53
+-- Dump completed on 2026-02-24  2:40:17
