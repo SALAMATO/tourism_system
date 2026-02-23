@@ -200,7 +200,16 @@ Django ORM 自动数据库管理
 部署至云服务器
 引入 Vue/React 优化前端体验
 
-十一、总结
+十一、数据库导出与导入
+1️⃣ 导出指定数据库到指定路径
+mysqldump -u root -p tourism_system_db > C:\Users\用户\PycharmProjects\tourism_system\sql\db_dump.sql
+2️⃣ 导入进指定路径
+进入 bin 目录
+cd "C:\Program Files\MySQL\MySQL Server 8.0\bin"
+导入
+mysql -u root -p low_altitude_tourism < "C:\Users\用户\PycharmProjects\tourism_system\sql\db_dump.sql"
+
+十二、总结
 
 本系统完整实现了低空旅游安全信息的管理与展示功能。
 通过本项目开发，掌握了：
