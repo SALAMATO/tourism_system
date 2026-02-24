@@ -227,7 +227,8 @@
           <a href="#destinations" class="btn btn-primary" style="padding: 16px 40px; font-size: 18px;">
             <i class="fas fa-compass"></i> 探索目的地
           </a>
-          <a href="{% url 'current_user' %}" class="btn btn-secondary" style="padding: 16px 40px; font-size: 18px; margin-left: 16px;">
+          <!-- 个人主页入口：登录后访问个人主页，未登录会被重定向到登录页 -->
+          <a href="{% url 'profile_page' %}" class="btn btn-secondary" style="padding: 16px 40px; font-size: 18px; margin-left: 16px;">
             <i class="fas fa-user"></i> 个人主页
           </a>
         </div>
@@ -348,7 +349,6 @@
       <a href="{% url 'safety' %}">安全预警</a>
       <a href="{% url 'news' %}">新闻资讯</a>
       <a href="{% url 'community' %}">互动交流</a>
-      <a href="{% url 'admin_page' %}">管理后台</a>
     </div>
     <p>&copy; 2024 低空旅游信息管理系统. All rights reserved.</p>
     <p style="margin-top: 8px; font-size: 12px;">&copy; 2024 Low-altitude Tourism Information Management System. All rights reserved.</p>

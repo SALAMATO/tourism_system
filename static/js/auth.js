@@ -146,17 +146,42 @@ class AuthManager {
     if (!userMenuContainer) return;
 
     if (this.isAuthenticated() && this.user) {
+      // 如果是管理员，在最右侧增加“管理后台”入口（在退出登录按钮的右边）
+      const adminLink = this.user.is_staff ? `
+        <li style="margin-left: 8px;">
+          <a href="/admin-page/" class="btn btn-primary" style="padding: 6px 16px; font-size: 12px;">
+            管理后台
+          </a>
+        </li>
+      ` : '';
+      
       userMenuContainer.innerHTML = `
-        <div style="display: flex; align-items: center; gap: 12px;">
-          <span style="font-size: 12px; opacity: 0.8;">欢迎，${escapeHtml(this.user.username)}</span>
-          <button onclick="auth.logout().then(() => location.reload())" class="btn btn-secondary" style="padding: 6px 16px; font-size: 12px;">
-            退出登录
-          </button>
-        </div>
+        <ul class="navbar-menu" style="margin: 0; align-items: center;">
+          <li>
+            <a href="/profile/" style="cursor: pointer;">
+              欢迎，${escapeHtml(this.user.username)}
+            </a>
+          </li>
+          <li>
+            <button 
+              onclick="auth.logout().then(() => location.reload())" 
+              class="btn btn-secondary" 
+              style="
+                padding: 6px 16px; 
+                font-size: 12px;
+                border: 1px solid #ddd;
+                color: #999;
+              "
+            >
+              退出登录
+            </button>
+          </li>
+          ${adminLink}
+        </ul>
       `;
     } else {
       userMenuContainer.innerHTML = `
-        <a href="/api/auth/me/" class="btn btn-primary" style="padding: 6px 16px; font-size: 12px;">
+        <a href="/auth/" class="btn btn-primary" style="padding: 6px 16px; font-size: 12px;">
           <i class="fas fa-sign-in-alt"></i> 登录/注册
         </a>
       `;
@@ -167,7 +192,7 @@ class AuthManager {
     if (!this.isAuthenticated()) {
       showNotification('请先登录', 'error');
       setTimeout(() => {
-        window.location.href = 'auth.html?redirect=' + encodeURIComponent(window.location.pathname);
+        window.location.href = '/auth/?redirect=' + encodeURIComponent(window.location.pathname);
       }, 1500);
       return false;
     }

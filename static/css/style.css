@@ -51,10 +51,11 @@ body {
   transition: all 0.3s ease;
 }
 
+
 .navbar-container {
-  max-width: 980px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 0 22px;
+  padding: 0 40px;
   display: flex;
   justify-content: space-between;
   align-items: center;

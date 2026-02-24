@@ -91,6 +91,52 @@ class UserViewSet(PublicModelViewSet):
         serializer = UserSerializer(request.user)
         return Response(serializer.data)
 
+    @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
+    def change_password(self, request):
+        """修改当前用户密码"""
+        old_password = request.data.get('old_password')
+        new_password = request.data.get('new_password')
+        if not old_password or not new_password:
+            return Response({'error': '请提供原密码和新密码'}, status=status.HTTP_400_BAD_REQUEST)
+        user = request.user
+        if not user.check_password(old_password):
+            return Response({'error': '原密码不正确'}, status=status.HTTP_400_BAD_REQUEST)
+        if len(new_password) < 6:
+            return Response({'error': '新密码长度至少6位'}, status=status.HTTP_400_BAD_REQUEST)
+        user.set_password(new_password)
+        user.save()
+        # 修改密码后使旧 token 失效
+        Token.objects.filter(user=user).delete()
+        return Response({'message': '密码修改成功，请使用新密码重新登录'})
+
+    @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
+    def update_profile(self, request):
+        """修改当前用户的邮箱和手机号"""
+        user = request.user
+        email = request.data.get('email')
+        phone = request.data.get('phone')
+        
+        if email is not None:
+            # 验证邮箱格式
+            if email and '@' not in email:
+                return Response({'error': '邮箱格式不正确'}, status=status.HTTP_400_BAD_REQUEST)
+            # 检查邮箱是否已被其他用户使用
+            if email and User.objects.filter(email=email).exclude(id=user.id).exists():
+                return Response({'error': '该邮箱已被使用'}, status=status.HTTP_400_BAD_REQUEST)
+            user.email = email
+        
+        if phone is not None:
+            # 检查手机号是否已被其他用户使用
+            if phone and User.objects.filter(phone=phone).exclude(id=user.id).exists():
+                return Response({'error': '该手机号已被使用'}, status=status.HTTP_400_BAD_REQUEST)
+            user.phone = phone
+        
+        user.save()
+        return Response({
+            'message': '个人信息修改成功',
+            'user': UserSerializer(user).data
+        })
+
 
 # 目的地视图集
 class DestinationViewSet(PublicModelViewSet):
@@ -167,16 +213,24 @@ class MessageViewSet(PublicModelViewSet):
     search_fields = ['username', 'email', 'content']
     ordering_fields = ['created_at']
 
-    def perform_create(self, serializer):
-        """创建留言时关联当前用户"""
-        if self.request.user.is_authenticated:
-            serializer.save(user=self.request.user)
+    def get_permissions(self):
+        """
+        未登录用户只能查看留言；
+        登录用户才能创建留言、回复、修改、删除，以及查看自己的留言列表。
+        """
+        if self.action in ['create', 'reply', 'update', 'partial_update', 'destroy', 'my']:
+            permission_classes = [IsAuthenticated]
         else:
-            serializer.save()
+            permission_classes = [AllowAny]
+        return [permission() for permission in permission_classes]
+
+    def perform_create(self, serializer):
+        """创建留言时关联当前用户（已登录才允许创建）"""
+        serializer.save(user=self.request.user)
 
     @action(detail=True, methods=['patch'])
     def reply(self, request, pk=None):
-        """回复留言"""
+        """回复留言（仅登录用户使用后台回复）"""
         message = self.get_object()
         reply_content = request.data.get('reply')
         if reply_content:
@@ -186,6 +240,13 @@ class MessageViewSet(PublicModelViewSet):
             serializer = self.get_serializer(message)
             return Response(serializer.data)
         return Response({'error': '回复内容不能为空'}, status=400)
+
+    @action(detail=False, methods=['get'])
+    def my(self, request):
+        """当前用户自己发表的留言列表"""
+        qs = self.get_queryset().filter(user=request.user).order_by('-created_at')
+        serializer = self.get_serializer(qs, many=True)
+        return Response(serializer.data)
 
 
 # 统计数据视图集

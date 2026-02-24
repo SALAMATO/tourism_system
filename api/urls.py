@@ -1,9 +1,5 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from django.conf import settings
-from django.conf.urls.static import static
-from django.urls import path, include
-from django.views.generic import TemplateView
 from .views import (
     PolicyViewSet, NewsViewSet, SafetyAlertViewSet,
     MessageViewSet, StatisticViewSet, DestinationViewSet,
@@ -20,15 +16,17 @@ router.register(r'statistics', StatisticViewSet, basename='statistic')
 router.register(r'destinations', DestinationViewSet, basename='destination')
 router.register(r'user', UserViewSet, basename='user')
 
-urlpatterns = [
-    path('', include(router.urls)),
-    # 用户登录界面（需要登录）
-    path('auth/register/', TemplateView.as_view(template_name='auth.html'), name='user_register'),
-    path('auth/login/', TemplateView.as_view(template_name='auth.html'), name='user_login'),
-    path('auth/logout/', TemplateView.as_view(template_name='auth.html'), name='user_logout'),
-    path('auth/me/', TemplateView.as_view(template_name='auth.html'), name='current_user'),
-]
 
-# 本地 DEBUG=False 静态文件映射
-if not settings.DEBUG:
-    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+# 兼容前端：/api/auth/* 作为纯 API（返回 JSON），不再返回 HTML 模板
+auth_register_view = UserViewSet.as_view({'post': 'register'})
+auth_login_view = UserViewSet.as_view({'post': 'login'})
+auth_logout_view = UserViewSet.as_view({'post': 'logout'})
+auth_me_view = UserViewSet.as_view({'get': 'me'})
+
+urlpatterns = [
+    path('auth/register/', auth_register_view, name='auth_register'),
+    path('auth/login/', auth_login_view, name='auth_login'),
+    path('auth/logout/', auth_logout_view, name='auth_logout'),
+    path('auth/me/', auth_me_view, name='auth_me'),
+    path('', include(router.urls)),
+]

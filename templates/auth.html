@@ -1,7 +1,4 @@
 {% load static %}
-<form id="registerForm">
-    {% csrf_token %}
-</form>
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -128,6 +125,9 @@
       <!-- 登录表单 -->
       <form id="login-form" class="auth-form active">
         <h2 class="auth-title">欢迎回来</h2>
+        <p style="text-align: center; color: var(--text-secondary); font-size: 14px; margin-bottom: 20px;">
+          请输入您的用户名和密码
+        </p>
         
         <div class="form-group">
           <label class="form-label">用户名</label>
@@ -188,7 +188,7 @@
     </div>
   </div>
 
-  <script src="{% static 'js/utils.js' %}"></script>
+  <script src="{% static 'js/utils.js' %}?v=2"></script>
   <script src="{% static 'js/auth.js' %}"></script>
   <script>
     // 标签切换

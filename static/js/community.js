@@ -29,6 +29,11 @@ function initStatusTabs() {
 }
 
 async function submitMessage() {
+  // 必须先登录才允许评论
+  if (!auth.requireAuth()) {
+    return;
+  }
+
   const username = document.getElementById('username').value.trim();
   const email = document.getElementById('email').value.trim();
   const messageType = document.getElementById('message-type').value;

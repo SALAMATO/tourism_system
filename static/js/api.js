@@ -14,12 +14,23 @@ class API {
   // 通用请求方法
   async request(url, options = {}) {
     try {
+      // 基础头部（JSON）
+      let headers = {
+        'Content-Type': 'application/json',
+        ...(options.headers || {})
+      };
+
+      // 如全局存在 getAuthHeaders，则自动附加认证头（例如 Token）
+      if (typeof getAuthHeaders === 'function') {
+        headers = {
+          ...headers,
+          ...getAuthHeaders()
+        };
+      }
+
       const response = await fetch(url, {
-        headers: {
-          'Content-Type': 'application/json',
-          ...options.headers
-        },
-        ...options
+        ...options,
+        headers
       });
 
       if (!response.ok) {
@@ -212,6 +223,23 @@ class API {
 
   async deleteStatistic(id) {
     return await this.deleteRecord('statistics', id);
+  }
+
+  // 用户管理相关
+  async getUsers(params = {}) {
+    return await this.getTableData('user', params);
+  }
+
+  async getUser(id) {
+    return await this.getRecord('user', id);
+  }
+
+  async updateUser(id, data) {
+    return await this.patchRecord('user', id, data);
+  }
+
+  async deleteUser(id) {
+    return await this.deleteRecord('user', id);
   }
 }
 

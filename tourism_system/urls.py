@@ -14,6 +14,8 @@ urlpatterns = [
     # 首页直接返回模板
     path('', TemplateView.as_view(template_name='index.html'), name='home'),
     path('policies/', TemplateView.as_view(template_name='policies.html'), name='policies'),
+    path('policies/policy-detail.html', TemplateView.as_view(template_name='policy-detail.html'), name='policy-detail'),
+    path('policy-detail.html', TemplateView.as_view(template_name='policy-detail.html'), name='policy-detail'),
     path('statistics/', TemplateView.as_view(template_name='statistics.html'), name='statistics'),
     path('safety/', TemplateView.as_view(template_name='safety.html'), name='safety'),
     path('news/', TemplateView.as_view(template_name='news.html'), name='news'),
@@ -21,23 +23,16 @@ urlpatterns = [
     path('news-detail.html/', TemplateView.as_view(template_name='news-detail.html'), name='news-detail'),
     path('community/', TemplateView.as_view(template_name='community.html'), name='community'),
 
-
-
-
-    # 管理后台（需要登录）
+    # 用户登录/注册页面（前端）
+    path('auth/', TemplateView.as_view(template_name='auth.html'), name='auth_page'),
+    # 个人主页
+    path('profile/', TemplateView.as_view(template_name='profile.html'), name='profile_page'),
+    # 管理后台（前端单页，由前端基于 Token 和 is_staff 进行权限控制）
     path(
         'admin-page/',
-        login_required(
-            TemplateView.as_view(template_name='admin.html'),
-            login_url='/admin-login/'
-        ),
+        TemplateView.as_view(template_name='admin.html'),
         name='admin_page'
     ),  # 避免与 admin 冲突
-
-
-    # 管理员登录/退出
-    path('admin-login/', auth_views.LoginView.as_view(template_name='admin_login.html'), name='admin_login'),
-    path('admin_logout/', admin_logout, name='admin_logout'),
 
 
     # 兼容旧的 messages 路由

@@ -99,7 +99,6 @@ class SafetyAlertSerializer(serializers.ModelSerializer):
 
 class MessageSerializer(serializers.ModelSerializer):
     """留言反馈序列化器"""
-    username = serializers.CharField(source='user.username', read_only=True)
     class Meta:
         model = Message
         fields = '__all__'

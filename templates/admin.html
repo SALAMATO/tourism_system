@@ -32,11 +32,10 @@
         <li><a href="{% url 'safety' %}">安全预警</a></li>
         <li><a href="{% url 'news' %}">新闻资讯</a></li>
         <li><a href="{% url 'community' %}">互动交流</a></li>
-        <li><a href="{% url 'admin_page' %}">管理后台</a></li>
-        <li>
-          <a href="{% url 'admin_logout' %}">退出登录</a>
-        </li>
       </ul>
+      <div id="user-menu">
+        <!-- 用户菜单将通过JS动态加载 -->
+      </div>
     </div>
   </nav>
 
@@ -76,6 +75,12 @@
         <span class="feature-icon">💬</span>
         <h3>留言管理</h3>
         <p>查看和回复用户留言</p>
+      </div>
+
+      <div class="feature-card" onclick="showModule('user')">
+        <span class="feature-icon">👥</span>
+        <h3>用户管理</h3>
+        <p>查看和管理系统用户</p>
       </div>
     </div>
 
@@ -309,6 +314,17 @@
         <div class="loading"><div class="spinner"></div><div>加载中...</div></div>
       </div>
     </div>
+
+    <!-- 用户管理 -->
+    <div id="user-module" class="admin-module" style="display:none;">
+      <h2 class="section-title">用户管理</h2>
+      <div class="card">
+        <h3 class="card-title">系统用户列表</h3>
+        <div id="users-admin-container">
+          <div class="loading"><div class="spinner"></div><div>加载中...</div></div>
+        </div>
+      </div>
+    </div>
   </main>
 
   <!-- 回复留言模态框 -->
@@ -341,7 +357,6 @@
       <a href="{% url 'safety' %}">安全预警</a>
       <a href="{% url 'news' %}">新闻资讯</a>
       <a href="{% url 'community' %}">互动交流</a>
-      <a href="{% url 'admin_page' %}">管理后台</a>
     </div>
     <p>&copy; 2024 低空旅游信息管理系统. All rights reserved.</p>
   </footer>
@@ -349,6 +364,7 @@
 
 <script src="{% static 'js/utils.js' %}"></script>
 <script src="{% static 'js/api.js' %}"></script>
+<script src="{% static 'js/auth.js' %}"></script>
 <script src="{% static 'js/admin.js' %}"></script>
 </body>
 </html>

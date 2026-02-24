@@ -10,9 +10,43 @@ let currentSafetyEditingId = null;
 let currentSafetyEditingData = null;
 let currentStatisticEditingId = null;
 
-document.addEventListener('DOMContentLoaded', () => {
-  initForms();
-  initDeleteButtons();
+document.addEventListener('DOMContentLoaded', async () => {
+  // 管理后台权限校验：必须登录且为管理员
+  try {
+    // 未登录则跳转到统一登录页
+    if (!auth.isAuthenticated()) {
+      showNotification('请先登录管理员账号', 'error');
+      setTimeout(() => {
+        window.location.href = '/auth/?redirect=' + encodeURIComponent('/admin-page/');
+      }, 1500);
+      return;
+    }
+
+    // 优先使用本地缓存的用户信息
+    let user = auth.getUser();
+    if (!user) {
+      user = await auth.getCurrentUser();
+    }
+
+    // 非管理员无权访问
+    if (!user || !user.is_staff) {
+      showNotification('您无权访问管理后台', 'error');
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 1500);
+      return;
+    }
+
+    // 通过校验后再初始化后台功能
+    initForms();
+    initDeleteButtons();
+  } catch (error) {
+    console.error('管理后台权限校验失败:', error);
+    showNotification('访问管理后台失败，请重新登录', 'error');
+    setTimeout(() => {
+      window.location.href = '/auth/?redirect=' + encodeURIComponent('/admin-page/');
+    }, 1500);
+  }
 });
 
 function showModule(moduleName) {
@@ -38,6 +72,8 @@ function showModule(moduleName) {
       loadStatisticsForAdmin();
     } else if (moduleName === 'message') {
       loadMessagesForAdmin();
+    } else if (moduleName === 'user') {
+      loadUsersForAdmin();
     }
   }
 }
@@ -842,5 +878,85 @@ async function deleteCurrentReply() {
   } catch (error) {
     console.error('删除当前留言失败:', error);
     showNotification('删除失败：' + error.message, 'error');
+  }
+}
+
+// ===== 用户管理 =====
+
+async function loadUsersForAdmin() {
+  const container = document.getElementById('users-admin-container');
+  if (!container) return;
+
+  try {
+    showLoading(container);
+    const response = await api.getUsers({ limit: 100, sort: '-date_joined' });
+    if (response.data && response.data.length > 0) {
+      renderUsersForAdmin(container, response.data);
+    } else {
+      container.innerHTML = '<div class="loading"><div>暂无用户</div></div>';
+    }
+  } catch (error) {
+    console.error('加载用户列表失败:', error);
+    showError(container);
+  }
+}
+
+function renderUsersForAdmin(container, users) {
+  const html = users.map(user => `
+    <div class="list-item" style="display: flex; justify-content: space-between; align-items: center; gap: 16px;">
+      <div style="flex: 1;">
+        <div style="font-weight: 500;">
+          ${escapeHtml(user.username)} ${user.is_staff ? '<span class="tag primary" style="margin-left: 8px;">管理员</span>' : '<span class="tag" style="margin-left: 8px;">普通用户</span>'}
+        </div>
+        <div class="list-item-meta">
+          <span><i class="fas fa-envelope"></i> ${escapeHtml(user.email || '未填写')}</span>
+          <span><i class="fas fa-phone"></i> ${escapeHtml(user.phone || '未填写')}</span>
+          <span><i class="fas fa-clock"></i> 注册于 ${formatDateTime(user.date_joined)}</span>
+        </div>
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <button class="btn btn-secondary" onclick="toggleUserAdmin('${user.id}', ${user.is_staff})">
+          ${user.is_staff ? '取消管理员' : '设为管理员'}
+        </button>
+        <button class="btn btn-danger" onclick="deleteUserById('${user.id}')">
+          删除
+        </button>
+      </div>
+    </div>
+  `).join('');
+
+  container.innerHTML = html;
+}
+
+async function toggleUserAdmin(userId, isStaff) {
+  try {
+    const currentUser = auth.getUser();
+    if (currentUser && String(currentUser.id) === String(userId)) {
+      showNotification('不能修改当前登录账户的管理员状态', 'error');
+      return;
+    }
+    await api.updateUser(userId, { is_staff: !isStaff });
+    showNotification('用户权限已更新', 'success');
+    loadUsersForAdmin();
+  } catch (error) {
+    console.error('更新用户权限失败:', error);
+    showNotification('更新用户权限失败：' + error.message, 'error');
+  }
+}
+
+async function deleteUserById(userId) {
+  if (!confirm('确定要删除该用户吗？该用户的登录权限将被移除。')) return;
+  try {
+    const currentUser = auth.getUser();
+    if (currentUser && String(currentUser.id) === String(userId)) {
+      showNotification('不能删除当前登录账户', 'error');
+      return;
+    }
+    await api.deleteUser(userId);
+    showNotification('用户已删除', 'success');
+    loadUsersForAdmin();
+  } catch (error) {
+    console.error('删除用户失败:', error);
+    showNotification('删除用户失败：' + error.message, 'error');
   }
 }
