@@ -244,7 +244,7 @@ tourism_system/
 
 ### 开发环境
 
-* Windows 10
+* Windows 11
 * PyCharm
 * Python 3.x
 
@@ -292,7 +292,7 @@ http://127.0.0.1:8000/
 ### 导出
 
 ```bash
-mysqldump -u root -p tourism_system_db > db_dump.sql
+mysqldump -u root -p low_altitude_tourism > db_dump.sql
 ```
 
 ### 导入
