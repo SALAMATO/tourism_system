@@ -34,8 +34,10 @@
         <li><a href="{% url 'safety' %}">安全预警</a></li>
         <li><a href="{% url 'news' %}">新闻资讯</a></li>
         <li><a href="{% url 'community' %}">互动交流</a></li>
-        <li><a href="{% url 'admin_page' %}">管理后台</a></li>
       </ul>
+      <div id="user-menu">
+        <!-- 用户菜单将通过JS动态加载 -->
+      </div>
     </div>
   </nav>
 
@@ -109,6 +111,7 @@
   
 <script src="{% static 'js/utils.js' %}"></script>
 <script src="{% static 'js/api.js' %}"></script>
+<script src="{% static 'js/auth.js' %}"></script>
 <script src="{% static 'js/statistics.js' %}"></script>
 </body>
 </html>

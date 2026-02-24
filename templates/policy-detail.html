@@ -4,8 +4,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>新闻资讯-低空旅游</title>
-    <!-- 基础 ICO（Windows / 旧浏览器） -->
+  <title>政策详情-低空旅游</title>
+        <!-- 基础 ICO（Windows / 旧浏览器） -->
     <link rel="icon" href="{% static 'images/favicon.ico' %}" type="image/x-icon">
     <!-- PNG 标准尺寸 -->
     <link rel="icon" type="image/png" sizes="16x16" href="{% static 'images/favicon-16x16.png' %}">
@@ -40,36 +40,19 @@
     </div>
   </nav>
 
-  <div class="page-header">
-    <h1>📰 新闻资讯</h1>
-    <p>分享低空旅游的最新讯息、事件与行业发展趋势</p>
-  </div>
-
-  <main class="container">
-    <div class="search-bar">
-      <input type="text" id="search-input" class="search-input" placeholder="搜索新闻标题或内容...">
-      <button class="search-btn" onclick="handleSearch()"><i class="fas fa-search"></i></button>
+  <main class="container" style="padding-top: 80px;">
+    <div style="margin-bottom: 20px;">
+      <a href="policies.html" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> 返回列表</a>
     </div>
-
-    <div class="category-tabs">
-      <button class="category-tab active" data-category="all">全部</button>
-      <button class="category-tab" data-category="行业动态">行业动态</button>
-      <button class="category-tab" data-category="政策解读">政策解读</button>
-      <button class="category-tab" data-category="技术创新">技术创新</button>
-      <button class="category-tab" data-category="企业新闻">企业新闻</button>
-      <button class="category-tab" data-category="市场分析">市场分析</button>
-    </div>
-
-    <div id="news-container">
+    
+    <div id="policy-detail-container">
       <div class="loading"><div class="spinner"></div><div>加载中...</div></div>
     </div>
-
-    <div id="pagination-container"></div>
   </main>
 
   <footer class="footer">
     <div class="footer-links">
-      <a href="{% url 'policies' %}">政策法规</a>
+       <a href="{% url 'policies' %}">政策法规</a>
       <a href="{% url 'statistics' %}">发展现状</a>
       <a href="{% url 'safety' %}">安全预警</a>
       <a href="{% url 'news' %}">新闻资讯</a>
@@ -78,10 +61,10 @@
     </div>
     <p>&copy; 2024 低空旅游信息管理系统. All rights reserved.</p>
   </footer>
-  
-<script src="{% static 'js/utils.js' %}"></script>
-<script src="{% static 'js/api.js' %}"></script>
-<script src="{% static 'js/auth.js' %}"></script>
-<script src="{% static 'js/news.js' %}"></script>
+
+    <script src="{% static 'js/utils.js' %}"></script>
+    <script src="{% static 'js/api.js' %}"></script>
+    <script src="{% static 'js/auth.js' %}"></script>
+    <script src="{% static 'js/policy-detail.js' %}"></script>
 </body>
 </html>

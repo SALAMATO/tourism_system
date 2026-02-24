@@ -4,7 +4,7 @@ let currentCategory = 'all';
 let currentPage = 1;
 let searchQuery = '';
 let pagination;
-const policyModal = new Modal('policy-modal');
+// const policyModal = new Modal('policy-modal');
 
 // 初始化
 document.addEventListener('DOMContentLoaded', () => {
@@ -110,7 +110,13 @@ async function loadPolicies() {
 // 渲染政策列表
 function renderPolicies(container, policies) {
   const html = policies.map(policy => `
-    <div class="list-item" onclick="showPolicyDetail('${policy.id}')">
+    <div class="list-item" onclick="location.href='policy-detail.html?id=${policy.id}'">
+      ${policy.cover_image ? `
+        <div style="margin-bottom: 16px;">
+          <img src="${escapeHtml(policy.cover_image)}" alt="${escapeHtml(policy.title)}" 
+               style="width: 100%; height: 200px; object-fit: cover; border-radius: 8px;">
+        </div>
+      ` : ''}
       <div class="list-item-header">
         <div>
           <h3>${escapeHtml(policy.title)}</h3>
@@ -118,11 +124,12 @@ function renderPolicies(container, policies) {
             <span><i class="fas fa-building"></i> ${escapeHtml(policy.department || '未知部门')}</span>
             <span><i class="fas fa-layer-group"></i> ${escapeHtml(policy.level || '未分类')}</span>
             <span><i class="fas fa-calendar"></i> ${formatDate(policy.publish_date)}</span>
+            <span><i class="fas fa-eye"></i> ${policy.views || 0} 次浏览</span>
           </div>
         </div>
         <span class="tag ${getLevelTagClass(policy.level)}">${escapeHtml(policy.level || '未分类')}</span>
       </div>
-      <div class="list-item-content preserve-whitespace">
+      <div class="list-item-content">
         ${truncateText(stripHtml(policy.content), 200)}
       </div>
       ${policy.tags && policy.tags.length > 0 ? `
@@ -132,9 +139,38 @@ function renderPolicies(container, policies) {
       ` : ''}
     </div>
   `).join('');
-  
+
   container.innerHTML = html;
 }
+
+// // 渲染政策列表
+// function renderPolicies(container, policies) {
+//   const html = policies.map(policy => `
+//     <div class="list-item" onclick="showPolicyDetail('${policy.id}')">
+//       <div class="list-item-header">
+//         <div>
+//           <h3>${escapeHtml(policy.title)}</h3>
+//           <div class="list-item-meta">
+//             <span><i class="fas fa-building"></i> ${escapeHtml(policy.department || '未知部门')}</span>
+//             <span><i class="fas fa-layer-group"></i> ${escapeHtml(policy.level || '未分类')}</span>
+//             <span><i class="fas fa-calendar"></i> ${formatDate(policy.publish_date)}</span>
+//           </div>
+//         </div>
+//         <span class="tag ${getLevelTagClass(policy.level)}">${escapeHtml(policy.level || '未分类')}</span>
+//       </div>
+//       <div class="list-item-content preserve-whitespace">
+//         ${truncateText(stripHtml(policy.content), 200)}
+//       </div>
+//       ${policy.tags && policy.tags.length > 0 ? `
+//         <div style="margin-top: 12px;">
+//           ${policy.tags.map(tag => `<span class="tag">${escapeHtml(tag)}</span>`).join('')}
+//         </div>
+//       ` : ''}
+//     </div>
+//   `).join('');
+//
+//   container.innerHTML = html;
+// }
 
 // 获取级别标签样式
 function getLevelTagClass(level) {
@@ -175,7 +211,7 @@ async function showPolicyDetail(policyId) {
         ${policy.file_url ? `
           <div style="margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border-color);">
             <a href="${escapeHtml(policy.file_url)}" target="_blank" class="btn btn-primary">
-              <i class="fas fa-download"></i> 下载文件
+              <i class="fa fa-university"></i> 访问官方原址
             </a>
           </div>
         ` : ''}

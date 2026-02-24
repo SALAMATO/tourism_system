@@ -1,4 +1,3 @@
-// 首页逻辑
 
 document.addEventListener('DOMContentLoaded', () => {
   loadHotDestinations();
@@ -9,11 +8,11 @@ document.addEventListener('DOMContentLoaded', () => {
 // 加载热门目的地
 async function loadHotDestinations() {
   const container = document.getElementById('destinations-container');
-
+  
   try {
     showLoading(container);
     const response = await fetch('http://127.0.0.1:8000/api/destinations/hot/');
-
+    
     if (response.ok) {
       const destinations = await response.json();
       renderDestinations(container, destinations);
@@ -62,18 +61,18 @@ function renderDestinations(container, destinations) {
       </div>
     </a>
   `).join('');
-
+  
   container.innerHTML = html;
 }
 
 // 加载最新新闻
 async function loadLatestNews() {
   const container = document.getElementById('latest-news-container');
-
+  
   try {
     showLoading(container);
     const response = await api.getNews({ limit: 3, sort: '-created_at' });
-
+    
     if (response.data && response.data.length > 0) {
       renderNewsList(container, response.data);
     } else {
@@ -106,7 +105,7 @@ function renderNewsList(container, newsItems) {
       ` : ''}
     </div>
   `).join('');
-
+  
   container.innerHTML = html;
 }
 
@@ -122,7 +121,7 @@ function stripHtml(html) {
 async function loadStatistics() {
   try {
     const response = await api.getStatistics({ limit: 100 });
-
+    
     if (response.data && response.data.length > 0) {
       // 计算总数
       let totalTourists = 0;
@@ -150,10 +149,3 @@ async function loadStatistics() {
     console.error('加载统计数据失败:', error);
   }
 }
-
-
-// 页面加载完成后执行
-document.addEventListener('DOMContentLoaded', () => {
-  loadLatestNews();
-  loadStatistics();
-});

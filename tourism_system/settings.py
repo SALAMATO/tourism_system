@@ -22,6 +22,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     # 第三方应用
+    'rest_framework.authtoken',  # 新增：Token认证
     'rest_framework',
     'corsheaders',
 
@@ -40,8 +41,10 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-# 如果使用CORS配置（开发环境）
+# 使用CORS配置（开发环境）
 CORS_ALLOW_ALL_ORIGINS = True  # 开发环境允许所有来源
+CORS_ALLOW_CREDENTIALS = True  # 允许携带认证信息
+
 # 生产环境使用：
 # CORS_ALLOWED_ORIGINS = [
 #     "http://localhost:8000",
@@ -70,6 +73,13 @@ DATABASES = {
 
 # REST Framework配置
 REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.AllowAny',  # 默认允许所有人访问
+    ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 100,
     'DEFAULT_FILTER_BACKENDS': [
@@ -97,7 +107,8 @@ TEMPLATES = [
 # settings.py
 SECRET_KEY = 'django-insecure-!a_random_secret_key_for_dev_1234567890'
 
-
+# 自定义用户模型
+AUTH_USER_MODEL = 'api.User'
 
 # 语言和时区
 LANGUAGE_CODE = 'zh-hans'

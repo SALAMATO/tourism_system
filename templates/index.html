@@ -21,86 +21,282 @@
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
 </head>
+<style>
+    /* 首页专属样式 */
+    .hero-large {
+      height: 90vh;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      text-align: center;
+      overflow: hidden;
+    }
+    
+    .hero-large::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="%23ffffff" fill-opacity="0.1" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,122.7C672,117,768,139,864,138.7C960,139,1056,117,1152,101.3C1248,85,1344,75,1392,69.3L1440,64L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg>') no-repeat bottom;
+      background-size: cover;
+    }
+    
+    .hero-content {
+      z-index: 1;
+      max-width: 900px;
+      padding: 0 20px;
+    }
+    
+    .hero-large h1 {
+      font-size: 64px;
+      font-weight: 700;
+      margin-bottom: 24px;
+      line-height: 1.2;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    .hero-large .subtitle {
+      font-size: 24px;
+      margin-bottom: 40px;
+      opacity: 0.95;
+    }
+    
+    .intro-section {
+      padding: 100px 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    .intro-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 40px;
+      margin-top: 60px;
+    }
+    
+    .intro-item {
+      text-align: center;
+      padding: 40px 30px;
+      background: var(--background);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      transition: transform 0.3s;
+    }
+    
+    .intro-item:hover {
+      transform: translateY(-8px);
+    }
+    
+    .intro-item-icon {
+      font-size: 56px;
+      margin-bottom: 24px;
+      display: block;
+    }
+    
+    .intro-item h3 {
+      font-size: 24px;
+      margin-bottom: 16px;
+      color: var(--text-primary);
+    }
+    
+    .intro-item p {
+      font-size: 16px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+    
+    .destinations-showcase {
+      background: var(--background-tertiary);
+      padding: 100px 20px;
+    }
+    
+    .destinations-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+      gap: 32px;
+      max-width: 1400px;
+      margin: 60px auto 0;
+    }
+    
+    .destination-card {
+      background: var(--background);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      transition: all 0.3s;
+      cursor: pointer;
+      text-decoration: none;
+      color: var(--text-primary);
+      display: block;
+    }
+    
+    .destination-card:hover {
+      transform: translateY(-8px);
+      box-shadow: var(--shadow-lg);
+    }
+    
+    .destination-image {
+      width: 100%;
+      height: 240px;
+      object-fit: cover;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 64px;
+      color: white;
+    }
+    
+    .destination-content {
+      padding: 24px;
+    }
+    
+    .destination-title {
+      font-size: 22px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    
+    .destination-location {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+    }
+    
+    .destination-desc {
+      font-size: 15px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 16px;
+    }
+    
+    .destination-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 16px;
+      border-top: 1px solid var(--border-color);
+    }
+    
+    .destination-rating {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      color: #ff9500;
+    }
+    
+    .destination-price {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--primary-color);
+    }
+  </style>
+</head>
 <body>
   <!-- 导航栏 -->
   <nav class="navbar">
     <div class="navbar-container">
-      <a href="{% url 'home' %}" class="navbar-brand">
-        <i class="fas fa-plane-departure"></i>
-        低空旅游信息管理系统
-      </a>
+      <a href="{% url 'home' %}" class="navbar-brand"><i class="fas fa-plane-departure"></i> 低空旅游信息管理系统</a>
       <ul class="navbar-menu">
-        <li><a href="{% url 'home' %}">首页</a></li> 
+        <li><a href="{% url 'home' %}">首页</a></li>
         <li><a href="{% url 'policies' %}">政策法规</a></li>
         <li><a href="{% url 'statistics' %}">发展现状</a></li>
         <li><a href="{% url 'safety' %}">安全预警</a></li>
         <li><a href="{% url 'news' %}">新闻资讯</a></li>
         <li><a href="{% url 'community' %}">互动交流</a></li>
-        <li><a href="{% url 'admin_page' %}">管理后台</a></li>
       </ul>
+      <div id="user-menu">
+        <!-- 用户菜单将通过JS动态加载 -->
+      </div>
     </div>
   </nav>
 
   <!-- 主要内容 -->
   <main class="main-content">
-    <!-- Hero区域 -->
-    <section class="hero-section">
-      <h1>低空旅游信息管理</h1>
-      <p>换个高度看风景，开启低空经济新时代</p>
-      <div class="hero-cta">
-        <a href="{% url 'policies' %}" class="btn btn-primary">浏览政策法规</a>
-        <a href="{% url 'statistics' %}" class="btn btn-secondary">查看发展数据</a>
+    <!-- 大型Hero区域 -->
+    <section class="hero-large">
+      <div class="hero-content">
+        <h1>换个高度看风景</h1>
+        <p class="subtitle">探索中国低空旅游的无限魅力<br>直升机观光 · 热气球体验 · 滑翔伞飞行</p>
+        <div class="hero-cta">
+          <a href="#destinations" class="btn btn-primary" style="padding: 16px 40px; font-size: 18px;">
+            <i class="fas fa-compass"></i> 探索目的地
+          </a>
+          <a href="{% url 'current_user' %}" class="btn btn-secondary" style="padding: 16px 40px; font-size: 18px; margin-left: 16px;">
+            <i class="fas fa-user"></i> 个人主页
+          </a>
+        </div>
       </div>
     </section>
 
-    <!-- 功能模块 -->
-    <section class="features-section">
-      <h2 class="section-title">核心功能</h2>
-      <p class="section-subtitle">全方位低空旅游信息管理与服务平台</p>
+    <!-- 低空旅游介绍 -->
+    <section class="intro-section">
+      <h2 class="section-title">什么是低空旅游</h2>
+      <p class="section-subtitle">低空旅游是指在低空空域（通常在3000米以下），依托通用航空器和低空飞行器所从事的旅游活动</p>
       
-      <div class="features-grid">
-        <a href="{% url 'policies' %}" class="feature-card">
-          <span class="feature-icon">📚</span>
-          <h3>政策法规库</h3>
-          <p>分类管理国家及地方低空旅游相关政策文件，便捷查询与检索</p>
-        </a>
-
-        <a href="{% url 'statistics' %}" class="feature-card">
-          <span class="feature-icon">📊</span>
-          <h3>发展现状</h3>
-          <p>数据可视化展示各地低空旅游发展情况，实时掌握行业动态</p>
-        </a>
-
-        <a href="{% url 'safety' %}" class="feature-card">
-          <span class="feature-icon">⚠️</span>
-          <h3>安全隐患预警</h3>
-          <p>建立风险评估体系和应急预案库，保障低空旅游安全</p>
-        </a>
-
-        <a href="{% url 'news' %}" class="feature-card">
-          <span class="feature-icon">📰</span>
-          <h3>新闻资讯</h3>
-          <p>分享低空旅游的最新讯息、事件与行业发展趋势</p>
-        </a>
-
-        <a href="{% url 'community' %}" class="feature-card">
-          <span class="feature-icon">💬</span>
-          <h3>互动交流</h3>
-          <p>专家答疑、企业经验分享、公众意见反馈的综合交流平台</p>
-        </a>
-
-        <a href="{% url 'admin_page' %}" class="feature-card">
-          <span class="feature-icon">⚙️</span>
-          <h3>管理后台</h3>
-          <p>统一管理平台内容、数据录入与系统配置</p>
-        </a>
+      <div class="intro-grid">
+        <div class="intro-item">
+          <span class="intro-item-icon">🎯</span>
+          <h3>概念与范围</h3>
+          <p>低空旅游包括直升机观光、热气球体验、滑翔伞飞行、动力伞飞行、飞艇观光等多种形式，为游客提供独特的空中视角和体验。</p>
+        </div>
+        
+        <div class="intro-item">
+          <span class="intro-item-icon">📈</span>
+          <h3>市场与产业</h3>
+          <p>2024年被称为"低空经济元年"，市场规模快速增长。预计到2030年，中国低空经济规模将突破3万亿元，低空旅游成为重要组成部分。</p>
+        </div>
+        
+        <div class="intro-item">
+          <span class="intro-item-icon">✈️</span>
+          <h3>设备与项目</h3>
+          <p>主要设备包括直升机、热气球、滑翔伞、动力伞、飞艇等。项目涵盖城市观光、山地飞行、海岛巡航、峡谷穿越等多种类型。</p>
+        </div>
+        
+        <div class="intro-item">
+          <span class="intro-item-icon">🏗️</span>
+          <h3>基础设施</h3>
+          <p>配套设施包括直升机起降点、通用机场、飞行营地、维修保养中心等。全国已建成300多个通用机场，覆盖主要旅游城市。</p>
+        </div>
+        
+        <div class="intro-item">
+          <span class="intro-item-icon">🛡️</span>
+          <h3>安全保障</h3>
+          <p>建立完善的安全管理体系，包括飞行员资质认证、设备定期检查、气象监测预警、应急救援机制等，确保游客安全。</p>
+        </div>
+        
+        <div class="intro-item">
+          <span class="intro-item-icon">📜</span>
+          <h3>政策支持</h3>
+          <p>国家和地方政府出台多项政策支持低空经济发展，简化审批流程，开放低空空域，提供财政补贴，助力产业快速发展。</p>
+        </div>
       </div>
     </section>
 
-    <!-- 最新动态 -->
+    <!-- 热门目的地展示 -->
+    <section class="destinations-showcase" id="destinations">
+      <div style="text-align: center;">
+        <h2 class="section-title">热门低空旅游目的地</h2>
+        <p class="section-subtitle">精选全国最受欢迎的低空旅游体验地</p>
+      </div>
+      
+      <div id="destinations-container" class="destinations-grid">
+        <div class="loading">
+          <div class="spinner"></div>
+          <div>加载中...</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 最新资讯 -->
     <section class="container">
-      <h2 class="section-title">最新动态</h2>
-      <p class="section-subtitle">了解低空旅游行业最新资讯</p>
+      <h2 class="section-title">最新资讯</h2>
+      <p class="section-subtitle">了解低空旅游行业动态</p>
       
       <div id="latest-news-container">
         <div class="loading">
@@ -110,27 +306,27 @@
       </div>
 
       <div style="text-align: center; margin-top: 40px;">
-        <a href="{% url 'news' %}" class="btn btn-primary">查看更多新闻</a>
+        <a href="{% url 'news' %}" class="btn btn-primary">查看更多资讯</a>
       </div>
     </section>
 
-    <!-- 统计概览 -->
-    <section class="container" style="background: var(--background-secondary); padding: 60px 20px;">
-      <h2 class="section-title">发展概览</h2>
-      <p class="section-subtitle">2024年低空旅游行业数据</p>
+    <!-- 统计数据 -->
+    <section class="container" style="background: var(--background-secondary); padding: 80px 20px; margin-top: 80px;">
+      <h2 class="section-title">行业数据一览</h2>
+      <p class="section-subtitle">2024年低空旅游发展数据</p>
       
       <div class="stats-grid">
         <div class="stat-card">
           <div class="stat-value" id="stat-tourists">--</div>
-          <div class="stat-label">游客总数（万人次）</div>
+          <div class="stat-label">年度游客总数（万人次）</div>
         </div>
         <div class="stat-card">
           <div class="stat-value" id="stat-revenue">--</div>
-          <div class="stat-label">营收总额（亿元）</div>
+          <div class="stat-label">年度营收（亿元）</div>
         </div>
         <div class="stat-card">
           <div class="stat-value" id="stat-flights">--</div>
-          <div class="stat-label">总航班次数</div>
+          <div class="stat-label">年度飞行架次</div>
         </div>
         <div class="stat-card">
           <div class="stat-value" id="stat-growth">--</div>
@@ -139,7 +335,7 @@
       </div>
 
       <div style="text-align: center; margin-top: 40px;">
-        <a href="{% url 'statistics' %}" class="btn btn-primary">查看详细数据</a>
+        <a href="{% url 'statistics' %}" class="btn btn-primary">查看详细统计</a>
       </div>
     </section>
   </main>
@@ -158,8 +354,9 @@
     <p style="margin-top: 8px; font-size: 12px;">&copy; 2024 Low-altitude Tourism Information Management System. All rights reserved.</p>
   </footer>
   
-  <script src="{% static 'js/utils.js' %}"></script>
-  <script src="{% static 'js/api.js' %}"></script>
-  <script src="{% static 'js/home.js' %}"></script>
+<script src="{% static 'js/utils.js' %}"></script>
+<script src="{% static 'js/api.js' %}"></script>
+<script src="{% static 'js/auth.js' %}"></script>
+<script src="{% static 'js/home.js' %}"></script>
 </body>
 </html>

@@ -1,4 +1,48 @@
 from django.db import models
+from django.contrib.auth.models import AbstractUser
+
+
+class User(AbstractUser):
+    """自定义用户模型"""
+    phone = models.CharField(max_length=11, blank=True, null=True, verbose_name='手机号')
+    avatar = models.URLField(blank=True, null=True, verbose_name='头像')
+    bio = models.TextField(blank=True, null=True, verbose_name='个人简介')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='注册时间')
+
+    class Meta:
+        db_table = 'users'
+        verbose_name = '用户'
+        verbose_name_plural = verbose_name
+
+    def __str__(self):
+        return self.username
+
+
+class Destination(models.Model):
+    """低空旅游目的地"""
+    name = models.CharField(max_length=200, verbose_name='目的地名称')
+    location = models.CharField(max_length=200, verbose_name='地理位置')
+    description = models.TextField(verbose_name='详细介绍')
+    cover_image = models.URLField(verbose_name='封面图片')
+    category = models.CharField(max_length=100, verbose_name='类别')
+    price_range = models.CharField(max_length=100, verbose_name='价格区间')
+    duration = models.CharField(max_length=100, verbose_name='游玩时长')
+    best_season = models.CharField(max_length=100, verbose_name='最佳季节')
+    features = models.JSONField(default=list, verbose_name='特色亮点')
+    rating = models.FloatField(default=5.0, verbose_name='评分')
+    views = models.IntegerField(default=0, verbose_name='浏览次数')
+    is_hot = models.BooleanField(default=False, verbose_name='是否热门')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
+
+    class Meta:
+        db_table = 'destinations'
+        verbose_name = '旅游目的地'
+        verbose_name_plural = verbose_name
+        ordering = ['-is_hot', '-rating', '-views']
+
+    def __str__(self):
+        return self.name
 
 
 class Policy(models.Model):
@@ -9,8 +53,10 @@ class Policy(models.Model):
     department = models.CharField(max_length=200, verbose_name='发布部门')
     publish_date = models.DateTimeField(verbose_name='发布日期')
     content = models.TextField(verbose_name='政策内容')
+    cover_image = models.URLField(blank=True, null=True, verbose_name='封面图片')  # 新增
     file_url = models.URLField(blank=True, null=True, verbose_name='文件链接')
     tags = models.JSONField(default=list, verbose_name='标签')
+    views = models.IntegerField(default=0, verbose_name='浏览次数')  # 新增
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
 
@@ -84,6 +130,7 @@ class SafetyAlert(models.Model):
 
 class Message(models.Model):
     """留言反馈模型"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, verbose_name='用户')  # 新增
     username = models.CharField(max_length=100, verbose_name='用户名')
     email = models.EmailField(verbose_name='邮箱')
     message_type = models.CharField(max_length=50, verbose_name='消息类型')

@@ -21,6 +21,9 @@ urlpatterns = [
     path('news-detail.html/', TemplateView.as_view(template_name='news-detail.html'), name='news-detail'),
     path('community/', TemplateView.as_view(template_name='community.html'), name='community'),
 
+
+
+
     # 管理后台（需要登录）
     path(
         'admin-page/',
@@ -31,13 +34,10 @@ urlpatterns = [
         name='admin_page'
     ),  # 避免与 admin 冲突
 
+
     # 管理员登录/退出
-    path(
-        'admin-login/',
-        auth_views.LoginView.as_view(template_name='admin_login.html'),
-        name='admin_login'
-    ),
-    path('logout/', admin_logout, name='logout'),
+    path('admin-login/', auth_views.LoginView.as_view(template_name='admin_login.html'), name='admin_login'),
+    path('admin_logout/', admin_logout, name='admin_logout'),
 
 
     # 兼容旧的 messages 路由
