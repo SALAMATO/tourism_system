@@ -149,7 +149,14 @@ class AuthManager {
       // 如果是管理员，在最右侧增加“管理后台”入口（在退出登录按钮的右边）
       const adminLink = this.user.is_staff ? `
         <li style="margin-left: 8px;">
-          <a href="/admin-page/" class="btn btn-primary" style="padding: 6px 16px; font-size: 12px;">
+          <a href="/admin-page/" 
+          class="btn btn-primary"
+          style="
+            padding: 6px 16px; 
+            font-size: 12px;
+            color: #ffffff;
+          "
+          >
             管理后台
           </a>
         </li>
@@ -169,7 +176,7 @@ class AuthManager {
               style="
                 padding: 6px 16px; 
                 font-size: 12px;
-                border: 1px solid #ddd;
+                /*border: 1px solid #ddd;*/
                 color: #999;
               "
             >

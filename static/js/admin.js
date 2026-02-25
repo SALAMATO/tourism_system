@@ -785,8 +785,8 @@ function renderMessagesForAdmin(container, messages) {
       ` : ''}
       
       <div style="display: flex; gap: 12px;">
-        <button onclick="openReplyModal('${msg.id}')" class="btn ${msg.status === '已回复' ? 'btn-secondary' : 'btn-primary'}">
-          <i class="fas fa-reply"></i> ${msg.status === '已回复' ? '修改回复' : '回复'}
+        <button onclick="openReplyModal('${msg.id}')" class="btn ${msg.reply ? 'btn-primary' : 'btn-primary'}">
+          <i class="fas fa-reply"></i> ${msg.reply ? '修改回复' : '回复'}
         </button>
         <button onclick="deleteMessage('${msg.id}')" class="btn btn-danger">
           <i class="fas fa-trash"></i> 删除
