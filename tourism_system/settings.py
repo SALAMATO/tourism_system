@@ -52,24 +52,29 @@ CORS_ALLOW_CREDENTIALS = True  # 允许携带认证信息
 # ]
 
 # # 数据库配置
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',  # 开发环境用SQLite
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
-
-# 使用MySQL：
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'low_altitude_tourism',
-        'USER': 'root',
-        'PASSWORD': '123456',
-        'HOST': 'localhost',
-        'PORT': '3306',
+        'ENGINE': 'django.db.backends.sqlite3',  # 开发环境用SQLite
+        'NAME': BASE_DIR / 'db.sqlite3',
+        'OPTIONS': {
+            'timeout': 20,  # 增加超时时间，避免数据库锁定
+        }
     }
 }
+
+# 如果需要使用MySQL，请先安装 mysqlclient：
+# pip install mysqlclient
+# 然后取消下面的注释并注释掉上面的SQLite配置
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.mysql',
+#         'NAME': 'low_altitude_tourism',
+#         'USER': 'root',
+#         'PASSWORD': '123456',
+#         'HOST': 'localhost',
+#         'PORT': '3306',
+#     }
+# }
 
 # REST Framework配置
 REST_FRAMEWORK = {

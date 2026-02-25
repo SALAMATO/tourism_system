@@ -60,7 +60,7 @@ class AuthManager {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          username,
+          username,  // 这里的username实际上可以是用户名、邮箱或手机号
           password
         })
       });
@@ -162,7 +162,7 @@ class AuthManager {
         
         <li>
           <a href="/profile/" style="cursor: pointer; display: flex; align-items: center; gap: 4px;">
-            <i class="fa fa-user"></i>${escapeHtml(this.user.username)}
+            <i class="fa fa-user"></i>${escapeHtml(this.user.nickname || this.user.username)}
           </a>
         </li>
 
@@ -170,7 +170,7 @@ class AuthManager {
 
         <li>
           <button 
-            onclick="auth.logout().then(() => location.reload())" 
+            id="logout-btn"
             class="btn btn-primary"
             style="padding: 6px 16px; font-size: 12px;">
             退出登录
@@ -179,6 +179,23 @@ class AuthManager {
 
       </ul>
     `;
+    
+    // 绑定退出登录事件
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', async () => {
+        try {
+          await this.logout();
+          showNotification('已退出登录', 'success');
+          setTimeout(() => {
+            window.location.href = '/';
+          }, 1000);
+        } catch (error) {
+          console.error('退出登录失败:', error);
+          showNotification('退出登录失败', 'error');
+        }
+      });
+    }
   } else {
     userMenuContainer.innerHTML = `
       <a href="/auth/" class="btn btn-primary" style="padding: 6px 16px; font-size: 12px;">

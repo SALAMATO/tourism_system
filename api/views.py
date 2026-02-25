@@ -61,20 +61,39 @@ class UserViewSet(PublicModelViewSet):
     # -------------------
     @action(detail=False, methods=['post'], permission_classes=[AllowAny])
     def login(self, request):
-        username = request.data.get('username')
+        account = request.data.get('username')  # 兼容前端字段名
         password = request.data.get('password')
 
-        if not username or not password:
-            return Response({'error': '请提供用户名和密码'}, status=status.HTTP_400_BAD_REQUEST)
+        if not account or not password:
+            return Response({'error': '请提供账号和密码'}, status=status.HTTP_400_BAD_REQUEST)
 
-        user = authenticate(username=username, password=password)
-        if user:
+        # 尝试多种登录方式
+        user = None
+        
+        # 1. 尝试用户名登录（不区分大小写）
+        user = User.objects.filter(username__iexact=account).first()
+        
+        # 2. 如果用户名登录失败，尝试邮箱登录
+        if not user and '@' in account:
+            user = User.objects.filter(email__iexact=account).first()
+        
+        # 3. 如果邮箱登录失败，尝试手机号登录
+        if not user and account.isdigit():
+            user = User.objects.filter(phone=account).first()
+        
+        # 验证密码
+        if user and user.check_password(password):
+            # 检查账号是否被冻结
+            if not user.is_active:
+                return Response({'error': '账号已被冻结，请联系管理员'}, status=status.HTTP_403_FORBIDDEN)
+            
             token, _ = Token.objects.get_or_create(user=user)
             return Response({
                 'token': token.key,
                 'user': UserSerializer(user).data
             })
-        return Response({'error': '用户名或密码错误'}, status=status.HTTP_401_UNAUTHORIZED)
+        
+        return Response({'error': '账号或密码错误'}, status=status.HTTP_401_UNAUTHORIZED)
 
     # -------------------
     # 登出

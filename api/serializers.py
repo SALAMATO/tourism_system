@@ -31,7 +31,17 @@ class UserRegisterSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         validated_data.pop('password_confirm')
-        user = User.objects.create_user(**validated_data)
+        password = validated_data.pop('password')
+        
+        # 创建用户
+        user = User(**validated_data)
+        user.set_password(password)
+        
+        # 如果没有昵称，使用用户名作为昵称
+        if not user.nickname:
+            user.nickname = user.username
+        
+        user.save()
         return user
 
 
