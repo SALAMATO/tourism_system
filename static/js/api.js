@@ -204,6 +204,42 @@ class API {
     return await this.deleteRecord('messages', id);
   }
 
+  async updateMessage(id, data) {
+    return await this.patchRecord('messages', id, data);
+  }
+
+  // 点赞留言
+  async likeMessage(id) {
+    return await this.request(`${this.baseURL}messages/${id}/like/`, {
+      method: 'POST'
+    });
+  }
+
+  // 取消点赞
+  async unlikeMessage(id) {
+    return await this.request(`${this.baseURL}messages/${id}/unlike/`, {
+      method: 'POST'
+    });
+  }
+
+  // 添加评论
+  async addComment(messageId, content) {
+    return await this.request(`${this.baseURL}messages/${messageId}/add_comment/`, {
+      method: 'POST',
+      body: JSON.stringify({ content })
+    });
+  }
+
+  // 获取留言的评论
+  async getMessageComments(messageId) {
+    return await this.request(`${this.baseURL}messages/${messageId}/comments/`);
+  }
+
+  // 删除评论
+  async deleteComment(commentId) {
+    return await this.deleteRecord('message-comments', commentId);
+  }
+
   // 统计数据相关
   async getStatistics(params = {}) {
     return await this.getTableData('statistics', params);
@@ -240,6 +276,25 @@ class API {
 
   async deleteUser(id) {
     return await this.deleteRecord('user', id);
+  }
+
+  // 重置用户密码
+  async resetUserPassword(id, newPassword) {
+    return await this.request(`${this.baseURL}user/${id}/reset_password/`, {
+      method: 'POST',
+      body: JSON.stringify({ new_password: newPassword })
+    });
+  }
+
+  // 获取用户的留言
+  async getUserMessages(userId, params = {}) {
+    const queryParams = new URLSearchParams({
+      user_id: userId,
+      page: params.page || 1,
+      page_size: params.limit || 100,
+      ...(params.sort && { ordering: params.sort })
+    });
+    return await this.getTableData('messages', { ...params, search: queryParams.get('user_id') });
   }
 }
 

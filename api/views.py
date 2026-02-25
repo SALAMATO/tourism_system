@@ -6,10 +6,11 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate, get_user_model
-from .models import Policy, News, SafetyAlert, Message, Statistic, Destination
+from .models import Policy, News, SafetyAlert, Message, MessageComment, MessageLike, Statistic, Destination
 from .serializers import (
     PolicySerializer, NewsSerializer, SafetyAlertSerializer,
-    MessageSerializer, StatisticSerializer, DestinationSerializer,
+    MessageSerializer, MessageCommentSerializer, MessageLikeSerializer,
+    StatisticSerializer, DestinationSerializer,
     UserSerializer, UserRegisterSerializer
 )
 
@@ -111,10 +112,14 @@ class UserViewSet(PublicModelViewSet):
 
     @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
     def update_profile(self, request):
-        """修改当前用户的邮箱和手机号"""
+        """修改当前用户的昵称、邮箱和手机号"""
         user = request.user
+        nickname = request.data.get('nickname')
         email = request.data.get('email')
         phone = request.data.get('phone')
+        
+        if nickname is not None:
+            user.nickname = nickname
         
         if email is not None:
             # 验证邮箱格式
@@ -136,6 +141,26 @@ class UserViewSet(PublicModelViewSet):
             'message': '个人信息修改成功',
             'user': UserSerializer(user).data
         })
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def reset_password(self, request, pk=None):
+        """管理员重置用户密码"""
+        if not request.user.is_staff:
+            return Response({'error': '只有管理员可以重置密码'}, status=status.HTTP_403_FORBIDDEN)
+        
+        user = self.get_object()
+        new_password = request.data.get('new_password', '123456')
+        
+        if len(new_password) < 6:
+            return Response({'error': '密码长度至少6位'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        user.set_password(new_password)
+        user.save()
+        
+        # 删除该用户的所有token，强制重新登录
+        Token.objects.filter(user=user).delete()
+        
+        return Response({'message': f'密码已重置为：{new_password}'}, status=status.HTTP_200_OK)
 
 
 # 目的地视图集
@@ -210,19 +235,24 @@ class MessageViewSet(PublicModelViewSet):
     queryset = Message.objects.all()
     serializer_class = MessageSerializer
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['username', 'email', 'content']
-    ordering_fields = ['created_at']
+    search_fields = ['content']
+    ordering_fields = ['created_at', 'likes_count']
 
     def get_permissions(self):
         """
         未登录用户只能查看留言；
         登录用户才能创建留言、回复、修改、删除，以及查看自己的留言列表。
         """
-        if self.action in ['create', 'reply', 'update', 'partial_update', 'destroy', 'my']:
+        if self.action in ['create', 'reply', 'update', 'partial_update', 'destroy', 'my', 'like', 'unlike', 'add_comment']:
             permission_classes = [IsAuthenticated]
         else:
             permission_classes = [AllowAny]
         return [permission() for permission in permission_classes]
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
 
     def perform_create(self, serializer):
         """创建留言时关联当前用户（已登录才允许创建）"""
@@ -248,6 +278,73 @@ class MessageViewSet(PublicModelViewSet):
         serializer = self.get_serializer(qs, many=True)
         return Response(serializer.data)
 
+    @action(detail=True, methods=['post'])
+    def like(self, request, pk=None):
+        """点赞留言"""
+        message = self.get_object()
+        user = request.user
+        
+        # 检查是否已经点赞
+        if MessageLike.objects.filter(message=message, user=user).exists():
+            return Response({'error': '您已经点赞过了'}, status=400)
+        
+        # 创建点赞记录
+        MessageLike.objects.create(message=message, user=user)
+        
+        # 更新点赞数
+        message.likes_count += 1
+        message.save()
+        
+        serializer = self.get_serializer(message)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['post'])
+    def unlike(self, request, pk=None):
+        """取消点赞"""
+        message = self.get_object()
+        user = request.user
+        
+        # 查找点赞记录
+        like = MessageLike.objects.filter(message=message, user=user).first()
+        if not like:
+            return Response({'error': '您还没有点赞'}, status=400)
+        
+        # 删除点赞记录
+        like.delete()
+        
+        # 更新点赞数
+        message.likes_count = max(0, message.likes_count - 1)
+        message.save()
+        
+        serializer = self.get_serializer(message)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['post'])
+    def add_comment(self, request, pk=None):
+        """添加评论"""
+        message = self.get_object()
+        content = request.data.get('content')
+        
+        if not content:
+            return Response({'error': '评论内容不能为空'}, status=400)
+        
+        comment = MessageComment.objects.create(
+            message=message,
+            user=request.user,
+            content=content
+        )
+        
+        serializer = MessageCommentSerializer(comment)
+        return Response(serializer.data, status=201)
+
+    @action(detail=True, methods=['get'])
+    def comments(self, request, pk=None):
+        """获取留言的所有评论"""
+        message = self.get_object()
+        comments = message.comments.all()
+        serializer = MessageCommentSerializer(comments, many=True)
+        return Response(serializer.data)
+
 
 # 统计数据视图集
 class StatisticViewSet(PublicModelViewSet):
@@ -256,6 +353,16 @@ class StatisticViewSet(PublicModelViewSet):
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['region']
     ordering_fields = ['year', 'region']
+
+
+# 留言评论视图集
+class MessageCommentViewSet(PublicModelViewSet):
+    queryset = MessageComment.objects.all()
+    serializer_class = MessageCommentSerializer
+    permission_classes = [IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
 
 
 # api/views.py - 添加详细的错误日志

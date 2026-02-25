@@ -4,6 +4,7 @@ from django.contrib.auth.models import AbstractUser
 
 class User(AbstractUser):
     """自定义用户模型"""
+    nickname = models.CharField(max_length=50, blank=True, null=True, verbose_name='昵称')
     phone = models.CharField(max_length=11, blank=True, null=True, verbose_name='手机号')
     avatar = models.URLField(blank=True, null=True, verbose_name='头像')
     bio = models.TextField(blank=True, null=True, verbose_name='个人简介')
@@ -15,7 +16,7 @@ class User(AbstractUser):
         verbose_name_plural = verbose_name
 
     def __str__(self):
-        return self.username
+        return self.nickname or self.username
 
 
 class Destination(models.Model):
@@ -130,13 +131,13 @@ class SafetyAlert(models.Model):
 
 class Message(models.Model):
     """留言反馈模型"""
-    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, verbose_name='用户')  # 新增
-    username = models.CharField(max_length=100, verbose_name='用户名')
-    email = models.EmailField(verbose_name='邮箱')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, verbose_name='用户')
     message_type = models.CharField(max_length=50, verbose_name='消息类型')
     content = models.TextField(verbose_name='消息内容')
     reply = models.TextField(blank=True, null=True, verbose_name='回复内容')
     status = models.CharField(max_length=20, default='待回复', verbose_name='状态')
+    is_hidden = models.BooleanField(default=False, verbose_name='是否屏蔽')
+    likes_count = models.IntegerField(default=0, verbose_name='点赞数')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
 
@@ -147,7 +148,40 @@ class Message(models.Model):
         ordering = ['-created_at']
 
     def __str__(self):
-        return f'{self.username} - {self.message_type}'
+        return f'{self.user.nickname if self.user and self.user.nickname else (self.user.username if self.user else "匿名")} - {self.message_type}'
+
+
+class MessageComment(models.Model):
+    """留言评论模型"""
+    message = models.ForeignKey(Message, on_delete=models.CASCADE, related_name='comments', verbose_name='留言')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='评论用户')
+    content = models.TextField(verbose_name='评论内容')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+
+    class Meta:
+        db_table = 'message_comments'
+        verbose_name = '留言评论'
+        verbose_name_plural = verbose_name
+        ordering = ['created_at']
+
+    def __str__(self):
+        return f'{self.user.nickname or self.user.username} 评论了 {self.message.id}'
+
+
+class MessageLike(models.Model):
+    """留言点赞模型"""
+    message = models.ForeignKey(Message, on_delete=models.CASCADE, related_name='likes', verbose_name='留言')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='点赞用户')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+
+    class Meta:
+        db_table = 'message_likes'
+        verbose_name = '留言点赞'
+        verbose_name_plural = verbose_name
+        unique_together = ['message', 'user']  # 一个用户只能给一条留言点赞一次
+
+    def __str__(self):
+        return f'{self.user.nickname or self.user.username} 点赞了 {self.message.id}'
 
 
 class Statistic(models.Model):

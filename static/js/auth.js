@@ -141,59 +141,52 @@ class AuthManager {
     this.updateUserMenu();
   }
 
-  updateUserMenu() {
-    const userMenuContainer = document.getElementById('user-menu');
-    if (!userMenuContainer) return;
+ updateUserMenu() {
+  const userMenuContainer = document.getElementById('user-menu');
+  if (!userMenuContainer) return;
 
-    if (this.isAuthenticated() && this.user) {
-      // 如果是管理员，在最右侧增加“管理后台”入口（在退出登录按钮的右边）
-      const adminLink = this.user.is_staff ? `
-        <li style="margin-left: 8px;">
-          <a href="/admin-page/" 
-          class="btn btn-primary"
-          style="
-            padding: 6px 16px; 
-            font-size: 12px;
-            color: #ffffff;
-          "
-          >
-            管理后台
+  if (this.isAuthenticated() && this.user) {
+
+    const adminLink = this.user.is_staff ? `
+      <li>
+        <a href="/admin-page/" 
+           class="btn btn-secondary"
+           style="padding: 6px 16px; font-size: 12px;">
+          管理后台
+        </a>
+      </li>
+    ` : '';
+
+    userMenuContainer.innerHTML = `
+      <ul class="navbar-menu" style="margin: 0; align-items: center; gap: 12px;">
+        
+        <li>
+          <a href="/profile/" style="cursor: pointer; display: flex; align-items: center; gap: 4px;">
+            <i class="fa fa-user"></i>${escapeHtml(this.user.username)}
           </a>
         </li>
-      ` : '';
-      
-      userMenuContainer.innerHTML = `
-        <ul class="navbar-menu" style="margin: 0; align-items: center;">
-          <li>
-            <a href="/profile/" style="cursor: pointer;">
-              欢迎，${escapeHtml(this.user.username)}
-            </a>
-          </li>
-          <li>
-            <button 
-              onclick="auth.logout().then(() => location.reload())" 
-              class="btn btn-secondary" 
-              style="
-                padding: 6px 16px; 
-                font-size: 12px;
-                /*border: 1px solid #ddd;*/
-                color: #999;
-              "
-            >
-              退出登录
-            </button>
-          </li>
-          ${adminLink}
-        </ul>
-      `;
-    } else {
-      userMenuContainer.innerHTML = `
-        <a href="/auth/" class="btn btn-primary" style="padding: 6px 16px; font-size: 12px;">
-          <i class="fas fa-sign-in-alt"></i> 登录/注册
-        </a>
-      `;
-    }
+
+        ${adminLink}
+
+        <li>
+          <button 
+            onclick="auth.logout().then(() => location.reload())" 
+            class="btn btn-primary"
+            style="padding: 6px 16px; font-size: 12px;">
+            退出登录
+          </button>
+        </li>
+
+      </ul>
+    `;
+  } else {
+    userMenuContainer.innerHTML = `
+      <a href="/auth/" class="btn btn-primary" style="padding: 6px 16px; font-size: 12px;">
+        <i class="fas fa-sign-in-alt"></i> 登录/注册
+      </a>
+    `;
   }
+}
 
   requireAuth() {
     if (!this.isAuthenticated()) {

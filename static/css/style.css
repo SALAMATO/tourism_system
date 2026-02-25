@@ -51,6 +51,10 @@ body {
   transition: all 0.3s ease;
 }
 
+.navbar * {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
 
 .navbar-container {
   max-width: 1200px;
@@ -70,6 +74,10 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.navbar-brand i {
+  font-style: normal;
 }
 
 .navbar-menu {
@@ -143,17 +151,37 @@ body {
 
 .btn-primary:hover {
   background: var(--primary-hover);
-  transform: scale(1.02);
 }
 
-.btn-secondary {
+.btn-glass {
   background: rgba(255, 255, 255, 0.15);
   color: white;
   backdrop-filter: blur(10px);
 }
 
-.btn-secondary:hover {
+.btn-glass:hover {
   background: rgba(255, 255, 255, 0.25);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--primary-color);
+  border: 1px solid var(--primary-color);
+  border-radius: 999px; /* 胶囊形状 */
+  padding: 6px 18px;
+  font-size: 12px;
+  transition: all 0.25s ease;
+}
+
+.btn-secondary:hover {
+  background: var(--primary-color);
+  color: #ffffff;
+  transition: all 0.25s ease;
+}
+
+.btn-primary:hover {
+  background: var(--primary-hover);
+  transform: none;
 }
 
 .btn-danger {
@@ -466,6 +494,21 @@ body {
   margin-bottom: 24px;
 }
 
+/* 留言卡片样式 */
+.message-card {
+  border: 1px solid var(--border-color);
+  transition: all 0.2s ease;
+}
+
+.message-card:hover {
+  box-shadow: var(--shadow-lg);
+  border-color: var(--primary-color);
+}
+
+.message-content-box {
+  border: 1px solid var(--border-color);
+}
+
 .card-title {
   font-size: 28px;
   font-weight: 600;
@@ -619,6 +662,14 @@ body {
   animation: modalSlideIn 0.3s ease;
 }
 
+.elegant-modal {
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.elegant-modal .modal-close:hover {
+  background: var(--background-secondary);
+}
+
 @keyframes modalSlideIn {
   from {
     transform: translateY(40px);
@@ -627,6 +678,15 @@ body {
   to {
     transform: translateY(0);
     opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
   }
 }
 
@@ -697,4 +757,528 @@ body {
     transform: translateX(0);
     opacity: 1;
   }
+}
+
+
+/* 小按钮样式 */
+.btn-sm {
+  padding: 6px 12px !important;
+  font-size: 13px !important;
+}
+
+
+
+
+/* 成功按钮 */
+.btn-success {
+  background: var(--success-color);
+  color: white;
+}
+
+.btn-success:hover {
+  background: #30b350;
+}
+
+
+
+
+/* 动画 */
+
+@keyframes eyePop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+
+@keyframes rippleGreen {
+  0% {
+    transform: scale(0.5);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+
+/* 标签样式扩展 */
+.tag.danger {
+  background: rgba(255, 59, 48, 0.1);
+  color: var(--danger-color);
+}
+
+.tag.success {
+  background: rgba(52, 199, 89, 0.1);
+  color: var(--success-color);
+}
+
+/* 个人主页统计卡片 */
+.stats-card {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.stat-item {
+  flex: 1;
+  background: var(--background-secondary);
+  padding: 20px;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.stat-item-value {
+  font-size: 32px;
+  font-weight: 600;
+  color: var(--primary-color);
+  margin-bottom: 8px;
+}
+
+.stat-item-label {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+/* 折叠区域 */
+.collapsible-section {
+  margin-bottom: 24px;
+}
+
+.collapsible-header {
+  cursor: pointer;
+  padding: 16px;
+  background: var(--background-secondary);
+  border-radius: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.2s;
+}
+
+.collapsible-header:hover {
+  background: var(--border-color);
+}
+
+.collapsible-header i {
+  transition: transform 0.3s ease;
+}
+
+.collapsible-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+
+.collapsible-content.active {
+  max-height: 2000px;
+  margin-top: 16px;
+}
+
+/* 帖子操作按钮组 */
+.post-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-color);
+}
+
+/* 评论列表样式 */
+.comment-item {
+  padding: 12px;
+  background: var(--background-secondary);
+  border-radius: 8px;
+  margin-bottom: 8px;
+  position: relative;
+}
+
+.comment-item-inline {
+  transition: all 0.2s ease;
+}
+
+.comment-item-inline:hover {
+  background: var(--background-secondary) !important;
+}
+
+.comment-item-inline.official {
+  background: rgba(0, 113, 227, 0.03) !important;
+  border-left: 3px solid var(--primary-color);
+}
+
+.comment-card {
+  border: 1px solid var(--border-color);
+  transition: all 0.2s ease;
+}
+
+.comment-card:hover {
+  border-color: var(--primary-color);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.comment-card.official {
+  background: rgba(0, 113, 227, 0.03);
+  border-color: var(--primary-color);
+}
+
+.comment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.comment-author {
+  font-weight: 500;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.comment-author-name {
+  font-weight: 400;
+}
+
+.comment-time {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.comment-content {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.comment-delete {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: transparent;
+  border: none;
+  color: var(--danger-color);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.comment-item:hover .comment-delete {
+  opacity: 1;
+}
+
+.comment-delete:hover {
+  background: rgba(255, 59, 48, 0.1);
+}
+
+/* 评论区域样式 */
+.inline-comments {
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.no-comments {
+  padding: 20px;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+/* 弹窗内留言卡片样式 */
+.comment-message-card {
+  border: 1px solid var(--border-color);
+}
+
+/* 三点菜单 */
+.dropdown-menu {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-toggle {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 8px 12px;
+  font-size: 18px;
+  color: var(--text-secondary);
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.dropdown-toggle:hover {
+  background: var(--background-secondary);
+  color: var(--text-primary);
+}
+
+.dropdown-content {
+  display: none;
+  position: absolute;
+  right: 0;
+  top: 100%;
+  background: var(--background);
+  min-width: 160px;
+  box-shadow: var(--shadow-lg);
+  border-radius: 12px;
+  z-index: 1000;
+  margin-top: 4px;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+}
+
+.dropdown-content.show {
+  display: block;
+}
+
+.dropdown-item {
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  font-size: 14px;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dropdown-item:hover {
+  background: var(--background-secondary);
+}
+
+.dropdown-item.danger {
+  color: var(--danger-color);
+}
+
+.dropdown-item.danger:hover {
+  background: rgba(255, 59, 48, 0.1);
+}
+
+.dropdown-divider {
+  height: 1px;
+  background: var(--border-color);
+  margin: 4px 0;
+}
+
+/* ===== 点赞按钮（X 风格果味爱心） ===== */
+.btn-like {
+  position: relative;
+  border-radius: 999px;
+  padding: 6px 12px;      /* 缩小 padding，使大小统一 */
+  transition: all 0.25s ease;
+  overflow: hidden;
+}
+
+.btn-like i {
+  transition: transform 0.25s ease, color 0.25s ease;
+  font-size: 16px;        /* 爱心图标大小 */
+}
+
+.btn-like:not(.liked) {
+  background: rgba(255, 255, 255, 0.08);
+  color: #666;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.btn-like:not(.liked):hover {
+  background: rgba(255, 0, 80, 0.08);
+  color: #ff2d55;
+}
+
+.btn-like.liked {
+  background: linear-gradient(135deg, #ff2d55, #ff6a88);
+  color: white;
+  border: none;
+  box-shadow: 0 4px 14px rgba(255, 45, 85, 0.35);
+}
+
+.btn-like.liked i {
+  color: white;
+  animation: heartPop 0.35s ease;
+}
+
+.btn-like.liked::after {
+  content: "";
+  position: absolute;
+  width: 120%;
+  height: 120%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 45, 85, 0.4) 0%, transparent 70%);
+  animation: ripple 0.6s ease-out;
+  pointer-events: none;
+}
+
+/* ===== 回复按钮（统一爱心尺寸风格） ===== */
+.btn-reply {
+  border-radius: 999px;
+  padding: 6px 12px;      /* 与点赞按钮统一 */
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.25s ease;
+  overflow: hidden;
+  position: relative;
+  background: rgba(255, 255, 255, 0.08);
+  color: #666;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  font-weight: 500;
+  font-size: 14px;         /* 调整字体大小 */
+}
+
+.btn-reply i {
+  font-size: 16px;         /* 图标大小和点赞一致 */
+}
+
+.btn-reply:hover {
+  background: rgba(88, 101, 242, 0.08);
+  color: #5865f2;
+}
+
+.btn-reply.reply-active {
+  background: linear-gradient(135deg, #5865f2, #8f94fb);
+  color: white;
+  border: none;
+  box-shadow: 0 4px 14px rgba(88, 101, 242, 0.35);
+}
+
+.btn-reply.reply-active i {
+  animation: replyPop 0.35s ease;
+}
+
+.btn-reply.reply-active::after {
+  content: "";
+  position: absolute;
+  width: 120%;
+  height: 120%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(88,101,242,0.4) 0%, transparent 70%);
+  animation: rippleBlue 0.6s ease-out;
+  pointer-events: none;
+}
+
+/* ===== 查看评论按钮（统一大小） ===== */
+.btn-comments {
+  border-radius: 999px;
+  padding: 6px 12px;       /* 与点赞按钮统一 */
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.25s ease;
+  background: rgba(255, 255, 255, 0.08);
+  color: #666;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  font-weight: 500;
+  font-size: 14px;          /* 字体与点赞一致 */
+}
+
+.btn-comments i {
+  font-size: 16px;          /* 图标与点赞一致 */
+}
+
+.btn-comments:hover {
+  background: rgba(0, 113, 227, 0.08);
+  color: #0071e3;
+  transform: translateY(-1px);
+}
+
+/* ===== 动画 ===== */
+@keyframes heartPop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.35); }
+  100% { transform: scale(1); }
+}
+
+@keyframes ripple {
+  0%   { transform: scale(0.5); opacity: 0.8; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+
+@keyframes replyPop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+
+@keyframes rippleBlue {
+  0%   { transform: scale(0.5); opacity: 0.8; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+
+/* ===== 屏蔽按钮统一尺寸 ===== */
+.btn-visibility {
+  border-radius: 999px;
+  padding: 6px 12px;        /* 和点赞/回复/评论一致 */
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.25s ease;
+  overflow: hidden;
+  position: relative;
+  background: rgba(255, 255, 255, 0.08);
+  color: #666;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  font-weight: 500;
+  font-size: 14px;           /* 与其他按钮字体统一 */
+}
+
+/* 图标大小统一 */
+.btn-visibility i {
+  font-size: 16px;           /* 与点赞/回复/评论图标一致 */
+  transition: transform 0.25s ease, color 0.25s ease;
+}
+
+/* ===== 默认灰色状态 ===== */
+.btn-visibility:hover {
+  background: rgba(0, 200, 150, 0.08);
+  color: #00c896;
+}
+
+/* ===== 屏蔽后（绿色果味） ===== */
+.btn-visibility.hidden-active {
+  background: linear-gradient(135deg, #00c896, #00e0aa);
+  color: white;
+  border: none;
+  box-shadow: 0 4px 14px rgba(0, 200, 150, 0.35);
+}
+
+.btn-visibility.hidden-active i {
+  animation: eyePop 0.35s ease; /* 图标弹跳动画 */
+}
+
+.btn-visibility.hidden-active::after {
+  content: "";
+  position: absolute;
+  width: 120%;
+  height: 120%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0, 200, 150, 0.4) 0%, transparent 70%);
+  animation: rippleGreen 0.6s ease-out;
+  pointer-events: none;
+}
+
+/* ===== 动画 ===== */
+@keyframes eyePop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.35); }
+  100% { transform: scale(1); }
+}
+
+@keyframes rippleGreen {
+  0%   { transform: scale(0.5); opacity: 0.8; }
+  100% { transform: scale(1.6); opacity: 0; }
 }

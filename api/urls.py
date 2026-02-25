@@ -2,7 +2,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
     PolicyViewSet, NewsViewSet, SafetyAlertViewSet,
-    MessageViewSet, StatisticViewSet, DestinationViewSet,
+    MessageViewSet, MessageCommentViewSet, StatisticViewSet, DestinationViewSet,
     UserViewSet
 )
 
@@ -12,6 +12,7 @@ router.register(r'policies', PolicyViewSet, basename='policy')
 router.register(r'news', NewsViewSet, basename='news')
 router.register(r'safety-alerts', SafetyAlertViewSet, basename='safety-alert')
 router.register(r'messages', MessageViewSet, basename='message')
+router.register(r'message-comments', MessageCommentViewSet, basename='message-comment')
 router.register(r'statistics', StatisticViewSet, basename='statistic')
 router.register(r'destinations', DestinationViewSet, basename='destination')
 router.register(r'user', UserViewSet, basename='user')

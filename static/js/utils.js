@@ -313,5 +313,148 @@ function scrollToTop() {
   });
 }
 
-// 注意：不要定义 confirm 函数，否则会覆盖原生 window.confirm 导致递归调用栈溢出。
-// 需要确认时直接使用 window.confirm(message)
+// 自定义确认对话框
+function showConfirm(options = {}) {
+  return new Promise((resolve) => {
+    const {
+      title = '确认操作',
+      message = '确定要执行此操作吗？',
+      confirmText = '确定',
+      cancelText = '取消',
+      type = 'warning' // warning, danger, info
+    } = options;
+
+    // 创建遮罩层
+    const overlay = document.createElement('div');
+    overlay.className = 'custom-confirm-overlay';
+    overlay.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(10px);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    `;
+
+    // 创建对话框
+    const dialog = document.createElement('div');
+    dialog.className = 'custom-confirm-dialog';
+    dialog.style.cssText = `
+      background: var(--background);
+      border-radius: 18px;
+      padding: 32px;
+      max-width: 420px;
+      width: 90%;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      transform: translateY(20px);
+      opacity: 0;
+      transition: all 0.3s ease;
+    `;
+
+    // 图标颜色
+    let iconColor = 'var(--warning-color)';
+    let iconClass = 'fa-exclamation-triangle';
+    if (type === 'danger') {
+      iconColor = 'var(--danger-color)';
+      iconClass = 'fa-exclamation-circle';
+    } else if (type === 'info') {
+      iconColor = 'var(--primary-color)';
+      iconClass = 'fa-info-circle';
+    }
+
+    dialog.innerHTML = `
+      <div style="text-align: center; margin-bottom: 24px;">
+        <i class="fas ${iconClass}" style="font-size: 48px; color: ${iconColor};"></i>
+      </div>
+      <h3 style="font-size: 20px; font-weight: 600; text-align: center; margin-bottom: 12px; color: var(--text-primary);">
+        ${escapeHtml(title)}
+      </h3>
+      <p style="font-size: 15px; color: var(--text-secondary); text-align: center; line-height: 1.6; margin-bottom: 28px;">
+        ${escapeHtml(message)}
+      </p>
+      <div style="display: flex; gap: 12px;">
+        <button class="custom-confirm-cancel" style="
+          flex: 1;
+          padding: 12px 24px;
+          border-radius: 980px;
+          font-size: 15px;
+          font-weight: 500;
+          border: 1px solid var(--border-color);
+          background: var(--background);
+          color: var(--text-primary);
+          cursor: pointer;
+          transition: all 0.2s;
+        ">${escapeHtml(cancelText)}</button>
+        <button class="custom-confirm-ok" style="
+          flex: 1;
+          padding: 12px 24px;
+          border-radius: 980px;
+          font-size: 15px;
+          font-weight: 500;
+          border: none;
+          background: ${type === 'danger' ? 'var(--danger-color)' : 'var(--primary-color)'};
+          color: white;
+          cursor: pointer;
+          transition: all 0.2s;
+        ">${escapeHtml(confirmText)}</button>
+      </div>
+    `;
+
+    overlay.appendChild(dialog);
+    document.body.appendChild(overlay);
+
+    // 添加动画样式
+    if (!document.getElementById('custom-confirm-styles')) {
+      const style = document.createElement('style');
+      style.id = 'custom-confirm-styles';
+      style.textContent = `
+        .custom-confirm-cancel:hover {
+          background: var(--background-secondary) !important;
+        }
+        .custom-confirm-ok:hover {
+          opacity: 0.9;
+          transform: translateY(-1px);
+        }
+      `;
+      document.head.appendChild(style);
+    }
+
+    // 触发动画
+    requestAnimationFrame(() => {
+      overlay.style.opacity = '1';
+      dialog.style.transform = 'translateY(0)';
+      dialog.style.opacity = '1';
+    });
+
+    // 绑定事件
+    const cancelBtn = dialog.querySelector('.custom-confirm-cancel');
+    const okBtn = dialog.querySelector('.custom-confirm-ok');
+
+    const close = (result) => {
+      // 添加关闭动画
+      overlay.style.opacity = '0';
+      dialog.style.transform = 'translateY(20px)';
+      dialog.style.opacity = '0';
+      
+      setTimeout(() => {
+        if (document.body.contains(overlay)) {
+          document.body.removeChild(overlay);
+        }
+        resolve(result);
+      }, 200);
+    };
+
+    cancelBtn.addEventListener('click', () => close(false));
+    okBtn.addEventListener('click', () => close(true));
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) close(false);
+    });
+  });
+}

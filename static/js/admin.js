@@ -211,7 +211,17 @@ async function deleteCurrentPolicy() {
     showNotification('请先选择要编辑的政策', 'error');
     return;
   }
-  if (!confirm('确定要删除当前这条政策吗？')) return;
+  
+  const confirmed = await showConfirm({
+    title: '删除政策',
+    message: '确定要删除当前这条政策吗？删除后将无法恢复。',
+    confirmText: '删除',
+    cancelText: '取消',
+    type: 'danger'
+  });
+  
+  if (!confirmed) return;
+  
   try {
     await api.deletePolicy(currentPolicyEditingId);
     showNotification('删除成功', 'success');
@@ -311,7 +321,17 @@ async function deleteCurrentNews() {
     showNotification('请先选择要编辑的新闻', 'error');
     return;
   }
-  if (!confirm('确定要删除当前这条新闻吗？')) return;
+  
+  const confirmed = await showConfirm({
+    title: '删除新闻',
+    message: '确定要删除当前这条新闻吗？删除后将无法恢复。',
+    confirmText: '删除',
+    cancelText: '取消',
+    type: 'danger'
+  });
+  
+  if (!confirmed) return;
+  
   try {
     await api.deleteNews(currentNewsEditingId);
     showNotification('删除成功', 'success');
@@ -406,7 +426,17 @@ async function deleteCurrentSafetyAlert() {
     showNotification('请先选择要编辑的安全隐患', 'error');
     return;
   }
-  if (!confirm('确定要删除当前这条安全隐患记录吗？')) return;
+  
+  const confirmed = await showConfirm({
+    title: '删除安全隐患',
+    message: '确定要删除当前这条安全隐患记录吗？删除后将无法恢复。',
+    confirmText: '删除',
+    cancelText: '取消',
+    type: 'danger'
+  });
+  
+  if (!confirmed) return;
+  
   try {
     await api.deleteSafetyAlert(currentSafetyEditingId);
     showNotification('删除成功', 'success');
@@ -491,7 +521,17 @@ async function deleteCurrentStatistic() {
     showNotification('请先选择要编辑的统计记录', 'error');
     return;
   }
-  if (!confirm('确定要删除当前这条统计记录吗？')) return;
+  
+  const confirmed = await showConfirm({
+    title: '删除统计记录',
+    message: '确定要删除当前这条统计记录吗？删除后将无法恢复。',
+    confirmText: '删除',
+    cancelText: '取消',
+    type: 'danger'
+  });
+  
+  if (!confirmed) return;
+  
   try {
     await api.deleteStatistic(currentStatisticEditingId);
     showNotification('删除成功', 'success');
@@ -549,7 +589,16 @@ function renderPoliciesForAdmin(container, policies) {
 }
 
 async function deletePolicy(id) {
-  if (!confirm('确定要删除该政策吗？')) return;
+  const confirmed = await showConfirm({
+    title: '删除政策',
+    message: '确定要删除该政策吗？删除后将无法恢复。',
+    confirmText: '删除',
+    cancelText: '取消',
+    type: 'danger'
+  });
+  
+  if (!confirmed) return;
+  
   try {
     await api.deletePolicy(id);
     showNotification('删除成功', 'success');
@@ -606,7 +655,16 @@ function renderNewsForAdmin(container, newsItems) {
 }
 
 async function deleteNews(id) {
-  if (!confirm('确定要删除该新闻吗？')) return;
+  const confirmed = await showConfirm({
+    title: '删除新闻',
+    message: '确定要删除该新闻吗？删除后将无法恢复。',
+    confirmText: '删除',
+    cancelText: '取消',
+    type: 'danger'
+  });
+  
+  if (!confirmed) return;
+  
   try {
     await api.deleteNews(id);
     showNotification('删除成功', 'success');
@@ -663,7 +721,16 @@ function renderSafetyAlertsForAdmin(container, alerts) {
 }
 
 async function deleteSafetyAlert(id) {
-  if (!confirm('确定要删除该安全隐患记录吗？')) return;
+  const confirmed = await showConfirm({
+    title: '删除安全隐患',
+    message: '确定要删除该安全隐患记录吗？删除后将无法恢复。',
+    confirmText: '删除',
+    cancelText: '取消',
+    type: 'danger'
+  });
+  
+  if (!confirmed) return;
+  
   try {
     await api.deleteSafetyAlert(id);
     showNotification('删除成功', 'success');
@@ -722,7 +789,16 @@ function renderStatisticsForAdmin(container, stats) {
 }
 
 async function deleteStatistic(id) {
-  if (!confirm('确定要删除该统计记录吗？')) return;
+  const confirmed = await showConfirm({
+    title: '删除统计记录',
+    message: '确定要删除该统计记录吗？删除后将无法恢复。',
+    confirmText: '删除',
+    cancelText: '取消',
+    type: 'danger'
+  });
+  
+  if (!confirmed) return;
+  
   try {
     await api.deleteStatistic(id);
     showNotification('删除成功', 'success');
@@ -752,45 +828,99 @@ async function loadMessagesForAdmin() {
   }
 }
 
-// 渲染留言列表（管理员视图）
+// 渲染留言管理列表（管理员视图）
 function renderMessagesForAdmin(container, messages) {
   const html = messages.map(msg => `
-    <div class="card" style="margin-bottom: 20px;">
+    <div class="card" style="margin-bottom: 20px; ${msg.is_hidden ? 'opacity: 0.6; border: 2px solid #ff4444;' : ''}">
       <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 16px;">
         <div>
           <h3 style="font-size: 20px; margin-bottom: 8px;">
-            <i class="fas fa-user-circle"></i> ${escapeHtml(msg.username)}
+            <i class="fas fa-user-circle"></i> ${escapeHtml(msg.user_nickname || '匿名用户')}
+            ${msg.user ? `<span style="font-size: 14px; color: var(--text-secondary); font-weight: normal;"> (ID: ${msg.user})</span>` : ''}
           </h3>
           <div class="list-item-meta">
-            <span><i class="fas fa-envelope"></i> ${escapeHtml(msg.email)}</span>
             <span><i class="fas fa-tag"></i> ${escapeHtml(msg.message_type)}</span>
             <span><i class="fas fa-clock"></i> ${formatDateTime(msg.created_at)}</span>
+            <span><i class="fas fa-heart"></i> ${msg.likes_count || 0} 点赞</span>
+            <span><i class="fas fa-comment"></i> ${msg.comments_count || 0} 评论</span>
           </div>
         </div>
-        <span class="tag ${msg.status === '已回复' ? 'success' : 'warning'}">
-          ${escapeHtml(msg.status)}
-        </span>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <span class="tag ${msg.status === '已回复' ? 'success' : 'warning'}">
+            ${escapeHtml(msg.status)}
+          </span>
+          ${msg.is_hidden ? '<span class="tag danger">已屏蔽</span>' : ''}
+        </div>
       </div>
       
       <div style="margin-bottom: 16px; padding: 16px; background: var(--background-secondary); border-radius: 8px;">
+        <div style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--border-color);">
+          <strong>发表者信息：</strong>
+          <div style="margin-top: 8px; font-size: 14px; color: var(--text-secondary);">
+            <div><i class="fas fa-user"></i>  账号：${escapeHtml(msg.user_username || '未知')}</div>
+            <div style="margin-top: 4px;"><i class="fas fa-envelope"></i> 邮箱：${escapeHtml(msg.user_email || '未填写')}</div>
+            <div style="margin-top: 4px;"><i class="fas fa-phone"></i> 电话：${escapeHtml(msg.user_phone || '未填写')}</div>
+          </div>
+        </div>
         <strong>留言内容：</strong>
         <p class="preserve-whitespace" style="margin-top: 8px; line-height: 1.6;">${escapeHtml(msg.content)}</p>
       </div>
       
       ${msg.reply ? `
         <div style="margin-bottom: 16px; padding: 16px; background: rgba(0, 113, 227, 0.05); border-radius: 8px; border-left: 3px solid var(--primary-color);">
-          <strong style="color: var(--primary-color);"><i class="fas fa-reply"></i> 已回复：</strong>
+          <strong style="color: var(--primary-color);"><i class="fas fa-reply"></i> 官方回复：</strong>
           <p class="preserve-whitespace" style="margin-top: 8px; line-height: 1.6;">${escapeHtml(msg.reply)}</p>
         </div>
       ` : ''}
       
-      <div style="display: flex; gap: 12px;">
-        <button onclick="openReplyModal('${msg.id}')" class="btn ${msg.reply ? 'btn-primary' : 'btn-primary'}">
-          <i class="fas fa-reply"></i> ${msg.reply ? '修改回复' : '回复'}
+        <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
+          <button 
+            onclick="openReplyModal('${msg.id}')"
+            class="btn btn-reply ${msg.reply ? 'reply-active' : ''}">
+            <i class="fa-solid fa-reply"></i>
+            ${msg.reply ? '修改回复' : '回复'}
+          </button>
+        
+          <button 
+            onclick="viewMessageComments('${msg.id}')"
+            class="btn btn-comments">
+            <i class="fa-solid fa-comments"></i>
+            查看评论 (${msg.comments_count || 0})
+            
+          <button 
+          onclick="toggleMessageHidden('${msg.id}', ${!!msg.is_hidden})"
+          class="btn btn-visibility ${msg.is_hidden ? 'hidden-active' : ''}">
+          <i class="fa-solid fa-${msg.is_hidden ? 'eye' : 'eye-slash'}"></i> 
+          ${msg.is_hidden ? '取消屏蔽' : '屏蔽'}
+        
+        
         </button>
-        <button onclick="deleteMessage('${msg.id}')" class="btn btn-danger">
-          <i class="fas fa-trash"></i> 删除
-        </button>
+        <div class="dropdown-menu">
+          <button class="dropdown-toggle" onclick="toggleAdminDropdown('admin-msg-menu-${msg.id}')">
+            <i class="fas fa-ellipsis-v"></i>
+          </button>
+          <div class="dropdown-content" id="admin-msg-menu-${msg.id}">
+            ${msg.reply ? `
+              <button class="dropdown-item danger" onclick="deleteMessageReply('${msg.id}')">
+                <i class="fas fa-eraser"></i> 删除回复
+              </button>
+              <div class="dropdown-divider"></div>
+            ` : ''}
+            ${msg.comments_count > 0 ? `
+              <button class="dropdown-item danger" onclick="clearAllComments('${msg.id}')">
+                <i class="fas fa-broom"></i> 清空所有评论
+              </button>
+              <div class="dropdown-divider"></div>
+            ` : ''}
+            <button class="dropdown-item danger" onclick="deleteMessage('${msg.id}')">
+              <i class="fas fa-trash"></i> 删除留言
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <div id="admin-comments-${msg.id}" style="display: none; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-color);">
+        <!-- 评论将动态加载 -->
       </div>
     </div>
   `).join('');
@@ -806,8 +936,11 @@ async function openReplyModal(messageId) {
     
     const infoHtml = `
       <div style="padding: 16px; background: var(--background-secondary); border-radius: 8px;">
-        <p><strong>用户：</strong> ${escapeHtml(message.username)}</p>
-        <p style="margin-top: 8px;"><strong>邮箱：</strong> ${escapeHtml(message.email)}</p>
+        <p><strong>昵称：</strong> ${escapeHtml(message.user_nickname || '匿名用户')}</p>
+        <p style="margin-top: 8px;"><strong>用户ID：</strong> ${message.user || '未知'}</p>
+        <p style="margin-top: 8px;"><strong>登录账号：</strong> ${escapeHtml(message.user_username || '未知')}</p>
+        <p style="margin-top: 8px;"><strong>邮箱：</strong> ${escapeHtml(message.user_email || '未填写')}</p>
+        <p style="margin-top: 8px;"><strong>电话：</strong> ${escapeHtml(message.user_phone || '未填写')}</p>
         <p style="margin-top: 8px;"><strong>类型：</strong> ${escapeHtml(message.message_type)}</p>
         <p style="margin-top: 8px;"><strong>内容：</strong> ${escapeHtml(message.content)}</p>
       </div>
@@ -852,7 +985,16 @@ async function submitReply() {
 
 // 删除留言
 async function deleteMessage(id) {
-  if (!window.confirm('确定要删除该留言吗？')) return;
+  const confirmed = await showConfirm({
+    title: '删除留言',
+    message: '确定要删除该留言吗？删除后将无法恢复。',
+    confirmText: '删除',
+    cancelText: '取消',
+    type: 'danger'
+  });
+  
+  if (!confirmed) return;
+  
   try {
     await api.deleteMessage(id);
     showNotification('删除成功', 'success');
@@ -863,13 +1005,49 @@ async function deleteMessage(id) {
   }
 }
 
+// 切换留言屏蔽状态
+async function toggleMessageHidden(messageId, isHidden) {
+  const action = isHidden ? '取消屏蔽' : '屏蔽';
+  
+  const confirmed = await showConfirm({
+    title: `${action}留言`,
+    message: isHidden 
+      ? '确定要取消屏蔽该留言吗？取消后该留言将在前台显示。'
+      : '确定要屏蔽该留言吗？屏蔽后该留言将不会在前台显示。',
+    confirmText: action,
+    cancelText: '取消',
+    type: isHidden ? 'info' : 'warning'
+  });
+  
+  if (!confirmed) return;
+  
+  try {
+    await api.updateMessage(messageId, { is_hidden: !isHidden });
+    showNotification(`${action}成功`, 'success');
+    loadMessagesForAdmin();
+  } catch (error) {
+    console.error(`${action}留言失败:`, error);
+    showNotification(`${action}失败：` + error.message, 'error');
+  }
+}
+
 // 在回复模态框中直接删除当前留言
 async function deleteCurrentReply() {
   if (!currentReplyMessageId) {
     showNotification('请先选择要回复的留言', 'error');
     return;
   }
-  if (!confirm('确定要删除这条留言吗？')) return;
+  
+  const confirmed = await showConfirm({
+    title: '删除留言',
+    message: '确定要删除这条留言吗？删除后将无法恢复。',
+    confirmText: '删除',
+    cancelText: '取消',
+    type: 'danger'
+  });
+  
+  if (!confirmed) return;
+  
   try {
     await api.deleteMessage(currentReplyMessageId);
     showNotification('删除成功', 'success');
@@ -881,7 +1059,188 @@ async function deleteCurrentReply() {
   }
 }
 
+// 查看留言的评论（管理员）
+async function viewMessageComments(messageId) {
+  const container = document.getElementById(`admin-comments-${messageId}`);
+  if (!container) return;
+  
+  if (container.style.display === 'none') {
+    container.style.display = 'block';
+    await loadAdminMessageComments(messageId);
+  } else {
+    container.style.display = 'none';
+  }
+}
+
+// 加载留言评论（管理员视图）
+async function loadAdminMessageComments(messageId) {
+  const container = document.getElementById(`admin-comments-${messageId}`);
+  if (!container) return;
+  
+  try {
+    const comments = await api.getMessageComments(messageId);
+    
+    if (comments && comments.length > 0) {
+      const html = `
+        <h4 style="margin-bottom: 12px; font-size: 16px; color: var(--primary-color);">
+          <i class="fas fa-comments"></i> 评论列表 (${comments.length})
+        </h4>
+        ${comments.map(comment => `
+          <div class="comment-item" style="position: relative; padding: 16px; background: var(--background-secondary); border-radius: 8px; margin-bottom: 12px;">
+            <div class="comment-header" style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+              <div>
+                <div class="comment-author" style="font-weight: 500; font-size: 14px;">
+                  <i class="fas fa-user-circle"></i> ${escapeHtml(comment.user_nickname || '匿名用户')}
+                  ${comment.user_is_staff ? '<span class="tag primary" style="margin-left: 8px; font-size: 12px;">官方回复</span>' : ''}
+                </div>
+                <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">
+                  <i class="fas fa-id-badge"></i> 用户ID: ${comment.user || '未知'}
+                </div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <div class="comment-time" style="font-size: 12px; color: var(--text-secondary);">
+                  ${formatDateTime(comment.created_at)}
+                </div>
+                <div class="dropdown-menu">
+                  <button class="dropdown-toggle" onclick="toggleAdminDropdown('admin-comment-menu-${comment.id}')" style="padding: 4px 8px; font-size: 14px;">
+                    <i class="fas fa-ellipsis-v"></i>
+                  </button>
+                  <div class="dropdown-content" id="admin-comment-menu-${comment.id}">
+                    <button class="dropdown-item danger" onclick="deleteAdminComment('${comment.id}', '${messageId}')">
+                      <i class="fas fa-trash"></i> 删除评论
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="comment-content" style="font-size: 14px; line-height: 1.6; padding: 8px 0;">
+              ${escapeHtml(comment.content)}
+            </div>
+          </div>
+        `).join('')}
+      `;
+      container.innerHTML = html;
+    } else {
+      container.innerHTML = '<div style="text-align: center; color: var(--text-secondary); padding: 16px;">暂无评论</div>';
+    }
+  } catch (error) {
+    console.error('加载评论失败:', error);
+    container.innerHTML = '<div style="text-align: center; color: var(--danger-color); padding: 16px;">加载评论失败</div>';
+  }
+}
+
+// 删除评论（管理员）
+async function deleteAdminComment(commentId, messageId) {
+  const confirmed = await showConfirm({
+    title: '删除评论',
+    message: '确定要删除这条评论吗？删除后无法恢复。',
+    confirmText: '删除',
+    cancelText: '取消',
+    type: 'danger'
+  });
+  
+  if (!confirmed) return;
+  
+  try {
+    await api.deleteComment(commentId);
+    showNotification('评论删除成功', 'success');
+    await loadAdminMessageComments(messageId);
+    await loadMessagesForAdmin(); // 刷新留言列表以更新评论数
+  } catch (error) {
+    console.error('删除评论失败:', error);
+    showNotification('删除失败：' + error.message, 'error');
+  }
+}
+
+// 删除留言的回复
+async function deleteMessageReply(messageId) {
+  const confirmed = await showConfirm({
+    title: '删除回复',
+    message: '确定要删除这条留言的官方回复吗？',
+    confirmText: '删除',
+    cancelText: '取消',
+    type: 'danger'
+  });
+  
+  if (!confirmed) return;
+  
+  try {
+    await api.updateMessage(messageId, { reply: '', status: '待回复' });
+    showNotification('回复删除成功', 'success');
+    await loadMessagesForAdmin();
+  } catch (error) {
+    console.error('删除回复失败:', error);
+    showNotification('删除失败：' + error.message, 'error');
+  }
+}
+
+// 清空所有评论
+async function clearAllComments(messageId) {
+  const confirmed = await showConfirm({
+    title: '清空所有评论',
+    message: '确定要清空这条留言的所有评论吗？此操作无法恢复！',
+    confirmText: '清空',
+    cancelText: '取消',
+    type: 'danger'
+  });
+  
+  if (!confirmed) return;
+  
+  try {
+    const comments = await api.getMessageComments(messageId);
+    
+    if (!comments || comments.length === 0) {
+      showNotification('该留言没有评论', 'warning');
+      return;
+    }
+    
+    // 逐个删除评论
+    for (const comment of comments) {
+      await api.deleteComment(comment.id);
+    }
+    
+    showNotification(`成功清空 ${comments.length} 条评论`, 'success');
+    await loadAdminMessageComments(messageId);
+    await loadMessagesForAdmin();
+  } catch (error) {
+    console.error('清空评论失败:', error);
+    showNotification('清空失败：' + error.message, 'error');
+  }
+}
+
+// 切换管理员下拉菜单
+function toggleAdminDropdown(menuId) {
+  // 关闭所有其他下拉菜单
+  document.querySelectorAll('.dropdown-content').forEach(menu => {
+    if (menu.id !== menuId) {
+      menu.classList.remove('show');
+    }
+  });
+  
+  // 切换当前菜单
+  const menu = document.getElementById(menuId);
+  if (menu) {
+    menu.classList.toggle('show');
+  }
+}
+
+// 点击外部关闭下拉菜单
+document.addEventListener('click', function(event) {
+  if (!event.target.closest('.dropdown-menu')) {
+    document.querySelectorAll('.dropdown-content').forEach(menu => {
+      menu.classList.remove('show');
+    });
+  }
+});
+
 // ===== 用户管理 =====
+
+// 用户管理状态
+let currentUserPage = 1;
+let currentUserSearch = '';
+let currentUserRoleFilter = 'all'; // all, admin, normal
+const userManageModal = new Modal('user-manage-modal');
+let currentManagingUserId = null;
 
 async function loadUsersForAdmin() {
   const container = document.getElementById('users-admin-container');
@@ -889,9 +1248,30 @@ async function loadUsersForAdmin() {
 
   try {
     showLoading(container);
-    const response = await api.getUsers({ limit: 100, sort: '-date_joined' });
+    
+    // 构建查询参数
+    const params = {
+      page: currentUserPage,
+      limit: 20,
+      sort: '-date_joined'
+    };
+    
+    if (currentUserSearch) {
+      params.search = currentUserSearch;
+    }
+    
+    const response = await api.getUsers(params);
+    
     if (response.data && response.data.length > 0) {
-      renderUsersForAdmin(container, response.data);
+      // 根据角色筛选
+      let filteredUsers = response.data;
+      if (currentUserRoleFilter === 'admin') {
+        filteredUsers = response.data.filter(u => u.is_staff);
+      } else if (currentUserRoleFilter === 'normal') {
+        filteredUsers = response.data.filter(u => !u.is_staff);
+      }
+      
+      renderUsersForAdmin(container, filteredUsers, response.total);
     } else {
       container.innerHTML = '<div class="loading"><div>暂无用户</div></div>';
     }
@@ -901,42 +1281,211 @@ async function loadUsersForAdmin() {
   }
 }
 
-function renderUsersForAdmin(container, users) {
-  const html = users.map(user => `
-    <div class="list-item" style="display: flex; justify-content: space-between; align-items: center; gap: 16px;">
-      <div style="flex: 1;">
-        <div style="font-weight: 500;">
-          ${escapeHtml(user.username)} ${user.is_staff ? '<span class="tag primary" style="margin-left: 8px;">管理员</span>' : '<span class="tag" style="margin-left: 8px;">普通用户</span>'}
-        </div>
-        <div class="list-item-meta">
-          <span><i class="fas fa-envelope"></i> ${escapeHtml(user.email || '未填写')}</span>
-          <span><i class="fas fa-phone"></i> ${escapeHtml(user.phone || '未填写')}</span>
-          <span><i class="fas fa-clock"></i> 注册于 ${formatDateTime(user.date_joined)}</span>
-        </div>
-      </div>
-      <div style="display: flex; gap: 8px;">
-        <button class="btn btn-secondary" onclick="toggleUserAdmin('${user.id}', ${user.is_staff})">
-          ${user.is_staff ? '取消管理员' : '设为管理员'}
-        </button>
-        <button class="btn btn-danger" onclick="deleteUserById('${user.id}')">
-          删除
-        </button>
-      </div>
+function renderUsersForAdmin(container, users, total) {
+  const searchHtml = `
+    <div style="margin-bottom: 20px; display: flex; gap: 12px; flex-wrap: wrap;">
+      <input type="text" id="user-search-input" class="form-input" placeholder="搜索用户名或邮箱..." 
+             value="${escapeHtml(currentUserSearch)}" style="flex: 1; min-width: 200px;">
+      <select id="user-role-filter" class="form-select" style="width: 150px;">
+        <option value="all" ${currentUserRoleFilter === 'all' ? 'selected' : ''}>全部用户</option>
+        <option value="admin" ${currentUserRoleFilter === 'admin' ? 'selected' : ''}>管理员</option>
+        <option value="normal" ${currentUserRoleFilter === 'normal' ? 'selected' : ''}>普通用户</option>
+      </select>
+      <button onclick="searchUsers()" class="btn btn-primary">
+        <i class="fas fa-search"></i> 搜索
+      </button>
+      <button onclick="resetUserSearch()" class="btn btn-secondary">
+        <i class="fas fa-redo"></i> 重置
+      </button>
     </div>
-  `).join('');
-
-  container.innerHTML = html;
+  `;
+  
+  const usersHtml = users.map(user => {
+    const statusBadge = user.is_active === false 
+      ? '<span class="tag danger" style="margin-left: 8px;">已冻结</span>' 
+      : '<span class="tag success" style="margin-left: 8px;">正常</span>';
+    const roleBadge = user.is_staff 
+      ? '<span class="tag primary" style="margin-left: 8px;">管理员</span>' 
+      : '<span class="tag" style="margin-left: 8px;">普通用户</span>';
+    
+    return `
+      <div class="list-item" style="display: flex; justify-content: space-between; align-items: center; gap: 16px;">
+        <div style="flex: 1;">
+          <div style="font-weight: 500;">
+            ${escapeHtml(user.username)} ${roleBadge} ${statusBadge}
+          </div>
+          <div class="list-item-meta">
+            <span><i class="fas fa-envelope"></i> ${escapeHtml(user.email || '未填写')}</span>
+            <span><i class="fas fa-phone"></i> ${escapeHtml(user.phone || '未填写')}</span>
+            <span><i class="fas fa-clock"></i> 注册于 ${formatDateTime(user.date_joined)}</span>
+          </div>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-primary" onclick="openUserManageModal('${user.id}')">
+            <i class="fas fa-cog"></i> 管理
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+  
+  // 分页控件
+  const totalPages = Math.ceil(total / 20);
+  const paginationHtml = totalPages > 1 ? `
+    <div style="margin-top: 20px; display: flex; justify-content: center; gap: 8px; align-items: center;">
+      <button onclick="changeUserPage(${currentUserPage - 1})" class="btn btn-secondary" 
+              ${currentUserPage === 1 ? 'disabled' : ''}>
+        <i class="fas fa-chevron-left"></i> 上一页
+      </button>
+      <span>第 ${currentUserPage} / ${totalPages} 页</span>
+      <button onclick="changeUserPage(${currentUserPage + 1})" class="btn btn-secondary"
+              ${currentUserPage === totalPages ? 'disabled' : ''}>
+        下一页 <i class="fas fa-chevron-right"></i>
+      </button>
+    </div>
+  ` : '';
+  
+  container.innerHTML = searchHtml + usersHtml + paginationHtml;
 }
 
-async function toggleUserAdmin(userId, isStaff) {
+function searchUsers() {
+  const searchInput = document.getElementById('user-search-input');
+  const roleFilter = document.getElementById('user-role-filter');
+  currentUserSearch = searchInput ? searchInput.value.trim() : '';
+  currentUserRoleFilter = roleFilter ? roleFilter.value : 'all';
+  currentUserPage = 1;
+  loadUsersForAdmin();
+}
+
+function resetUserSearch() {
+  currentUserSearch = '';
+  currentUserRoleFilter = 'all';
+  currentUserPage = 1;
+  loadUsersForAdmin();
+}
+
+function changeUserPage(page) {
+  if (page < 1) return;
+  currentUserPage = page;
+  loadUsersForAdmin();
+}
+
+// 打开用户管理模态框
+async function openUserManageModal(userId) {
   try {
+    const user = await api.getUser(userId);
+    currentManagingUserId = userId;
+    
     const currentUser = auth.getUser();
-    if (currentUser && String(currentUser.id) === String(userId)) {
-      showNotification('不能修改当前登录账户的管理员状态', 'error');
-      return;
-    }
+    const isSelf = currentUser && String(currentUser.id) === String(userId);
+    
+    const userInfoHtml = `
+      <div style="padding: 16px; background: var(--background-secondary); border-radius: 8px; margin-bottom: 20px;">
+        <p><strong>用户名：</strong> ${escapeHtml(user.username)}</p>
+        <p style="margin-top: 8px;"><strong>邮箱：</strong> ${escapeHtml(user.email || '未填写')}</p>
+        <p style="margin-top: 8px;"><strong>手机：</strong> ${escapeHtml(user.phone || '未填写')}</p>
+        <p style="margin-top: 8px;"><strong>注册时间：</strong> ${formatDateTime(user.date_joined)}</p>
+        <p style="margin-top: 8px;"><strong>角色：</strong> ${user.is_staff ? '管理员' : '普通用户'}</p>
+        <p style="margin-top: 8px;"><strong>状态：</strong> ${user.is_active === false ? '已冻结' : '正常'}</p>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">账号状态</label>
+        <div style="display: flex; gap: 12px;">
+          <button onclick="toggleUserStatus('${userId}', ${user.is_active !== false})" 
+                  class="btn ${user.is_active === false ? 'btn-success' : 'btn-warning'}"
+                  ${isSelf ? 'disabled title="不能冻结自己的账号"' : ''}>
+            <i class="fas fa-${user.is_active === false ? 'unlock' : 'lock'}"></i> 
+            ${user.is_active === false ? '解除冻结' : '冻结账号'}
+          </button>
+        </div>
+        <small style="color: var(--text-secondary); margin-top: 4px; display: block;">
+          冻结后用户无法发表留言和评论
+        </small>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">角色权限</label>
+        <div style="display: flex; gap: 12px;">
+          <button onclick="toggleUserAdmin('${userId}', ${user.is_staff})" 
+                  class="btn btn-secondary"
+                  ${isSelf ? 'disabled title="不能修改自己的权限"' : ''}>
+            <i class="fas fa-user-shield"></i> 
+            ${user.is_staff ? '取消管理员' : '设为管理员'}
+          </button>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">密码管理</label>
+        <div style="display: flex; gap: 12px; align-items: center;">
+          <input type="text" id="reset-password-input" class="form-input" 
+                 placeholder="输入新密码（留空则重置为123456）" style="flex: 1;">
+          <button onclick="resetUserPasswordAction('${userId}')" class="btn btn-primary">
+            <i class="fas fa-key"></i> 重置密码
+          </button>
+        </div>
+        <small style="color: var(--text-secondary); margin-top: 4px; display: block;">
+          用于帮助忘记密码的用户重置密码
+        </small>
+      </div>
+    `;
+    
+    document.getElementById('user-manage-info').innerHTML = userInfoHtml;
+    userManageModal.open();
+  } catch (error) {
+    console.error('加载用户详情失败:', error);
+    showNotification('加载用户详情失败', 'error');
+  }
+}
+
+// 切换用户状态（冻结/解冻）
+async function toggleUserStatus(userId, isActive) {
+  const action = isActive ? '冻结' : '解除冻结';
+  
+  const confirmed = await showConfirm({
+    title: `${action}用户`,
+    message: isActive 
+      ? '确定要冻结该用户吗？冻结后用户无法发表留言和评论。'
+      : '确定要解除冻结该用户吗？解除后用户可以正常使用系统。',
+    confirmText: action,
+    cancelText: '取消',
+    type: isActive ? 'warning' : 'info'
+  });
+  
+  if (!confirmed) return;
+  
+  try {
+    await api.updateUser(userId, { is_active: !isActive });
+    showNotification(`${action}成功`, 'success');
+    userManageModal.close();
+    loadUsersForAdmin();
+  } catch (error) {
+    console.error(`${action}用户失败:`, error);
+    showNotification(`${action}失败：` + error.message, 'error');
+  }
+}
+
+// 切换管理员权限
+async function toggleUserAdmin(userId, isStaff) {
+  const action = isStaff ? '取消管理员权限' : '设为管理员';
+  
+  const confirmed = await showConfirm({
+    title: action,
+    message: isStaff
+      ? '确定要取消该用户的管理员权限吗？取消后用户将无法访问管理后台。'
+      : '确定要将该用户设为管理员吗？设置后用户将可以访问管理后台。',
+    confirmText: '确定',
+    cancelText: '取消',
+    type: 'warning'
+  });
+  
+  if (!confirmed) return;
+  
+  try {
     await api.updateUser(userId, { is_staff: !isStaff });
     showNotification('用户权限已更新', 'success');
+    userManageModal.close();
     loadUsersForAdmin();
   } catch (error) {
     console.error('更新用户权限失败:', error);
@@ -944,19 +1493,29 @@ async function toggleUserAdmin(userId, isStaff) {
   }
 }
 
-async function deleteUserById(userId) {
-  if (!confirm('确定要删除该用户吗？该用户的登录权限将被移除。')) return;
+// 重置用户密码
+async function resetUserPasswordAction(userId) {
+  const passwordInput = document.getElementById('reset-password-input');
+  const newPassword = passwordInput ? passwordInput.value.trim() : '';
+  const finalPassword = newPassword || '123456';
+  
+  const confirmed = await showConfirm({
+    title: '重置密码',
+    message: `确定要将该用户密码重置为：${finalPassword} 吗？`,
+    confirmText: '重置',
+    cancelText: '取消',
+    type: 'warning'
+  });
+  
+  if (!confirmed) return;
+  
   try {
-    const currentUser = auth.getUser();
-    if (currentUser && String(currentUser.id) === String(userId)) {
-      showNotification('不能删除当前登录账户', 'error');
-      return;
-    }
-    await api.deleteUser(userId);
-    showNotification('用户已删除', 'success');
-    loadUsersForAdmin();
+    await api.resetUserPassword(userId, finalPassword);
+    showNotification('密码重置成功', 'success');
+    if (passwordInput) passwordInput.value = '';
   } catch (error) {
-    console.error('删除用户失败:', error);
-    showNotification('删除用户失败：' + error.message, 'error');
+    console.error('重置密码失败:', error);
+    showNotification('重置密码失败：' + error.message, 'error');
   }
 }
+
