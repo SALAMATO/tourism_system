@@ -71,7 +71,7 @@ function renderPolicyDetail(container, policy) {
       ${policy.file_url ? `
         <div style="margin-top: 40px; padding-top: 30px; border-top: 1px solid var(--border-color);">
           <a href="${escapeHtml(policy.file_url)}" target="_blank" class="btn btn-primary">
-            <i class="fas fa-download"></i> 下载政策文件
+            <i class="fa fa-university"></i> 访问原发布页面
           </a>
         </div>
       ` : ''}
