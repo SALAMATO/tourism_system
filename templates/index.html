@@ -18,13 +18,17 @@
     <!-- PWA -->
     <link rel="manifest" href="{% static 'images/site.webmanifest' %}">
     <!-- CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/swiper@8/swiper-bundle.min.css">
+    <script src="https://unpkg.com/swiper@8/swiper-bundle.min.js"></script>
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
 </head>
 <style>
     /* 首页专属样式 */
     .hero-large {
-      height: 90vh;
+      min-height: calc(100vh + 72px); /*  包括导航栏高度 */
+      margin-top: -72px;              /*  向上覆盖导航栏 */
+      padding-top: 72px;              /*  内容不被挡 */
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       position: relative;
       display: flex;
@@ -38,12 +42,16 @@
     .hero-large::before {
       content: '';
       position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
+      {#top: 0;#}
+      {#left: 0;#}
+      {#right: 0;#}
+      {#bottom: 0;#} 
+      inset: 0;   /* 等价 top/left/right/bottom = 0 */
       background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="%23ffffff" fill-opacity="0.1" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,122.7C672,117,768,139,864,138.7C960,139,1056,117,1152,101.3C1248,85,1344,75,1392,69.3L1440,64L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg>') no-repeat bottom;
+      background-repeat: no-repeat;
+      background-position: center center;
       background-size: cover;
+      pointer-events: none;
     }
     
     .hero-content {
@@ -65,9 +73,56 @@
       margin-bottom: 40px;
       opacity: 0.95;
     }
+
+    /* Hero下方的小字导航  */
+    .hero-nav {
+      width: 100%;
+      height: 120px;
+      background: #fff;
+    
+      display: flex;
+      align-items: center;
+    
+      padding: 40px 64px 400px; /* 关键：左右留白 */
+      box-sizing: border-box;
+    
+      position: relative;
+    }
+
+    .hero-nav-item {
+      color: #999;
+      font-size: 13px;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.3s;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      position: relative;
+    }
+
+    .hero-nav-item:hover {
+      color: #333;
+    }
+
+    .hero-nav-item.left {
+      flex: 0 0 auto;
+    }
+    
+    .hero-nav-item.right {
+      flex: 0 0 auto;
+      margin-left: auto;
+    }
+    
+    .hero-nav-item.center {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+    }
     
     .intro-section {
-      padding: 100px 20px;
+      padding-top: 100px;              /* 增加顶部空白*/
+      padding-bottom: 200px;           /* 增加底部留白 */
       max-width: 1200px;
       margin: 0 auto;
     }
@@ -110,10 +165,109 @@
       line-height: 1.6;
     }
     
-    .destinations-showcase {
-      background: var(--background-tertiary);
-      padding: 100px 20px;
-    }
+    /* --- 核心布局变量 --- */
+      :root {
+        --center-width: 65%;   /* 中间大图的宽度，可根据喜好调整 */
+        --img-height: 750px;   /* 图片高度 */
+      }
+    
+      .destinations-showcase {
+        width: 100%;
+        min-height: calc(100vh + 72px);  /* 与hero区域一致 */
+        margin-top: -72px;               /* 向上覆盖导航栏 */
+        padding-top: 72px;              /* 增加顶部空白*/
+        padding-bottom: 200px;           /* 增加底部留白 */
+        background-color: #fff;
+        overflow: hidden;
+      }
+    
+      .header-area { text-align: center; margin-bottom: 40px; }
+      .recommend-tag { color: #999; font-size: 20px; letter-spacing: 1px; text-transform: uppercase; }
+      .section-title { font-size: 28px;font-weight: bold; margin-top: 8px; color: #1a1a1a; }
+    
+      /* 轮播容器 - 强制全屏 */
+      .swiper-container {
+        width: 100vw;
+        position: relative;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+    
+      .swiper-slide {
+        width: var(--center-width);
+        transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+    
+      /* 非活动图片：变暗、缩小、模糊 */
+      .swiper-slide:not(.swiper-slide-active) {
+        opacity: 0.3;
+        transform: scale(0.9);
+        filter: blur(2px);
+      }
+    
+      .img-wrapper {
+        width: 100%;
+        height: var(--img-height);
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+      }
+    
+      .img-wrapper img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+    
+      /* 描述文字：始终在中间图片正下方 */
+      .slide-caption {
+        text-align: center;
+        padding-top: 25px;
+        font-size: 16px;
+        color: #333;
+        font-weight: 500;
+        opacity: 0;
+        transform: translateY(10px);
+        transition: 0.4s;
+      }
+    
+      .swiper-slide-active .slide-caption {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    
+      /* --- 关键：将按钮限制在中间图片的左右侧 --- */
+      .nav-controls {
+        position: absolute;
+        top: calc(var(--img-height) / 2); /* 垂直居中于图片 */
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: var(--center-width); /* 宽度与中间图片一致 */
+        height: 0;
+        z-index: 10;
+        pointer-events: none; /* 防止遮挡图片点击 */
+      }
+    
+      .swiper-button-prev, .swiper-button-next {
+        pointer-events: auto; /* 恢复按钮点击 */
+        background: rgba(255, 255, 255, 0.9);
+        width: 50px !important;
+        height: 50px !important;
+        border-radius: 50%;
+        color: #000 !important;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        margin: 0 -25px; /* 让按钮一半悬浮在图片边缘外 */
+        transition: 0.3s;
+      }
+    
+      .swiper-button-prev:hover, .swiper-button-next:hover {
+        background: #000;
+        color: #fff !important;
+      }
+    
+      .swiper-button-prev::after, .swiper-button-next::after {
+        font-size: 20px !important;
+      }
     
     .destinations-grid {
       display: grid;
@@ -195,7 +349,293 @@
       font-weight: 600;
       color: var(--primary-color);
     }
+
+    /* ===== 视频展示模块样式 ===== */
+    .video-showcase {
+      width: 100%;
+      min-height: calc(100vh + 72px);  /* 与hero区域一致 */
+      margin-top: -72px;               /* 向上覆盖导航栏 */
+      padding-top: 72px;              /* 72px导航栏  */
+      padding-bottom: 200px;           /* 增加底部留白 */
+      background-color: #fff;          /* 改为白色背景 */
+      overflow: hidden;
+    }
+
+    /* 平滑滚动 */
+    html {
+      scroll-behavior: auto;           /* 禁用CSS平滑滚动，使用JS控制 */
+    }
+
+    .material-container {
+      width: 100vw;
+      position: relative;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 0 40px;
+      box-sizing: border-box;
+    }
+
+    /* Hero轮播区 */
+    .hero-section {
+      position: relative;
+      width: 100%;
+      max-width: 1400px;
+      margin: 0 auto 60px;
+      height: 500px;                  /* 调整高度，更适合一屏展示 */
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+      background: #1a1a1a;            /* 深灰色背景 */
+    }
+
+    .hero-slide {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      transition: opacity 0.8s ease;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+    }
+
+    .hero-slide.active {
+      opacity: 1;
+      z-index: 1;
+    }
+
+    .hero-bg {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      display: block;                 /* 移除inline默认间隙 */
+    }
+
+    .hero-logos {
+      position: absolute;
+      top: 30px;
+      right: 30px;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(10px);
+      padding: 8px 16px;
+      border-radius: 8px;
+      color: white;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 1px;
+    }
+
+    .hero-overlay {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 100%);
+      padding: 40px 30px 30px;        /* 减小padding */
+      color: white;
+    }
+
+    .hero-main-title {
+      font-size: 36px;                /* 减小字体 */
+      font-weight: 700;
+      margin-bottom: 8px;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    }
+
+    .hero-sub-title {
+      font-size: 16px;                /* 减小字体 */
+      opacity: 0.9;
+      margin-bottom: 16px;
+    }
+
+    .hero-tags {
+      display: flex;
+      gap: 12px;
+    }
+
+    .hero-tag {
+      background: rgba(255,255,255,0.2);
+      backdrop-filter: blur(10px);
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      border: 1px solid rgba(255,255,255,0.3);
+    }
+
+    /* 指示器 */
+    .indicators {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 12px;
+      z-index: 10;
+    }
+
+    .indicator {
+      width: 40px;
+      height: 4px;
+      background: rgba(255,255,255,0.4);
+      border-radius: 2px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .indicator.active {
+      background: white;
+      width: 60px;
+    }
+
+    /* 网格区 */
+    .grid-section {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 24px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .grid-item {
+      background: white;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+      transition: all 0.3s;
+      cursor: pointer;
+    }
+
+    .grid-item:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+    }
+
+    .grid-img-wrap {
+      width: 100%;
+      height: 180px;                  /* 减小高度 */
+      overflow: hidden;
+    }
+
+    .grid-img-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s;
+    }
+
+    .grid-item:hover .grid-img-wrap img {
+      transform: scale(1.1);
+    }
+
+    .grid-info {
+      padding: 20px;
+    }
+
+    .grid-title-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .tag-border {
+      background: var(--primary-color);
+      color: white;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .grid-desc {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* 视频弹窗 */
+    .video-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.9);
+      z-index: 10000;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .video-overlay.show {
+      display: flex;
+      opacity: 1;
+    }
+
+    .video-modal {
+      position: relative;
+      width: 90%;
+      max-width: 1200px;
+      aspect-ratio: 16/9;
+      background: black;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+
+    .video-close {
+      position: absolute;
+      top: -50px;
+      right: 0;
+      color: white;
+      font-size: 40px;
+      cursor: pointer;
+      z-index: 10001;
+      width: 50px;
+      height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.2s;
+    }
+
+    .video-close:hover {
+      transform: scale(1.2);
+    }
+
+    #videoIframe {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* 响应式 */
+    @media (max-width: 768px) {
+      .hero-main-title {
+        font-size: 32px;
+      }
+      
+      .hero-sub-title {
+        font-size: 16px;
+      }
+      
+      .grid-section {
+        grid-template-columns: 1fr;
+      }
+      
+      .material-container {
+        padding: 0 20px;
+      }
+    }
+    
   </style>
+
+
 </head>
 <body>
   <!-- 导航栏 -->
@@ -203,7 +643,6 @@
     <div class="navbar-container">
       <a href="{% url 'home' %}" class="navbar-brand"><i class="fas fa-plane-departure"></i> 低空旅游信息管理系统</a>
       <ul class="navbar-menu">
-        <li><a href="{% url 'home' %}">首页</a></li>
         <li><a href="{% url 'policies' %}">政策法规</a></li>
         <li><a href="{% url 'statistics' %}">发展现状</a></li>
         <li><a href="{% url 'safety' %}">安全预警</a></li>
@@ -227,16 +666,204 @@
           <a href="#destinations" class="btn btn-primary" style="padding: 16px 40px; font-size: 18px;">
             <i class="fas fa-compass"></i> 探索目的地
           </a>
-          <!-- 个人主页入口：登录后访问个人主页，未登录会被重定向到登录页 -->
-          <a href="{% url 'profile_page' %}" class="btn btn-glass" style="padding: 16px 40px; font-size: 18px; margin-left: 16px;">
-            <i class="fas fa-user"></i> 个人主页
+          <a href="#video" class="btn btn-glass" style="padding: 16px 40px; font-size: 18px; margin-left: 16px;">
+            <i class="fas fa-video"></i> 观看视频
           </a>
         </div>
       </div>
     </section>
 
+    <!-- Hero下方的小字导航 - 独立区域 -->
+    <div class="hero-nav">
+      <a href="#intro" class="hero-nav-item left">低空旅游概念</a>
+      <a href="#container" class="hero-nav-item center">最新资讯</a>
+      <a href="#" class="hero-nav-item right">2026</a>
+    </div>
+
+
+
+    <!-- 热门目的地展示 -->
+    <section class="destinations-showcase" id="destinations">
+    <div class="header-area">
+        <div class="recommend-tag">RECOMMEND</div>
+        <div class="section-title">热门低空旅游目的地</div>
+      </div>
+      <div class="swiper-container mySwiper">
+      <div class="swiper-wrapper">
+
+
+
+        <div class="swiper-slide">
+        <div class="img-wrapper">
+          <img src="https://img.remit.ee/api/file/BQACAgUAAyEGAASHRsPbAAERUY5pokb3uhHZ_0kBSH7gyynEx_qWDwACSBoAAgdJGFXL4eNx59Y5NToE.png" alt="深圳直升机">
+        </div>
+        <div class="slide-info">
+          <div class="slide-title">深圳 · 都市飞行</div>
+          <div class="slide-desc">云端俯瞰鹏城天际线，感受科技之城的巅峰视角</div>
+        </div>
+      </div>
+      
+      <div class="swiper-slide">
+        <div class="img-wrapper">
+          <img src="https://img.remit.ee/api/file/BQACAgUAAyEGAASHRsPbAAERUatpokw_YEJZf9grTOpIRdjTVWGMawACbhoAAgdJGFWsJ8W0z1f1zToE.png" alt="东京直升机">
+        </div>
+        <div class="slide-info">
+          <div class="slide-title">东京 · 浪漫巡航</div>
+          <div class="slide-desc">飞越东京铁塔与摩天大楼，领略极致的亚洲都市魅力</div>
+        </div>
+      </div>
+
+      <div class="swiper-slide">
+        <div class="img-wrapper">
+          <img src="https://img.remit.ee/api/file/BQACAgUAAyEGAASHRsPbAAERUcJpok-yD0XgVlCeaPt99SULpntaIgACmhoAAgdJGFX8xiWGp2ReJToE.jpg" alt="土耳其热气球">
+        </div>
+        <div class="slide-info">
+          <div class="slide-title">卡帕多奇亚 · 奇幻之旅</div>
+          <div class="slide-desc">在清晨的霞光中，随百千热气球升入地精仙境</div>
+        </div>
+      </div>
+
+      <div class="swiper-slide">
+        <div class="img-wrapper">
+          <img src="https://img.remit.ee/api/file/BQACAgUAAyEGAASHRsPbAAERUZBpokcv6IptdZlgrHqydi_SdR1bGgACShoAAgdJGFUtIkLx2Oh3oDoE.png" alt="阳朔热气球">
+        </div>
+        <div class="slide-info">
+          <div class="slide-title">桂林阳朔 · 水墨云游</div>
+          <div class="slide-desc">低空漂浮于万峰丛中，在遇龙河上空步入山水画卷</div>
+        </div>
+      </div>
+
+      <div class="swiper-slide">
+        <div class="img-wrapper">
+          <img src="https://img.remit.ee/api/file/BQACAgUAAyEGAASHRsPbAAERUY9pokcUN5IUCdMMVkEsJRf2TPGS0QACSRoAAgdJGFUfKBAwLYKq-ToE.png" alt="香港维多利亚港">
+        </div>
+        <div class="slide-info">
+          <div class="slide-title">香港 · 东方之珠</div>
+          <div class="slide-desc">空中纵览全球最美港湾，见证繁华交织的维多利亚港</div>
+        </div>
+      </div>
+
+      <div class="swiper-slide">
+        <div class="img-wrapper">
+          <img src="https://img.remit.ee/api/file/BQACAgUAAyEGAASHRsPbAAERUZxpokltylbyf_zMSyllXamcNm2plgACVRoAAgdJGFWL_aFh8kk-YToE.png" alt="韶关丹霞山">
+        </div>
+        <div class="slide-info">
+          <div class="slide-title">韶关丹霞 · 色如渥丹</div>
+          <div class="slide-desc">俯瞰世界地质奇观，领略岭南赤壁丹崖的雄伟气魄</div>
+        </div>
+      </div>
+              
+          
+          </div>
+    
+        <div class="nav-controls">
+          <div class="swiper-button-prev"></div>
+          <div class="swiper-button-next"></div>
+        </div>
+      </div>
+    </section>
+      
+      <!-- 推荐的视频链接展示 -->
+    <section class="video-showcase" id="video">
+    <div class="header-area">
+        <div class="recommend-tag">RECOMMEND</div>
+        <div class="section-title">热门低空旅游视频</div>
+    </div>
+
+    <div id="video-container" class="material-container">
+        
+        <div class="hero-section">
+            <div class="hero-slide active" data-video="这里放入视频链接1">
+                <img class="hero-bg" src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1000">
+                <div class="hero-logos">4K | Dolby VISION</div>
+                <div class="hero-overlay">
+                    <div class="hero-main-title">2026低空飞行样片合集</div>
+                    <div class="hero-sub-title">激发你设备的极限画质</div>
+                    <div class="hero-tags">
+                        <span class="hero-tag">杜比视界</span>
+                        <span class="hero-tag">免费</span>
+                        <span class="hero-tag">4K</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hero-slide" data-video="https://player.bilibili.com/player.html?isOutside=true&aid=771844187&bvid=BV1w14y1b7XCpk&cid=814966236&p=2">
+                <img class="hero-bg" src="https://img.remit.ee/api/file/BQACAgUAAyEGAASHRsPbAAERUY5pokb3uhHZ_0kBSH7gyynEx_qWDwACSBoAAgdJGFXL4eNx59Y5NToE.png">
+                <div class="hero-logos">4K | HDR</div>
+                <div class="hero-overlay">
+                    <div class="hero-main-title">深圳 · 都市飞行</div>
+                    <div class="hero-sub-title">感受科技之城的巅峰视角</div>
+                    <div class="hero-tags">
+                        <span class="hero-tag">影视飓风</span>
+                        <span class="hero-tag">深圳</span>
+                        <span class="hero-tag">HDR</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hero-slide" data-video="这里放入视频链接3">
+                <img class="hero-bg" src="https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=1000">
+                <div class="hero-logos">8K | Cinematic</div>
+                <div class="hero-overlay">
+                    <div class="hero-main-title">直升机俯瞰大堡礁</div>
+                    <div class="hero-sub-title">深蓝秘境的顶级航拍视角</div>
+                    <div class="hero-tags">
+                        <span class="hero-tag">海洋</span>
+                        <span class="hero-tag">绝美</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="indicators">
+                <div class="indicator active" data-index="0"></div>
+                <div class="indicator" data-index="1"></div>
+                <div class="indicator" data-index="2"></div>
+            </div>
+        </div>
+
+        <div class="grid-section">
+            <div class="grid-item" data-video="https://player.bilibili.com/player.html?bvid=BV1hKJpzjEDf">
+                <div class="grid-img-wrap"><img src="http://i1.hdslb.com/bfs/archive/e5f8bdbfe17fef2103ee029fc4610256c54db363.jpg"></div>
+                <div class="grid-info">
+                    <div class="grid-title-row"><span class="tag-border">节目</span><span>土耳其卡帕多奇亞热气球！</span><span class="tag-border">4K</span></div>
+                    <div class="grid-desc">#Goldfish Brain-土耳其 人文&自然</div>
+                </div>
+            </div>
+            <div class="grid-item" data-video="视频链接B">
+                <div class="grid-img-wrap"><img src="https://images.unsplash.com/photo-1490806843957-31f4c9a91c65?auto=format&fit=crop&w=600"></div>
+                <div class="grid-info">
+                    <div class="grid-title-row"><span class="tag-border">节目</span><span>日本关东</span><span class="tag-border">4K</span></div>
+                    <div class="grid-desc">#样片日记-日本 人文&自然</div>
+                </div>
+            </div>
+            <div class="grid-item" data-video="https://player.bilibili.com/player.html?bvid=BV13prSYiEhr">
+                <div class="grid-img-wrap"><img src="http://i0.hdslb.com/bfs/archive/bde686e0549ab91fe493202a7b4d9448d44cb875.jpg"></div>
+                <div class="grid-info">
+                    <div class="grid-title-row"><span class="tag-border">节目</span><span>阿拉斯加</span><span class="tag-border">4K</span></div>
+                    <div class="grid-desc">#样片日记-自然风景&延时</div>
+                </div>
+            </div>
+            <div class="grid-item" data-video="视频链接D">
+                <div class="grid-img-wrap"><img src="https://images.unsplash.com/photo-1552832230-c0197dd311b5?auto=format&fit=crop&w=600"></div>
+                <div class="grid-info">
+                    <div class="grid-title-row"><span class="tag-border">节目</span><span>开车去罗马</span><span class="tag-border">4K</span></div>
+                    <div class="grid-desc">城市人文&街头摄影</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="video-overlay" id="videoOverlay">
+    <div class="video-modal">
+        <span class="video-close">&times;</span>
+        <iframe id="videoIframe" src="" frameborder="0" allowfullscreen></iframe>
+    </div>
+</div>
+
+      
     <!-- 低空旅游介绍 -->
-    <section class="intro-section">
+    <section class="intro-section" id="intro">
       <h2 class="section-title">什么是低空旅游</h2>
       <p class="section-subtitle">低空旅游是指在低空空域（通常在3000米以下），依托通用航空器和低空飞行器所从事的旅游活动</p>
       
@@ -279,23 +906,8 @@
       </div>
     </section>
 
-    <!-- 热门目的地展示 -->
-    <section class="destinations-showcase" id="destinations">
-      <div style="text-align: center;">
-        <h2 class="section-title">热门低空旅游目的地</h2>
-        <p class="section-subtitle">精选全国最受欢迎的低空旅游体验地</p>
-      </div>
-      
-      <div id="destinations-container" class="destinations-grid">
-        <div class="loading">
-          <div class="spinner"></div>
-          <div>加载中...</div>
-        </div>
-      </div>
-    </section>
-
     <!-- 最新资讯 -->
-    <section class="container">
+    <section class="container" id="container">
       <h2 class="section-title">最新资讯</h2>
       <p class="section-subtitle">了解低空旅游行业动态</p>
       
@@ -354,9 +966,211 @@
     <p style="margin-top: 8px; font-size: 12px;">&copy; 2024 Low-altitude Tourism Information Management System. All rights reserved.</p>
   </footer>
   
+<script>
+  var swiper = new Swiper(".mySwiper", {
+    slidesPerView: "auto",
+    centeredSlides: true,
+    spaceBetween: 0,
+    loop: true,
+    speed: 800,
+    autoplay: {
+      delay: 5000,
+      disableOnInteraction: false,
+    },
+    navigation: {
+      nextEl: ".swiper-button-next",
+      prevEl: ".swiper-button-prev",
+    },
+  });
+
+  // ===== 精确滚动控制系统 =====
+  document.addEventListener('DOMContentLoaded', function() {
+    const navbar = document.querySelector('.navbar');
+    const navbarHeight = navbar ? navbar.offsetHeight : 72;
+    
+    // 所有需要精确定位的区域
+    const sections = [
+      document.querySelector('.hero-large'),
+      document.getElementById('destinations'),
+      document.getElementById('video')
+    ].filter(el => el !== null);
+
+    // 平滑滚动到指定区域
+    function scrollToSection(targetElement) {
+      if (!targetElement) return;
+      
+      // 计算目标位置（元素的offsetTop就是正确位置）
+      const targetPosition = targetElement.offsetTop;
+      
+      // 平滑滚动
+      window.scrollTo({
+        top: targetPosition,
+        behavior: 'smooth'
+      });
+    }
+
+    // 处理所有锚点链接点击（包括hero-nav和按钮）
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function(e) {
+        e.preventDefault();
+        const targetId = this.getAttribute('href').substring(1);
+        
+        // 如果是空锚点，返回顶部
+        if (!targetId) {
+          window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+          });
+          return;
+        }
+        
+        const targetElement = document.getElementById(targetId);
+        if (targetElement) {
+          scrollToSection(targetElement);
+        }
+      });
+    });
+
+    // 鼠标滚轮精确定位 - 优化版
+    let isScrolling = false;
+    let scrollTimeout;
+    let lastScrollPosition = window.pageYOffset;
+
+    window.addEventListener('scroll', function() {
+      const currentScrollPosition = window.pageYOffset;
+      
+      // 清除之前的定时器
+      clearTimeout(scrollTimeout);
+      
+      // 设置新的定时器，在滚动停止后执行
+      scrollTimeout = setTimeout(function() {
+        if (isScrolling) return;
+        
+        // 获取当前滚动位置
+        const scrollPosition = window.pageYOffset;
+        
+        // 找到最接近的section
+        let closestSection = null;
+        let minDistance = Infinity;
+        
+        sections.forEach(section => {
+          const sectionTop = section.offsetTop;
+          const distance = Math.abs(scrollPosition - sectionTop);
+          
+          if (distance < minDistance) {
+            minDistance = distance;
+            closestSection = section;
+          }
+        });
+        
+        // 如果距离小于150px，自动吸附到该section
+        if (closestSection && minDistance < 150 && minDistance > 20) {
+          isScrolling = true;
+          scrollToSection(closestSection);
+          
+          setTimeout(() => {
+            isScrolling = false;
+          }, 1000);
+        }
+      }, 200); // 滚动停止200ms后执行
+      
+      lastScrollPosition = currentScrollPosition;
+    });
+
+    // ===== 视频模块交互 =====
+    let currentSlide = 0;
+    const heroSlides = document.querySelectorAll('.hero-slide');
+    const indicators = document.querySelectorAll('.indicator');
+    let autoPlayInterval;
+
+    function showSlide(index) {
+      heroSlides.forEach((slide, i) => {
+        slide.classList.toggle('active', i === index);
+      });
+      indicators.forEach((indicator, i) => {
+        indicator.classList.toggle('active', i === index);
+      });
+      currentSlide = index;
+    }
+
+    function nextSlide() {
+      currentSlide = (currentSlide + 1) % heroSlides.length;
+      showSlide(currentSlide);
+    }
+
+    function startAutoPlay() {
+      autoPlayInterval = setInterval(nextSlide, 5000);
+    }
+
+    function stopAutoPlay() {
+      clearInterval(autoPlayInterval);
+    }
+
+    indicators.forEach((indicator, index) => {
+      indicator.addEventListener('click', () => {
+        stopAutoPlay();
+        showSlide(index);
+        startAutoPlay();
+      });
+    });
+
+    startAutoPlay();
+
+    // 视频弹窗功能
+    const videoOverlay = document.getElementById('videoOverlay');
+    const videoIframe = document.getElementById('videoIframe');
+    const videoClose = document.querySelector('.video-close');
+
+    function openVideo(videoUrl) {
+      if (!videoUrl || videoUrl.includes('这里放入视频链接') || videoUrl.includes('视频链接')) {
+        showNotification('视频链接暂未配置', 'error');
+        return;
+      }
+      videoIframe.src = videoUrl;
+      videoOverlay.classList.add('show');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeVideo() {
+      videoOverlay.classList.remove('show');
+      videoIframe.src = '';
+      document.body.style.overflow = '';
+    }
+
+    heroSlides.forEach(slide => {
+      slide.addEventListener('click', function() {
+        const videoUrl = this.getAttribute('data-video');
+        openVideo(videoUrl);
+      });
+    });
+
+    document.querySelectorAll('.grid-item').forEach(item => {
+      item.addEventListener('click', function() {
+        const videoUrl = this.getAttribute('data-video');
+        openVideo(videoUrl);
+      });
+    });
+
+    videoClose.addEventListener('click', closeVideo);
+
+    videoOverlay.addEventListener('click', function(e) {
+      if (e.target === videoOverlay) {
+        closeVideo();
+      }
+    });
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && videoOverlay.classList.contains('show')) {
+        closeVideo();
+      }
+    });
+  });
+</script>
+  
 <script src="{% static 'js/utils.js' %}"></script>
 <script src="{% static 'js/api.js' %}"></script>
 <script src="{% static 'js/auth.js' %}"></script>
+<script src="{% static 'js/auth-modal.js' %}"></script>
 <script src="{% static 'js/home.js' %}"></script>
 </body>
 </html>

@@ -6,6 +6,30 @@ document.addEventListener('DOMContentLoaded', () => {
   loadStatistics();
 });
 
+//检测 hero 是否在屏幕中
+document.addEventListener('DOMContentLoaded', () => {
+  const hero = document.querySelector('.hero-large');
+  const navbar = document.querySelector('.navbar');
+
+  if (!hero || !navbar) return;
+
+  const observer = new IntersectionObserver(
+    ([entry]) => {
+      if (entry.isIntersecting) {
+        navbar.classList.add('hero-active');
+      } else {
+        navbar.classList.remove('hero-active');
+      }
+    },
+    {
+      root: null,
+      threshold: 0.1   // hero 还有 10% 在视口就算“在 hero 区域”
+    }
+  );
+
+  observer.observe(hero);
+});
+
 // 加载热门目的地
 async function loadHotDestinations() {
   const container = document.getElementById('destinations-container');
@@ -157,3 +181,5 @@ document.addEventListener('DOMContentLoaded', () => {
   loadLatestNews();
   loadStatistics();
 });
+
+

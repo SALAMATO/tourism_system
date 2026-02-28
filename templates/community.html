@@ -29,7 +29,6 @@
     <div class="navbar-container">
       <a href="{% url 'home' %}" class="navbar-brand"><i class="fas fa-plane-departure"></i> 低空旅游信息管理系统</a>
       <ul class="navbar-menu">
-        <li><a href="{% url 'home' %}">首页</a></li>
         <li><a href="{% url 'policies' %}">政策法规</a></li>
         <li><a href="{% url 'statistics' %}">发展现状</a></li>
         <li><a href="{% url 'safety' %}">安全预警</a></li>
@@ -161,6 +160,7 @@
 <script src="{% static 'js/utils.js' %}"></script>
 <script src="{% static 'js/api.js' %}"></script>
 <script src="{% static 'js/auth.js' %}"></script>
+<script src="{% static 'js/auth-modal.js' %}"></script>
 <script src="{% static 'js/community.js' %}"></script>
 </body>
 </html>

@@ -150,7 +150,7 @@ class AuthManager {
     const adminLink = this.user.is_staff ? `
       <li>
         <a href="/admin-page/" 
-           class="btn btn-secondary"
+           class="btn btn-admin"
            style="padding: 6px 16px; font-size: 12px;">
           管理后台
         </a>
@@ -198,9 +198,9 @@ class AuthManager {
     }
   } else {
     userMenuContainer.innerHTML = `
-      <a href="/auth/" class="btn btn-primary" style="padding: 6px 16px; font-size: 12px;">
+      <button onclick="authModal.open('login')" class="btn btn-primary" style="padding: 6px 16px; font-size: 12px;">
         <i class="fas fa-sign-in-alt"></i> 登录/注册
-      </a>
+      </button>
     `;
   }
 }
@@ -209,8 +209,12 @@ class AuthManager {
     if (!this.isAuthenticated()) {
       showNotification('请先登录', 'error');
       setTimeout(() => {
-        window.location.href = '/auth/?redirect=' + encodeURIComponent(window.location.pathname);
-      }, 1500);
+        if (typeof authModal !== 'undefined') {
+          authModal.open('login');
+        } else {
+          window.location.href = '/auth/?redirect=' + encodeURIComponent(window.location.pathname);
+        }
+      }, 1000);
       return false;
     }
     return true;
@@ -232,3 +236,27 @@ function getAuthHeaders() {
   
   return headers;
 }
+
+//检测 hero 是否在屏幕中
+document.addEventListener('DOMContentLoaded', () => {
+  const hero = document.querySelector('.auth-container');
+  const navbar = document.querySelector('.navbar');
+
+  if (!hero || !navbar) return;
+
+  const observer = new IntersectionObserver(
+    ([entry]) => {
+      if (entry.isIntersecting) {
+        navbar.classList.add('hero-active');
+      } else {
+        navbar.classList.remove('hero-active');
+      }
+    },
+    {
+      root: null,
+      threshold: 0.1   // hero 还有 10% 在视口就算“在 hero 区域”
+    }
+  );
+
+  observer.observe(hero);
+});
