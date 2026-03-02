@@ -32,12 +32,26 @@
         <li><a href="{% url 'news' %}">新闻资讯</a></li>
         <li><a href="{% url 'community' %}">互动交流</a></li>
       </ul>
+      <button class="navbar-toggle" id="navbar-toggle">
+        <i class="fas fa-bars"></i>
+      </button>
       <div id="user-menu">
         <!-- 用户菜单将通过JS动态加载 -->
       </div>
     </div>
   </nav>
 
+  <!-- 移动端菜单覆盖层 -->
+  <div class="mobile-menu-overlay" id="mobile-menu-overlay">
+    <div class="mobile-menu">
+      <a href="{% url 'policies' %}" class="mobile-menu-item">政策法规</a>
+      <a href="{% url 'statistics' %}" class="mobile-menu-item">发展现状</a>
+      <a href="{% url 'safety' %}" class="mobile-menu-item">安全预警</a>
+      <a href="{% url 'news' %}" class="mobile-menu-item">新闻资讯</a>
+      <a href="{% url 'community' %}" class="mobile-menu-item">互动交流</a>
+    </div>
+  </div>  
+  
   <div class="page-header">
     <h1>⚙️ 管理后台</h1>
     <p>统一管理平台内容、数据录入与系统配置</p>

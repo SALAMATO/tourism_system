@@ -20,6 +20,10 @@
   
   /* 字体 */
   --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  
+  /* 导航栏毛玻璃效果 - 统一定义 */
+  --navbar-bg: rgba(255, 255, 255, 0.72);
+  --navbar-blur: saturate(180%) blur(30px);
 }
 
 * {
@@ -43,12 +47,13 @@ body {
   top: 0;
   left: 0;
   right: 0;
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: saturate(180%) blur(20px);
-  -webkit-backdrop-filter: saturate(180%) blur(20px);
-  border-bottom: 1px solid var(--border-color);
+  background: var(--navbar-bg);
+  backdrop-filter: var(--navbar-blur);
+  -webkit-backdrop-filter: var(--navbar-blur);
+  border-bottom: none;
   z-index: 1000;
   transition: all 0.3s ease;
+  box-shadow: none;
 }
 
 /* 首页 hero 覆盖时：完全透明态 */
@@ -64,12 +69,28 @@ body {
   box-shadow: none !important;
 }
 
-  /* hero 区域时：导航栏文字变白 */
-  .navbar.hero-active .navbar-brand,
-  .navbar.hero-active .navbar-menu a {
-    color: rgba(255, 255, 255, 0.95);
-    text-shadow: 0 1px 2px rgba(0,0,0,0.25);
-  }
+/* hero 区域时：导航栏文字变白 */
+.navbar.hero-active .navbar-brand,
+.navbar.hero-active .navbar-menu a {
+  color: rgba(255, 255, 255, 0.95);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.25);
+}
+
+/* Hero区域展开汉堡菜单时，导航栏恢复毛玻璃 */
+.navbar.hero-active.menu-open {
+  background: var(--navbar-bg) !important;
+  backdrop-filter: var(--navbar-blur) !important;
+  -webkit-backdrop-filter: var(--navbar-blur) !important;
+  box-shadow: none !important;
+}
+
+/* Hero区域展开菜单时，导航栏文字变回黑色 */
+.navbar.hero-active.menu-open .navbar-brand,
+.navbar.hero-active.menu-open .navbar-menu a,
+.navbar.hero-active.menu-open .navbar-toggle {
+  color: var(--text-primary) !important;
+  text-shadow: none !important;
+}
 
 .navbar * {
   -webkit-font-smoothing: antialiased;
@@ -125,6 +146,119 @@ body {
 
 .navbar-menu a:hover {
   opacity: 1;
+}
+
+/* 移动端汉堡菜单 */
+.navbar-toggle {
+  display: none;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  color: var(--text-primary);
+  font-size: 24px;
+  transition: all 0.3s ease;
+}
+
+.navbar-toggle i {
+  display: block;
+  transition: transform 0.3s ease;
+}
+
+.navbar-toggle:hover {
+  transform: scale(1.1);
+}
+
+/* Hero区域时汉堡按钮变白色 */
+.navbar.hero-active .navbar-toggle {
+  color: rgba(255, 255, 255, 0.95);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.25);
+}
+
+/* 移动端菜单覆盖层 */
+.mobile-menu-overlay {
+  display: none;
+  position: fixed;
+  top: 48px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0);
+  backdrop-filter: blur(0px);
+  -webkit-backdrop-filter: blur(0px);
+  z-index: 999;
+  opacity: 0;
+  transition: opacity 0.3s ease, backdrop-filter 0.3s ease;
+  pointer-events: none;
+}
+
+.mobile-menu-overlay.show {
+  display: block;
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  pointer-events: auto;
+}
+
+.mobile-menu {
+  background: var(--navbar-bg);
+  backdrop-filter: var(--navbar-blur);
+  -webkit-backdrop-filter: var(--navbar-blur);
+  padding: 0;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  transform-origin: top;
+  transform: scaleY(0);
+  opacity: 0;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), 
+              opacity 0.3s ease;
+}
+
+.mobile-menu-overlay.show .mobile-menu {
+  transform: scaleY(1);
+  opacity: 1;
+}
+
+.mobile-menu-item {
+  display: block;
+  padding: 16px 40px;
+  color: var(--text-primary);
+  text-decoration: none;
+  font-size: 17px;
+  font-weight: 400;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  background: transparent;
+  opacity: 0;
+  transform: translateX(-20px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mobile-menu-overlay.show .mobile-menu-item {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* 为每个菜单项添加延迟动画 */
+.mobile-menu-overlay.show .mobile-menu-item:nth-child(1) { transition-delay: 0.1s; }
+.mobile-menu-overlay.show .mobile-menu-item:nth-child(2) { transition-delay: 0.15s; }
+.mobile-menu-overlay.show .mobile-menu-item:nth-child(3) { transition-delay: 0.2s; }
+.mobile-menu-overlay.show .mobile-menu-item:nth-child(4) { transition-delay: 0.25s; }
+.mobile-menu-overlay.show .mobile-menu-item:nth-child(5) { transition-delay: 0.3s; }
+.mobile-menu-overlay.show .mobile-menu-item:nth-child(6) { transition-delay: 0.35s; }
+.mobile-menu-overlay.show .mobile-menu-item:nth-child(7) { transition-delay: 0.4s; }
+.mobile-menu-overlay.show .mobile-menu-item:nth-child(8) { transition-delay: 0.45s; }
+
+.mobile-menu-item:last-child {
+  border-bottom: none;
+}
+
+.mobile-menu-item:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.mobile-menu-item:active {
+  background: rgba(0, 0, 0, 0.1);
 }
 
 /* 主要内容区 */
@@ -636,6 +770,10 @@ body {
 @media (max-width: 768px) {
   .navbar-menu {
     display: none;
+  }
+  
+  .navbar-toggle {
+    display: block;
   }
   
   .hero-section h1 {

@@ -458,3 +458,69 @@ function showConfirm(options = {}) {
     });
   });
 }
+
+// 初始化移动端汉堡菜单（所有页面通用）
+document.addEventListener('DOMContentLoaded', function() {
+  const navbarToggle = document.getElementById('navbar-toggle');
+  const mobileMenuOverlay = document.getElementById('mobile-menu-overlay');
+  const navbar = document.querySelector('.navbar');
+  
+  if (navbarToggle && mobileMenuOverlay) {
+    navbarToggle.addEventListener('click', function() {
+      const isOpening = !mobileMenuOverlay.classList.contains('show');
+      
+      mobileMenuOverlay.classList.toggle('show');
+      const icon = navbarToggle.querySelector('i');
+      
+      if (isOpening) {
+        // 打开菜单
+        icon.classList.remove('fa-bars');
+        icon.classList.add('fa-times');
+        
+        // 如果在Hero区域，给导航栏添加menu-open类
+        if (navbar && navbar.classList.contains('hero-active')) {
+          navbar.classList.add('menu-open');
+        }
+      } else {
+        // 关闭菜单
+        icon.classList.remove('fa-times');
+        icon.classList.add('fa-bars');
+        
+        // 移除menu-open类
+        if (navbar) {
+          navbar.classList.remove('menu-open');
+        }
+      }
+    });
+    
+    // 点击覆盖层关闭菜单
+    mobileMenuOverlay.addEventListener('click', function(e) {
+      if (e.target === mobileMenuOverlay) {
+        mobileMenuOverlay.classList.remove('show');
+        const icon = navbarToggle.querySelector('i');
+        icon.classList.remove('fa-times');
+        icon.classList.add('fa-bars');
+        
+        // 移除menu-open类
+        if (navbar) {
+          navbar.classList.remove('menu-open');
+        }
+      }
+    });
+    
+    // 点击菜单项关闭菜单
+    document.querySelectorAll('.mobile-menu-item').forEach(item => {
+      item.addEventListener('click', function() {
+        mobileMenuOverlay.classList.remove('show');
+        const icon = navbarToggle.querySelector('i');
+        icon.classList.remove('fa-times');
+        icon.classList.add('fa-bars');
+        
+        // 移除menu-open类
+        if (navbar) {
+          navbar.classList.remove('menu-open');
+        }
+      });
+    });
+  }
+});

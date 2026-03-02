@@ -196,11 +196,75 @@ class AuthManager {
         }
       });
     }
+    
+    // 更新移动端菜单
+    this.updateMobileMenu();
   } else {
     userMenuContainer.innerHTML = `
       <button onclick="authModal.open('login')" class="btn btn-primary" style="padding: 6px 16px; font-size: 12px;">
         <i class="fas fa-sign-in-alt"></i> 登录/注册
       </button>
+    `;
+    
+    // 更新移动端菜单
+    this.updateMobileMenu();
+  }
+}
+
+updateMobileMenu() {
+  const mobileMenu = document.querySelector('.mobile-menu');
+  if (!mobileMenu) return;
+
+  // 保留原有的导航链接
+  const navLinks = `
+    <a href="/policies/" class="mobile-menu-item">政策法规</a>
+    <a href="/statistics/" class="mobile-menu-item">发展现状</a>
+    <a href="/safety/" class="mobile-menu-item">安全预警</a>
+    <a href="/news/" class="mobile-menu-item">新闻资讯</a>
+    <a href="/community/" class="mobile-menu-item">互动交流</a>
+  `;
+
+  if (this.isAuthenticated() && this.user) {
+    const adminLink = this.user.is_staff ? `
+      <a href="/admin-page/" class="mobile-menu-item">
+        <i class="fas fa-user-shield"></i> 管理后台
+      </a>
+    ` : '';
+
+    mobileMenu.innerHTML = `
+      ${navLinks}
+      <a href="/profile/" class="mobile-menu-item">
+        <i class="fas fa-user"></i> 个人主页
+      </a>
+      ${adminLink}
+      <a href="#" class="mobile-menu-item" id="mobile-logout-btn">
+        <i class="fas fa-sign-out-alt"></i> 退出登录
+      </a>
+    `;
+
+    // 绑定移动端退出登录事件
+    const mobileLogoutBtn = document.getElementById('mobile-logout-btn');
+    if (mobileLogoutBtn) {
+      mobileLogoutBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        try {
+          await this.logout();
+          showNotification('已退出登录', 'success');
+          setTimeout(() => {
+            window.location.href = '/';
+          }, 1000);
+        } catch (error) {
+          console.error('退出登录失败:', error);
+          showNotification('退出登录失败', 'error');
+        }
+      });
+    }
+  } else {
+    mobileMenu.innerHTML = `
+      ${navLinks}
+      <a href="#" class="mobile-menu-item" onclick="authModal.open('login'); return false;">
+        <i class="fas fa-sign-in-alt"></i> 登录/注册
+      </a>
     `;
   }
 }
