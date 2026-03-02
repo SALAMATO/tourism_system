@@ -293,8 +293,6 @@ http://127.0.0.1:8000/
 
 ## 十、系统不足与优化方向
 
-* 增加 JWT 用户认证
-* 权限分级控制
 * 云服务器部署
 * 引入 Vue / React 优化前端
 
@@ -305,13 +303,13 @@ http://127.0.0.1:8000/
 ### 导出
 
 ```bash
-mysqldump -u root -p low_altitude_tourism > db_dump.sql
+mysqldump -u root -p low_altitude_tourism > low_altitude_tourism.sql
 ```
 
 ### 导入
 
 ```bash
-mysql -u root -p low_altitude_tourism < db_dump.sql
+mysql -u root -p low_altitude_tourism < low_altitude_tourism.sql
 ```
 
 ---
