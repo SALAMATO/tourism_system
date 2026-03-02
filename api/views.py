@@ -223,6 +223,21 @@ class PolicyViewSet(PublicModelViewSet):
         policy.save()
         return Response({'views': policy.views})
 
+    @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
+    def fetch_from_url(self, request):
+        from .fetchers import PolicyFetcher
+
+        url = request.data.get('url')
+        if not url:
+            return Response({'error': '请提供URL'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            fetcher = PolicyFetcher(url)
+            data = fetcher.fetch()
+            return Response(data)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
 # 新闻资讯视图集
 class NewsViewSet(PublicModelViewSet):
     queryset = News.objects.all()
@@ -238,6 +253,22 @@ class NewsViewSet(PublicModelViewSet):
         news.views += 1
         news.save()
         return Response({'views': news.views})
+
+    @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
+    def fetch_from_url(self, request):
+        from .fetchers import NewsFetcher
+
+        url = request.data.get('url')
+        if not url:
+            return Response({'error': '请提供URL'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            fetcher = NewsFetcher(url)
+            data = fetcher.fetch()
+            return Response(data)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 # 安全隐患视图集

@@ -102,6 +102,33 @@
       <h2 class="section-title">政策法规管理</h2>
       <div class="card">
         <h3 class="card-title">添加政策法规</h3>
+        
+        <!-- 政策识别功能 -->
+        <div style="background: var(--background-secondary); padding: 20px; border-radius: 12px; margin-bottom: 24px;">
+          <h4 style="font-size: 18px; margin-bottom: 12px; color: var(--text-primary);">
+            <i class="fas fa-magic"></i> 智能原文识别
+          </h4>
+          <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 16px;">
+            输入政策原文URL，自动提取标题、发布部门、发布日期和内容
+          </p>
+          <div style="display: flex; gap: 12px;">
+            <input 
+              type="url" 
+              id="policy-url-input" 
+              class="form-input" 
+              placeholder="输入政策URL，例如：https://www.ndrc.gov.cn/xxgk/zcfb/tz/202408/t20240821_1392498.html"
+              style="flex: 1;">
+            <button 
+              type="button" 
+              id="fetch-policy-btn" 
+              class="btn btn-primary"
+              style="white-space: nowrap;">
+              <i class="fas fa-download"></i> 识别原文
+            </button>
+          </div>
+          <div id="fetch-policy-status" style="margin-top: 12px; font-size: 14px;"></div>
+        </div>
+        
         <form id="policy-form">
           <div class="form-group">
             <label class="form-label">政策标题 *</label>
@@ -132,7 +159,7 @@
             <textarea id="policy-content" class="form-textarea" rows="8" required></textarea>
           </div>
           <div class="form-group">
-            <label class="form-label">文件链接（选填）</label>
+            <label class="form-label">原文链接（选填）</label>
             <input type="url" id="policy-url" class="form-input" placeholder="https://...">
           </div>
           <div class="form-group">
@@ -162,6 +189,33 @@
       <h2 class="section-title">新闻资讯管理</h2>
       <div class="card">
         <h3 class="card-title">发布新闻</h3>
+        
+        <!-- 新闻识别功能 -->
+        <div style="background: var(--background-secondary); padding: 20px; border-radius: 12px; margin-bottom: 24px;">
+          <h4 style="font-size: 18px; margin-bottom: 12px; color: var(--text-primary);">
+            <i class="fas fa-magic"></i> 智能新闻识别
+          </h4>
+          <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 16px;">
+            输入新闻URL，自动提取标题、作者和内容
+          </p>
+          <div style="display: flex; gap: 12px;">
+            <input 
+              type="url" 
+              id="news-url-input" 
+              class="form-input" 
+              placeholder="输入新闻URL，例如：https://www.ndrc.gov.cn/wsdwhfz/202408/t20240821_1392498.html"
+              style="flex: 1;">
+            <button 
+              type="button" 
+              id="fetch-news-btn" 
+              class="btn btn-primary"
+              style="white-space: nowrap;">
+              <i class="fas fa-download"></i> 识别新闻
+            </button>
+          </div>
+          <div id="fetch-news-status" style="margin-top: 12px; font-size: 14px;"></div>
+        </div>
+        
         <form id="news-form">
           <div class="form-group">
             <label class="form-label">新闻标题 *</label>
@@ -180,6 +234,10 @@
           <div class="form-group">
             <label class="form-label">作者 *</label>
             <input type="text" id="news-author" class="form-input" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">发布日期</label>
+            <input type="date" id="news-date" class="form-input">
           </div>
           <div class="form-group">
             <label class="form-label">封面图片URL（选填）</label>
@@ -390,6 +448,7 @@
 <script src="{% static 'js/utils.js' %}"></script>
 <script src="{% static 'js/api.js' %}"></script>
 <script src="{% static 'js/auth.js' %}"></script>
+<script src="{% static 'js/fetchers.js' %}"></script>
 <script src="{% static 'js/admin.js' %}"></script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-//管理后台逻辑
+﻿//管理后台逻辑
 let currentReplyMessageId = null;
 const replyModal = new Modal('reply-modal');
 
@@ -241,8 +241,9 @@ async function submitNews() {
       .map(tag => tag.trim())
       .filter(tag => tag);
     
-    // 使用当前时间作为发布日期
-    const publishDate = new Date().toISOString();
+    // 获取发布日期
+    const dateValue = document.getElementById('news-date').value;
+    const publishDate = dateValue ? new Date(dateValue).toISOString() : new Date().toISOString();
     
     const data = {
       title: document.getElementById('news-title').value,
@@ -250,9 +251,8 @@ async function submitNews() {
       author: document.getElementById('news-author').value,
       cover_image: document.getElementById('news-cover').value || '',
       content: document.getElementById('news-content').value,
+      tags: tags,
       publish_date: publishDate,
-      views: 0,
-      tags: tags
     };
     
     console.log('提交新闻数据:', data);
