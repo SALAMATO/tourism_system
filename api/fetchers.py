@@ -204,16 +204,17 @@ class ContentFetcher:
         return '未知作者'
     
     def extract_content(self):
-        """提取内容 - 支持小标题和格式化"""
+        """提取内容 - 支持小标题和格式化（修复重复问题）"""
         content_parts = []
+        processed_texts = set()  # 用于去重
         
         # 查找内容容器
         container = self._find_content_container()
         
         if container is not None:
-            # 改进的提取方法：按顺序提取所有元素，保留结构
-            # 提取h2-h6标题、p段落、strong加粗等
-            elements = container.xpath('.//*[self::h2 or self::h3 or self::h4 or self::h5 or self::h6 or self::p or self::div[@class="subtitle"] or self::strong]')
+            # 改进的提取方法：只提取顶层元素，避免重复
+            # 先提取h2-h6标题和p段落（不包括嵌套的strong）
+            elements = container.xpath('.//*[self::h2 or self::h3 or self::h4 or self::h5 or self::h6 or self::p]')
             
             logger.info(f"找到 {len(elements)} 个内容元素")
             
@@ -224,19 +225,18 @@ class ContentFetcher:
                 if not text or len(text) < 3:
                     continue
                 
+                # 避免重复：检查文本是否已处理
+                if text in processed_texts:
+                    logger.info(f"跳过重复内容: {text[:30]}...")
+                    continue
+                
                 # 小标题（h2-h6）- 自动加粗
                 if tag in ['h2', 'h3', 'h4', 'h5', 'h6']:
                     if len(text) < 100:  # 标题通常较短
                         formatted_text = f"**{text}**"
                         content_parts.append(formatted_text)
+                        processed_texts.add(text)
                         logger.info(f"提取到小标题: {text}")
-                        continue
-                
-                # 加粗文本（strong, b）
-                if tag in ['strong', 'b']:
-                    if len(text) < 100:
-                        formatted_text = f"**{text}**"
-                        content_parts.append(formatted_text)
                         continue
                 
                 # 普通段落
@@ -244,18 +244,23 @@ class ContentFetcher:
                     # 检查段落内是否有加粗元素
                     strong_elements = element.xpath('.//strong | .//b')
                     if strong_elements:
-                        # 处理段落内的加粗
-                        formatted_text = self._format_paragraph_with_bold(element)
-                        content_parts.append(formatted_text)
+                        # 检查是否整个段落都是加粗（可能是小标题）
+                        strong_text = ''.join([s.text_content().strip() for s in strong_elements])
+                        if strong_text == text and len(text) < 100:
+                            # 整个段落都是加粗，当作小标题
+                            formatted_text = f"**{text}**"
+                            content_parts.append(formatted_text)
+                            processed_texts.add(text)
+                            logger.info(f"提取到段落小标题: {text}")
+                        else:
+                            # 段落内部分加粗
+                            formatted_text = self._format_paragraph_with_bold(element)
+                            content_parts.append(formatted_text)
+                            processed_texts.add(text)
                     else:
                         content_parts.append(text)
+                        processed_texts.add(text)
                     continue
-                
-                # div元素（可能是段落）
-                if tag == 'div' and len(text) > 20:
-                    # 避免重复（如果内容已经被子元素提取）
-                    if text not in ' '.join(content_parts):
-                        content_parts.append(text)
             
             # 如果提取的内容太少，使用备用方法
             if len(content_parts) < 3:
@@ -276,11 +281,17 @@ class ContentFetcher:
                 if not text or len(text) < 10:
                     continue
                 
+                # 避免重复
+                if text in processed_texts:
+                    continue
+                
                 # 标题加粗
                 if tag in ['h2', 'h3', 'h4'] and len(text) < 100:
                     content_parts.append(f"**{text}**")
+                    processed_texts.add(text)
                 else:
                     content_parts.append(text)
+                    processed_texts.add(text)
         
         # 合并内容
         if content_parts:
@@ -302,7 +313,7 @@ class ContentFetcher:
             return content
         
         return None
-    
+
     def _format_paragraph_with_bold(self, element):
         """格式化包含加粗元素的段落"""
         from lxml import html as lxml_html

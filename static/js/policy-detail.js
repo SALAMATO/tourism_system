@@ -64,8 +64,8 @@ function renderPolicyDetail(container, policy) {
         </span>
       </div>
       
-      <div class="card-content" style="font-size: 18px; line-height: 1.8;">
-        ${policy.content || '暂无内容'}
+      <div class="card-content rich-text-content" style="font-size: 18px; line-height: 1.8;">
+        ${formatRichTextContent(policy.content || '暂无内容')}
       </div>
       
       ${policy.file_url ? `

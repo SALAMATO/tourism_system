@@ -223,15 +223,15 @@ async function loadMyMessages() {
           </span>
         </div>
 
-        <div style="margin-bottom: 16px; padding: 16px; background: var(--background-secondary); border-radius: 8px;">
+        <div class="rich-text-content" style="margin-bottom: 16px; padding: 16px; background: var(--background-secondary); border-radius: 8px;">
           <strong>我的留言：</strong>
-          <p class="preserve-whitespace" style="margin-top: 8px; line-height: 1.6;">${escapeHtml(msg.content || '')}</p>
+          <div style="margin-top: 8px; line-height: 1.6;">${formatRichTextContent(msg.content || '')}</div>
         </div>
 
         ${msg.reply ? `
-          <div style="padding: 16px; background: rgba(0, 113, 227, 0.05); border-radius: 8px; border-left: 3px solid var(--primary-color); margin-bottom: 16px;">
+          <div class="rich-text-content" style="padding: 16px; background: rgba(0, 113, 227, 0.05); border-radius: 8px; border-left: 3px solid var(--primary-color); margin-bottom: 16px;">
             <strong style="color: var(--primary-color);"><i class="fas fa-reply"></i> 官方回复：</strong>
-            <p class="preserve-whitespace" style="margin-top: 8px; line-height: 1.6;">${escapeHtml(msg.reply || '')}</p>
+            <div style="margin-top: 8px; line-height: 1.6;">${formatRichTextContent(msg.reply || '')}</div>
           </div>
         ` : ''}
 
@@ -322,7 +322,7 @@ async function loadPostComments(messageId) {
                 ` : ''}
               </div>
             </div>
-            <div class="comment-content">${escapeHtml(comment.content)}</div>
+            <div class="comment-content rich-text-content">${formatRichTextContent(comment.content)}</div>
           </div>
         `).join('')}
       `;
@@ -400,10 +400,25 @@ function openReplyCommentModal(messageId) {
     `;
     document.body.insertAdjacentHTML('beforeend', modalHtml);
     modal = document.getElementById('reply-comment-modal');
+    
+    // 初始化CKEditor
+    if (window.CKEditorHelper) {
+      setTimeout(() => {
+        window.CKEditorHelper.initEditor('reply-comment-content');
+      }, 100);
+    }
   }
   
   // 清空内容并显示
   document.getElementById('reply-comment-content').value = '';
+  
+  // 如果编辑器已存在，清空内容
+  if (window.CKEditorHelper) {
+    setTimeout(() => {
+      window.CKEditorHelper.clearContent('reply-comment-content');
+    }, 50);
+  }
+  
   modal.classList.add('active');
 }
 
@@ -431,6 +446,12 @@ async function submitReplyComment() {
   try {
     await api.addComment(currentReplyingMessageId, content);
     showNotification('回复成功', 'success');
+    
+    // 清空CKEditor
+    if (window.CKEditorHelper) {
+      window.CKEditorHelper.clearContent('reply-comment-content');
+    }
+    
     closeReplyCommentModal();
     await loadMyMessages();
   } catch (error) {

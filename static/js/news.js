@@ -102,8 +102,8 @@ function renderNews(container, newsItems) {
         <span><i class="fas fa-calendar"></i> ${formatDate(item.publish_date)}</span>
         <span><i class="fas fa-eye"></i> ${item.views || 0} 次浏览</span>
       </div>
-      <div class="list-item-content preserve-whitespace">
-        ${truncateText(stripHtml(item.content), 200)}
+      <div class="list-item-content rich-text-preview">
+        ${formatRichTextPreview(item.content, 200)}
       </div>
       ${item.tags && item.tags.length > 0 ? `
         <div style="margin-top: 12px;">

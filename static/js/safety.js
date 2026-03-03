@@ -76,8 +76,8 @@ function renderAlerts(container, alerts) {
         </div>
         <span class="tag ${getRiskTagClass(alert.risk_level)}">${escapeHtml(alert.risk_level || '未知')}</span>
       </div>
-      <div class="list-item-content preserve-whitespace">
-        ${truncateText(stripHtml(alert.description), 200)}
+      <div class="list-item-content rich-text-preview">
+        ${formatRichTextPreview(alert.description, 200)}
       </div>
     </div>
   `).join('');
@@ -115,17 +115,17 @@ async function showAlertDetail(alertId) {
         
         <div style="margin-bottom: 24px;">
           <h3 style="font-size: 20px; margin-bottom: 12px;">隐患描述</h3>
-          <div class="card-content preserve-whitespace">${escapeHtml(alert.description || '暂无描述')}</div>
+          <div class="card-content rich-text-content">${formatRichTextContent(alert.description || '暂无描述')}</div>
         </div>
         
         <div style="margin-bottom: 24px;">
           <h3 style="font-size: 20px; margin-bottom: 12px;">预防措施</h3>
-          <div class="card-content preserve-whitespace">${escapeHtml(alert.prevention || '暂无预防措施')}</div>
+          <div class="card-content rich-text-content">${formatRichTextContent(alert.prevention || '暂无预防措施')}</div>
         </div>
         
         <div>
           <h3 style="font-size: 20px; margin-bottom: 12px;">应急预案</h3>
-          <div class="card-content preserve-whitespace">${escapeHtml(alert.emergency_plan || '暂无应急预案')}</div>
+          <div class="card-content rich-text-content">${formatRichTextContent(alert.emergency_plan || '暂无应急预案')}</div>
         </div>
       </div>
     `;

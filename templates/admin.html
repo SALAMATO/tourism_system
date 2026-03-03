@@ -20,6 +20,52 @@
     <!-- CSS -->
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    
+    <!-- CKEditor 5 自定义样式 -->
+    <style>
+        /* CKEditor 容器样式 */
+        .ck-editor__editable {
+            min-height: 300px;
+            max-height: 500px;
+        }
+        
+        /* CKEditor 内容样式 */
+        .ck-content h2 {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin: 1em 0 0.5em 0;
+            color: #2c3e50;
+        }
+        
+        .ck-content h3 {
+            font-size: 1.3em;
+            font-weight: bold;
+            margin: 0.8em 0 0.4em 0;
+            color: #34495e;
+        }
+        
+        .ck-content h4 {
+            font-size: 1.1em;
+            font-weight: bold;
+            margin: 0.6em 0 0.3em 0;
+            color: #7f8c8d;
+        }
+        
+        .ck-content p {
+            margin: 0.5em 0;
+            line-height: 1.8;
+        }
+        
+        .ck-content strong {
+            font-weight: bold;
+            color: #e74c3c;
+        }
+        
+        /* 隐藏原始textarea */
+        textarea.form-textarea.ck-hidden {
+            display: none;
+        }
+    </style>
 </head>
 <body>
   <nav class="navbar">
@@ -411,8 +457,9 @@
           <label class="form-label">回复内容 *</label>
           <textarea id="reply-content" class="form-textarea" rows="6" required></textarea>
         </div>
-        <div style="margin-top: 8px;">
-          <button id="reply-submit-btn" onclick="submitReply()" class="btn btn-primary">提交回复</button>
+        <div style="display: flex; justify-content: flex-start; gap: 12px;">
+          <button type="button" onclick="submitReply()" class="btn btn-primary" style="padding: 10px 24px;">提交回复</button>
+{#          <button type="button" class="btn btn-secondary" onclick="closeCommentsModal()" style="padding: 12px 24px;">取消</button>#}
 {#          <button type="button" id="reply-delete-btn" class="btn btn-danger" style="margin-left: 12px;">删除#}
           </button>
         </div>
@@ -445,9 +492,16 @@
   </footer>
   
 
+
+<!-- CKEditor 5 CDN - Classic版本 -->
+<script src="https://cdn.ckeditor.com/ckeditor5/41.1.0/classic/ckeditor.js"></script>
+<script src="https://cdn.ckeditor.com/ckeditor5/41.1.0/classic/translations/zh-cn.js"></script>
+
+
 <script src="{% static 'js/utils.js' %}"></script>
 <script src="{% static 'js/api.js' %}"></script>
 <script src="{% static 'js/auth.js' %}"></script>
+<script src="{% static 'js/ckeditor-init.js' %}"></script>
 <script src="{% static 'js/fetchers.js' %}"></script>
 <script src="{% static 'js/admin.js' %}"></script>
 </body>

@@ -524,3 +524,81 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 });
+
+// 富文本内容格式化函数
+function formatRichTextContent(content) {
+  if (!content) return '暂无内容';
+  
+  console.log('formatRichTextContent 输入:', content);
+  
+  // 如果内容已经是HTML格式（包含HTML标签），直接返回
+  if (/<[^>]+>/.test(content)) {
+    console.log('检测到HTML格式，直接返回');
+    return content;
+  }
+  
+  console.log('转换Markdown为HTML');
+  
+  // 否则，将Markdown格式转换为HTML
+  let html = content;
+  
+  // 转换加粗 **文本** -> <strong>文本</strong>
+  html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  
+  // 转换段落（双换行符分隔）
+  const paragraphs = html.split('\n\n');
+  
+  html = paragraphs.map(para => {
+    para = para.trim();
+    if (!para) return '';
+    
+    // 检查是否是标题（以<strong>开头和结尾）
+    if (para.startsWith('<strong>') && para.endsWith('</strong>')) {
+      const text = para.replace(/<\/?strong>/g, '');
+      
+      // 一级标题：一、二、三...
+      if (/^[一二三四五六七八九十]+、/.test(text)) {
+        return `<h2 style="font-size: 1.5em; font-weight: bold; margin: 1.5em 0 0.8em 0; color: #2c3e50;">${text}</h2>`;
+      }
+      // 二级标题：（一）（二）...
+      else if (/^[（(][一二三四五六七八九十]+[）)]/.test(text)) {
+        return `<h3 style="font-size: 1.3em; font-weight: bold; margin: 1.2em 0 0.6em 0; color: #34495e;">${text}</h3>`;
+      }
+      // 三级标题：1. 2. 3...
+      else if (/^\d+[.、]/.test(text)) {
+        return `<h4 style="font-size: 1.1em; font-weight: bold; margin: 1em 0 0.5em 0; color: #7f8c8d;">${text}</h4>`;
+      }
+      // 其他加粗文本
+      else {
+        return `<p style="margin: 0.8em 0; line-height: 1.8;"><strong style="color: #e74c3c; font-weight: bold;">${text}</strong></p>`;
+      }
+    }
+    
+    // 普通段落
+    return `<p style="margin: 0.8em 0; line-height: 1.8;">${para}</p>`;
+  }).join('');
+  
+  console.log('formatRichTextContent 输出:', html);
+  
+  return html;
+}
+
+// 富文本预览格式化函数（用于列表摘要）
+function formatRichTextPreview(content, maxLength = 200) {
+  if (!content) return '暂无内容';
+  
+  // 先转换为富文本HTML
+  const html = formatRichTextContent(content);
+  
+  // 创建临时元素提取纯文本
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = html;
+  const text = tempDiv.textContent || tempDiv.innerText || '';
+  
+  // 截取指定长度
+  if (text.length > maxLength) {
+    return escapeHtml(text.substring(0, maxLength)) + '...';
+  }
+  
+  return escapeHtml(text);
+}

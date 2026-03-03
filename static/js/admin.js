@@ -1,4 +1,4 @@
-﻿//管理后台逻辑
+//管理后台逻辑
 let currentReplyMessageId = null;
 const replyModal = new Modal('reply-modal');
 
@@ -188,7 +188,16 @@ async function editPolicy(id) {
     document.getElementById('policy-department').value = policy.department || '';
     // 将时间转为 yyyy-MM-dd 形式填到 date 输入框
     document.getElementById('policy-date').value = formatDate(policy.publish_date);
-    document.getElementById('policy-content').value = policy.content || '';
+    
+    // 使用CKEditor设置内容
+    if (window.CKEditorHelper && policy.content) {
+      setTimeout(() => {
+        window.CKEditorHelper.setContent('policy-content', policy.content);
+      }, 100);
+    } else {
+      document.getElementById('policy-content').value = policy.content || '';
+    }
+    
     document.getElementById('policy-url').value = policy.file_url || '';
     document.getElementById('policy-tags').value = (policy.tags || []).join(',');
 
@@ -199,7 +208,8 @@ async function editPolicy(id) {
     const deleteBtn = document.getElementById('policy-delete-btn');
     if (deleteBtn) deleteBtn.style.display = 'inline-block';
 
-    scrollToTop();
+    // 滚动到政策法规管理区域
+    document.getElementById('policy-module').scrollIntoView({ behavior: 'smooth', block: 'start' });
   } catch (error) {
     console.error('加载政策详情用于编辑失败:', error);
     showNotification('加载政策详情失败', 'error');
@@ -299,7 +309,15 @@ async function editNews(id) {
     document.getElementById('news-category').value = news.category || '';
     document.getElementById('news-author').value = news.author || '';
     document.getElementById('news-cover').value = news.cover_image || '';
-    document.getElementById('news-content').value = news.content || '';
+    
+    // 使用CKEditor设置内容
+    if (window.CKEditorHelper && news.content) {
+      setTimeout(() => {
+        window.CKEditorHelper.setContent('news-content', news.content);
+      }, 100);
+    } else {
+      document.getElementById('news-content').value = news.content || '';
+    }
     document.getElementById('news-tags').value = (news.tags || []).join(',');
 
     const titleEl = document.querySelector('#news-module .card-title');
@@ -309,7 +327,8 @@ async function editNews(id) {
     const deleteBtn = document.getElementById('news-delete-btn');
     if (deleteBtn) deleteBtn.style.display = 'inline-block';
 
-    scrollToTop();
+    // 滚动到新闻资讯管理区域
+    document.getElementById('news-module').scrollIntoView({ behavior: 'smooth', block: 'start' });
   } catch (error) {
     console.error('加载新闻详情用于编辑失败:', error);
     showNotification('加载新闻详情失败', 'error');
@@ -402,9 +421,20 @@ async function editSafetyAlert(id) {
     document.getElementById('safety-title').value = alert.title || '';
     document.getElementById('safety-risk').value = alert.risk_level || '中';
     document.getElementById('safety-category').value = alert.category || '';
-    document.getElementById('safety-description').value = alert.description || '';
-    document.getElementById('safety-prevention').value = alert.prevention || '';
-    document.getElementById('safety-plan').value = alert.emergency_plan || '';
+    
+    // 使用CKEditor设置内容
+    if (window.CKEditorHelper) {
+      setTimeout(() => {
+        window.CKEditorHelper.setContent('safety-description', alert.description || '');
+        window.CKEditorHelper.setContent('safety-prevention', alert.prevention || '');
+        window.CKEditorHelper.setContent('safety-plan', alert.emergency_plan || '');
+      }, 100);
+    } else {
+      document.getElementById('safety-description').value = alert.description || '';
+      document.getElementById('safety-prevention').value = alert.prevention || '';
+      document.getElementById('safety-plan').value = alert.emergency_plan || '';
+    }
+    
     document.getElementById('safety-status').value = alert.status || '待处理';
 
     const titleEl = document.querySelector('#safety-module .card-title');
@@ -414,7 +444,8 @@ async function editSafetyAlert(id) {
     const deleteBtn = document.getElementById('safety-delete-btn');
     if (deleteBtn) deleteBtn.style.display = 'inline-block';
 
-    scrollToTop();
+    // 滚动到安全隐患管理区域
+    document.getElementById('safety-module').scrollIntoView({ behavior: 'smooth', block: 'start' });
   } catch (error) {
     console.error('加载安全隐患详情用于编辑失败:', error);
     showNotification('加载安全隐患详情失败', 'error');
@@ -509,7 +540,8 @@ async function editStatistic(id) {
     const deleteBtn = document.getElementById('statistics-delete-btn');
     if (deleteBtn) deleteBtn.style.display = 'inline-block';
 
-    scrollToTop();
+    // 滚动到统计数据管理区域
+    document.getElementById('statistics-module').scrollIntoView({ behavior: 'smooth', block: 'start' });
   } catch (error) {
     console.error('加载统计数据详情用于编辑失败:', error);
     showNotification('加载统计数据详情失败', 'error');
@@ -831,7 +863,7 @@ async function loadMessagesForAdmin() {
 // 渲染留言管理列表（管理员视图）
 function renderMessagesForAdmin(container, messages) {
   const html = messages.map(msg => `
-    <div class="card" style="margin-bottom: 20px; ${msg.is_hidden ? 'opacity: 0.6; border: 2px solid #ff4444;' : ''}">
+    <div class="card" data-message-id="${msg.id}" style="margin-bottom: 20px; ${msg.is_hidden ? 'opacity: 0.6; border: 2px solid #ff4444;' : ''}">
       <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 16px;">
         <div>
           <h3 style="font-size: 20px; margin-bottom: 8px;">
@@ -863,13 +895,13 @@ function renderMessagesForAdmin(container, messages) {
           </div>
         </div>
         <strong>留言内容：</strong>
-        <p class="preserve-whitespace" style="margin-top: 8px; line-height: 1.6;">${escapeHtml(msg.content)}</p>
+        <div class="rich-text-content" style="margin-top: 8px; line-height: 1.6;">${formatRichTextContent(msg.content)}</div>
       </div>
       
       ${msg.reply ? `
         <div style="margin-bottom: 16px; padding: 16px; background: rgba(0, 113, 227, 0.05); border-radius: 8px; border-left: 3px solid var(--primary-color);">
           <strong style="color: var(--primary-color);"><i class="fas fa-reply"></i> 官方回复：</strong>
-          <p class="preserve-whitespace" style="margin-top: 8px; line-height: 1.6;">${escapeHtml(msg.reply)}</p>
+          <div class="rich-text-content" style="margin-top: 8px; line-height: 1.6;">${formatRichTextContent(msg.reply)}</div>
         </div>
       ` : ''}
       
@@ -942,12 +974,22 @@ async function openReplyModal(messageId) {
         <p style="margin-top: 8px;"><strong>邮箱：</strong> ${escapeHtml(message.user_email || '未填写')}</p>
         <p style="margin-top: 8px;"><strong>电话：</strong> ${escapeHtml(message.user_phone || '未填写')}</p>
         <p style="margin-top: 8px;"><strong>类型：</strong> ${escapeHtml(message.message_type)}</p>
-        <p style="margin-top: 8px;"><strong>内容：</strong> ${escapeHtml(message.content)}</p>
+        <div style="margin-top: 8px;"><strong>内容：</strong></div>
+        <div class="rich-text-content" style="margin-top: 8px; padding: 12px; background: var(--background); border-radius: 4px;">${formatRichTextContent(message.content)}</div>
       </div>
     `;
     
     document.getElementById('reply-message-info').innerHTML = infoHtml;
-    document.getElementById('reply-content').value = message.reply || '';
+    
+    // 设置回复内容（支持CKEditor）
+    const replyContent = message.reply || '';
+    if (window.CKEditorHelper && window.CKEditorHelper.editorInstances['reply-content']) {
+      // 如果CKEditor已初始化，使用CKEditor API
+      window.CKEditorHelper.setContent('reply-content', replyContent);
+    } else {
+      // 否则直接设置textarea的值
+      document.getElementById('reply-content').value = replyContent;
+    }
     
     // 根据是否已有回复，更新模态框标题和提交按钮文字
     const isEditing = !!message.reply;
@@ -965,7 +1007,15 @@ async function openReplyModal(messageId) {
 
 // 提交回复 / 保存修改
 async function submitReply() {
-  const replyContent = document.getElementById('reply-content').value.trim();
+  // 获取回复内容（支持CKEditor）
+  let replyContent;
+  if (window.CKEditorHelper && window.CKEditorHelper.editorInstances['reply-content']) {
+    // 如果CKEditor已初始化，使用CKEditor API
+    replyContent = window.CKEditorHelper.getContent('reply-content').trim();
+  } else {
+    // 否则直接获取textarea的值
+    replyContent = document.getElementById('reply-content').value.trim();
+  }
   
   if (!replyContent) {
     showNotification('请输入回复内容', 'error');
@@ -976,7 +1026,25 @@ async function submitReply() {
     await api.replyMessage(currentReplyMessageId, replyContent);
     showNotification('保存成功', 'success');
     replyModal.close();
-    loadMessagesForAdmin();
+    
+    // 不重新加载整个列表，只刷新当前留言的状态
+    // 这样页面会保持在原来的位置
+    const messageCard = document.querySelector(`[data-message-id="${currentReplyMessageId}"]`);
+    if (messageCard) {
+      // 更新留言卡片的状态和回复内容
+      const message = await api.getMessage(currentReplyMessageId);
+      const statusTag = messageCard.querySelector('.tag');
+      if (statusTag) {
+        statusTag.className = 'tag success';
+        statusTag.textContent = '已回复';
+      }
+      
+      // 更新回复按钮文字
+      const replyBtn = messageCard.querySelector('[onclick*="openReplyModal"]');
+      if (replyBtn) {
+        replyBtn.innerHTML = '<i class="fa-solid fa-edit"></i> 修改回复';
+      }
+    }
   } catch (error) {
     console.error('回复/修改失败:', error);
     showNotification('保存失败，请稍后重试', 'error');
@@ -1113,8 +1181,8 @@ async function loadAdminMessageComments(messageId) {
                 </div>
               </div>
             </div>
-            <div class="comment-content" style="font-size: 14px; line-height: 1.6; padding: 8px 0;">
-              ${escapeHtml(comment.content)}
+            <div class="comment-content rich-text-content" style="font-size: 14px; line-height: 1.6; padding: 8px 0;">
+              ${formatRichTextContent(comment.content)}
             </div>
           </div>
         `).join('')}

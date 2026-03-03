@@ -51,7 +51,7 @@ function renderNewsDetail(container, news) {
         </div>
       ` : ''}
       
-      <div class="card-content preserve-whitespace" style="font-size: 18px; line-height: 1.8;">${escapeHtml(news.content || '暂无内容')}</div>
+      <div class="card-content rich-text-content" style="font-size: 18px; line-height: 1.8;">${formatRichTextContent(news.content || '暂无内容')}</div>
       
       ${news.tags && news.tags.length > 0 ? `
         <div style="margin-top: 40px; padding-top: 30px; border-top: 1px solid var(--border-color);">

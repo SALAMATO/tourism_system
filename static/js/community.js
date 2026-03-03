@@ -1,5 +1,63 @@
 // 互动交流平台逻辑
 
+// 本地formatRichTextContent函数（避免依赖问题）
+function formatRichTextContentLocal(content) {
+  if (!content) return '暂无内容';
+  
+  console.log('[卡片评论] formatRichTextContent 输入:', content);
+  
+  // 如果内容已经是HTML格式（包含HTML标签），直接返回
+  if (/<[^>]+>/.test(content)) {
+    console.log('[卡片评论] 检测到HTML格式，直接返回');
+    return content;
+  }
+  
+  console.log('[卡片评论] 转换Markdown为HTML');
+  
+  // 否则，将Markdown格式转换为HTML
+  let html = content;
+  
+  // 转换加粗 **文本** -> <strong>文本</strong>
+  html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  
+  // 转换段落（双换行符分隔）
+  const paragraphs = html.split('\n\n');
+  
+  html = paragraphs.map(para => {
+    para = para.trim();
+    if (!para) return '';
+    
+    // 检查是否是标题（以<strong>开头和结尾）
+    if (para.startsWith('<strong>') && para.endsWith('</strong>')) {
+      const text = para.replace(/<\/?strong>/g, '');
+      
+      // 一级标题：一、二、三...
+      if (/^[一二三四五六七八九十]+、/.test(text)) {
+        return `<h2 style="font-size: 1.5em; font-weight: bold; margin: 1.5em 0 0.8em 0; color: #2c3e50;">${text}</h2>`;
+      }
+      // 二级标题：（一）（二）...
+      else if (/^[（(][一二三四五六七八九十]+[）)]/.test(text)) {
+        return `<h3 style="font-size: 1.3em; font-weight: bold; margin: 1.2em 0 0.6em 0; color: #34495e;">${text}</h3>`;
+      }
+      // 三级标题：1. 2. 3...
+      else if (/^\d+[.、]/.test(text)) {
+        return `<h4 style="font-size: 1.1em; font-weight: bold; margin: 1em 0 0.5em 0; color: #7f8c8d;">${text}</h4>`;
+      }
+      // 其他加粗文本
+      else {
+        return `<p style="margin: 0.8em 0; line-height: 1.8;"><strong style="color: #e74c3c; font-weight: bold;">${text}</strong></p>`;
+      }
+    }
+    
+    // 普通段落
+    return `<p style="margin: 0.8em 0; line-height: 1.8;">${para}</p>`;
+  }).join('');
+  
+  console.log('[卡片评论] formatRichTextContent 输出:', html);
+  
+  return html;
+}
+
 let currentSort = 'latest'; // latest, hot, replied
 let currentPage = 1;
 let isLoading = false;
@@ -76,7 +134,7 @@ async function submitMessage() {
   }
 
   const messageType = document.getElementById('message-type').value;
-  const content = document.getElementById('content').value.trim();
+  const content = document.getElementById('message-content').value.trim();
   
   if (!content) {
     showNotification('请输入内容', 'error');
@@ -95,6 +153,12 @@ async function submitMessage() {
     
     // 清空表单
     document.getElementById('message-form').reset();
+    
+    // 清空CKEditor
+    if (window.CKEditorHelper) {
+      window.CKEditorHelper.clearContent('message-content');
+    }
+    
     postModal.close();
     
     // 刷新列表
@@ -198,12 +262,15 @@ function createMessageCard(msg) {
   const isOwner = user && user.id === msg.user;
   
   // 处理内容显示（最多200字）
-  const content = escapeHtml(msg.content);
-  const needsExpand = content.length > 200;
-  const shortContent = needsExpand ? content.substring(0, 200) + '...' : content;
+  const formattedContent = formatRichTextContent(msg.content);
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = formattedContent;
+  const textContent = tempDiv.textContent || tempDiv.innerText || '';
+  const needsExpand = textContent.length > 200;
+  const shortContent = needsExpand ? formattedContent.substring(0, 400) + '...' : formattedContent;
   
   return `
-    <div class="card message-card" style="margin-bottom: 20px;" data-id="${msg.id}">
+    <div class="card message-card" style="margin-bottom: 20px;" data-message-id="${msg.id}" data-id="${msg.id}">
       <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 16px;">
         <div>
           <h3 style="font-size: 18px; margin-bottom: 8px;">
@@ -233,8 +300,8 @@ function createMessageCard(msg) {
         </div>
       </div>
       
-      <div class="message-content-box" style="margin-bottom: 16px; padding: 16px; background: var(--background-secondary); border-radius: 8px;">
-        <p class="preserve-whitespace message-content-text" style="line-height: 1.6; margin: 0;" data-full="${content}" data-short="${shortContent}">${linkify(needsExpand ? shortContent : content)}</p>${needsExpand ? `
+      <div class="message-content-box rich-text-content" style="margin-bottom: 16px; padding: 16px; background: var(--background-secondary); border-radius: 8px;">
+        <div class="message-content-text" style="line-height: 1.6; margin: 0;" data-full="${formattedContent}" data-short="${shortContent}">${linkify(needsExpand ? shortContent : formattedContent)}</div>${needsExpand ? `
           <button class="btn-expand" onclick="toggleContent(event, '${msg.id}')" style="margin-top: 8px; color: var(--primary-color); background: none; border: none; cursor: pointer; font-size: 14px;">
             <i class="fas fa-chevron-down"></i> 显示更多
           </button>
@@ -242,9 +309,9 @@ function createMessageCard(msg) {
       </div>
       
       ${msg.reply ? `
-        <div style="margin-bottom: 16px; padding: 16px; background: rgba(0, 113, 227, 0.05); border-radius: 8px; border-left: 3px solid var(--primary-color);">
+        <div class="rich-text-content" style="margin-bottom: 16px; padding: 16px; background: rgba(0, 113, 227, 0.05); border-radius: 8px; border-left: 3px solid var(--primary-color);">
           <strong style="color: var(--primary-color);"><i class="fas fa-shield-alt"></i> 官方回复：</strong>
-          <p class="preserve-whitespace" style="margin: 8px 0 0 0; line-height: 1.6;">${escapeHtml(msg.reply)}</p>
+          <div style="margin: 8px 0 0 0; line-height: 1.6;">${formatRichTextContent(msg.reply)}</div>
         </div>
       ` : ''}
       
@@ -301,10 +368,28 @@ async function toggleLike(messageId, isLiked) {
       await api.likeMessage(messageId);
     }
 
-    // 刷新点赞状态和列表
-    currentPage = 1;
-    hasMore = true;
-    loadMessages(true);
+    // 不重新加载整个列表，只更新当前留言卡片的点赞状态
+    const messageCard = document.querySelector(`[data-message-id="${messageId}"]`);
+    if (messageCard) {
+      const likeBtn = messageCard.querySelector('.btn-like');
+      const likeCount = messageCard.querySelector('.btn-like span');
+      
+      if (likeBtn && likeCount) {
+        if (isLiked) {
+          // 取消点赞
+          likeBtn.classList.remove('liked');
+          likeCount.textContent = parseInt(likeCount.textContent) - 1;
+          // 更新onclick属性，将isLiked改为false
+          likeBtn.setAttribute('onclick', `toggleLike('${messageId}', false)`);
+        } else {
+          // 点赞
+          likeBtn.classList.add('liked');
+          likeCount.textContent = parseInt(likeCount.textContent) + 1;
+          // 更新onclick属性，将isLiked改为true
+          likeBtn.setAttribute('onclick', `toggleLike('${messageId}', true)`);
+        }
+      }
+    }
   } catch (error) {
     console.error("点赞操作失败:", error);
     showNotification(error.message || "操作失败", "error");
@@ -319,15 +404,11 @@ async function openCommentsModal(messageId) {
     currentReplyMessageId = messageId;
     const message = await api.getMessage(messageId);
     
-    // 处理内容显示（最多200字）
-    const content = message.content;
-    const needsExpand = content.length > 200;
-    const shortContent = needsExpand ? content.substring(0, 200) + '...' : content;
-
-    document.getElementById("comments-message-info").innerHTML = `
-      <div style="padding-bottom: 20px; border-bottom: 1px solid var(--border-color);">
-        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
-          <div style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, var(--primary-color), var(--primary-hover)); display: flex; align-items: center; justify-content: center; color: white; font-size: 18px;">
+    // 构建留言信息HTML（参考管理后台样式）
+    const infoHtml = `
+      <div style="padding: 20px; background: var(--background-secondary); border-radius: 12px; margin-bottom: 20px;">
+        <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;">
+          <div style="width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, var(--primary-color), var(--primary-hover)); display: flex; align-items: center; justify-content: center; color: white; font-size: 20px;">
             <i class="fas fa-user"></i>
           </div>
           <div style="flex: 1;">
@@ -335,19 +416,52 @@ async function openCommentsModal(messageId) {
               ${escapeHtml(message.user_nickname || "匿名用户")}
             </div>
             <div style="font-size: 13px; color: var(--text-secondary);">
-              ${formatRelativeTime(new Date(message.created_at).getTime())}
+              <i class="fas fa-clock"></i> ${formatRelativeTime(new Date(message.created_at).getTime())}
+              <span style="margin-left: 12px;"><i class="fas fa-tag"></i> ${escapeHtml(message.message_type || '留言')}</span>
             </div>
           </div>
+          <div style="display: flex; gap: 8px;">
+            <span class="tag ${message.status === '已回复' ? 'success' : 'warning'}" style="font-size: 12px;">
+              ${escapeHtml(message.status || '待回复')}
+            </span>
+          </div>
         </div>
-        <p class="preserve-whitespace modal-content-text" style="line-height: 1.7; color: var(--text-primary); margin: 0; font-size: 15px;" data-full="${escapeHtml(content)}" data-short="${escapeHtml(shortContent)}">${escapeHtml(needsExpand ? shortContent : content)}</p>${needsExpand ? `
-        <button class="btn-expand-modal" onclick="toggleModalContent()" style="margin-top: 12px; color: var(--primary-color); background: none; border: none; cursor: pointer; font-size: 14px; padding: 0; font-weight: 500;">
-          <i class="fas fa-chevron-down"></i> 显示更多
-        </button>
+        
+        <div style="padding: 16px; background: var(--background); border-radius: 8px; border-left: 3px solid var(--primary-color);">
+          <div style="font-weight: 500; margin-bottom: 8px; color: var(--text-secondary); font-size: 13px;">
+            <i class="fas fa-comment-dots"></i> 留言内容
+          </div>
+          <div class="rich-text-content" style="line-height: 1.7; color: var(--text-primary); font-size: 14px;">
+            ${formatRichTextContentLocal(message.content)}
+          </div>
+        </div>
+        
+        ${message.reply ? `
+          <div style="margin-top: 12px; padding: 16px; background: rgba(0, 113, 227, 0.05); border-radius: 8px; border-left: 3px solid var(--primary-color);">
+            <div style="font-weight: 500; margin-bottom: 8px; color: var(--primary-color); font-size: 13px;">
+              <i class="fas fa-reply"></i> 官方回复
+            </div>
+            <div class="rich-text-content" style="line-height: 1.7; color: var(--text-primary); font-size: 14px;">
+              ${formatRichTextContentLocal(message.reply)}
+            </div>
+          </div>
         ` : ''}
+        
+        <div style="margin-top: 12px; display: flex; gap: 16px; font-size: 13px; color: var(--text-secondary);">
+          <span><i class="fas fa-heart"></i> ${message.likes_count || 0} 点赞</span>
+          <span><i class="fas fa-comment"></i> ${message.comments_count || 0} 评论</span>
+        </div>
       </div>
     `;
 
+    document.getElementById("comments-message-info").innerHTML = infoHtml;
     document.getElementById("comment-content").value = "";
+    
+    // 清空CKEditor
+    if (window.CKEditorHelper) {
+      window.CKEditorHelper.clearContent('comment-content');
+    }
+    
     commentsModal.open();
 
     await loadCommentsInModal(messageId);
@@ -368,13 +482,30 @@ async function submitComment() {
   try {
     await api.addComment(currentReplyMessageId, content);
     showNotification("评论成功", "success");
+    
+    // 清空输入框
     document.getElementById("comment-content").value = "";
+    
+    // 清空CKEditor
+    if (window.CKEditorHelper) {
+      window.CKEditorHelper.clearContent('comment-content');
+    }
 
     await loadCommentsInModal(currentReplyMessageId);
 
-    currentPage = 1;
-    hasMore = true;
-    loadMessages(true);
+    // 不重新加载整个列表，只更新当前留言卡片的评论数
+    const messageCard = document.querySelector(`[data-message-id="${currentReplyMessageId}"]`);
+    if (messageCard) {
+      const commentsBtn = messageCard.querySelector('.btn-comments');
+      if (commentsBtn) {
+        // 更新评论数
+        const match = commentsBtn.textContent.match(/\d+/);
+        if (match) {
+          const currentCount = parseInt(match[0]);
+          commentsBtn.innerHTML = `<i class="fa-solid fa-comments"></i> 查看评论 (${currentCount + 1})`;
+        }
+      }
+    }
   } catch (error) {
     console.error("评论失败:", error);
     showNotification("评论失败：" + error.message, "error");
@@ -389,43 +520,59 @@ async function loadCommentsInModal(messageId) {
     if (!container) return;
 
     if (comments.length > 0) {
-      container.innerHTML = `
+      const html = `
         <div style="margin-top: 24px;">
-          <h4 style="font-size: 15px; font-weight: 600; color: var(--text-primary); margin-bottom: 16px;">
-            全部评论 (${comments.length})
+          <h4 style="font-size: 16px; font-weight: 600; color: var(--primary-color); margin-bottom: 16px;">
+            <i class="fas fa-comments"></i> 评论列表 (${comments.length})
           </h4>
-          ${comments
-            .map((comment) => {
-              const isOfficial = comment.user_is_staff;
-              return `
-                <div class="modal-comment-item" style="padding: 16px 0; border-bottom: 1px solid var(--border-color);">
-                  <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
-                    <div style="width: 32px; height: 32px; border-radius: 50%; background: ${isOfficial ? 'linear-gradient(135deg, var(--primary-color), var(--primary-hover))' : 'var(--background-secondary)'}; display: flex; align-items: center; justify-content: center; color: ${isOfficial ? 'white' : 'var(--text-secondary)'}; font-size: 14px;">
-                      <i class="fas fa-user"></i>
+          ${comments.map(comment => {
+            const isOfficial = comment.user_is_staff;
+            return `
+              <div class="modal-comment-item" style="position: relative; padding: 16px; background: var(--background-secondary); border-radius: 8px; margin-bottom: 12px;">
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
+                  <div style="display: flex; align-items: center; gap: 12px; flex: 1;">
+                    <div style="width: 36px; height: 36px; border-radius: 50%; background: ${isOfficial ? 'linear-gradient(135deg, var(--primary-color), var(--primary-hover))' : 'var(--background-tertiary)'}; display: flex; align-items: center; justify-content: center; color: ${isOfficial ? 'white' : 'var(--text-secondary)'}; font-size: 16px;">
+                      <i class="fas fa-user${isOfficial ? '-tie' : '-circle'}"></i>
                     </div>
                     <div style="flex: 1;">
-                      <div style="display: flex; align-items: center; gap: 8px;">
-                        <span style="font-size: 14px; font-weight: 500; color: var(--text-primary);">${escapeHtml(comment.user_nickname || "匿名用户")}</span>
-                        ${isOfficial ? '<span class="tag primary" style="font-size: 11px; padding: 2px 8px;">官方</span>' : ""}
+                      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                        <span style="font-size: 14px; font-weight: 500; color: var(--text-primary);">
+                          ${escapeHtml(comment.user_nickname || "匿名用户")}
+                        </span>
+                        ${isOfficial ? '<span class="tag primary" style="font-size: 11px; padding: 2px 8px;">官方回复</span>' : ''}
                       </div>
-                      <span style="color: var(--text-secondary); font-size: 12px;">
-                        ${formatRelativeTime(new Date(comment.created_at).getTime())}
-                      </span>
+                      <div style="font-size: 12px; color: var(--text-secondary);">
+                        <i class="fas fa-clock"></i> ${formatRelativeTime(new Date(comment.created_at).getTime())}
+                      </div>
                     </div>
                   </div>
-                  <p class="preserve-whitespace" style="margin: 0 0 0 44px; line-height: 1.6; font-size: 14px; color: var(--text-primary);">${escapeHtml(comment.content)}</p>
                 </div>
-              `;
-            })
-            .join("")}
+                <div class="rich-text-content" style="margin-left: 48px; line-height: 1.6; font-size: 14px; color: var(--text-primary);">
+                  ${formatRichTextContentLocal(comment.content)}
+                </div>
+              </div>
+            `;
+          }).join('')}
         </div>
       `;
+      container.innerHTML = html;
     } else {
-      container.innerHTML =
-        '<div style="padding: 60px 0; text-align: center;"><div style="font-size: 48px; margin-bottom: 12px; opacity: 0.3;">💬</div><div style="color: var(--text-secondary); font-size: 14px;">还没有评论，快来抢沙发吧</div></div>';
+      container.innerHTML = `
+        <div style="padding: 60px 0; text-align: center;">
+          <div style="font-size: 48px; margin-bottom: 12px; opacity: 0.3;">💬</div>
+          <div style="color: var(--text-secondary); font-size: 14px;">还没有评论，快来抢沙发吧</div>
+        </div>
+      `;
     }
   } catch (error) {
     console.error("加载评论失败:", error);
+    container.innerHTML = `
+      <div style="padding: 40px 0; text-align: center;">
+        <div style="color: var(--danger-color); font-size: 14px;">
+          <i class="fas fa-exclamation-circle"></i> 加载评论失败
+        </div>
+      </div>
+    `;
   }
 }
 
@@ -466,7 +613,7 @@ async function loadCommentsInline(messageId) {
                       ${formatRelativeTime(new Date(comment.created_at).getTime())}
                     </span>
                   </div>
-                  <p class="preserve-whitespace" style="margin: 0; line-height: 1.6; font-size: 14px; color: var(--text-primary);">${escapeHtml(comment.content)}</p>
+                  <div class="rich-text-content" style="margin: 0; line-height: 1.6; font-size: 14px; color: var(--text-primary);">${formatRichTextContentLocal(comment.content)}</div>
                 </div>
               `;
             })

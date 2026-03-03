@@ -38,7 +38,13 @@ async function fetchNewsFromUrl() {
     
     document.getElementById('news-title').value = data.title || '';
     document.getElementById('news-author').value = data.author || '';
-    document.getElementById('news-content').value = data.content || '';
+    
+    // 使用CKEditor设置内容
+    if (window.CKEditorHelper && data.content) {
+      window.CKEditorHelper.setContent('news', data.content);
+    } else {
+      document.getElementById('news-content').value = data.content || '';
+    }
     
     // 如果有发布日期，填充它
     if (data.publish_date) {
@@ -104,8 +110,14 @@ async function fetchPolicyFromUrl() {
     document.getElementById('policy-title').value = data.title || '';
     document.getElementById('policy-department').value = data.department || '';
     document.getElementById('policy-date').value = data.publish_date || '';
-    document.getElementById('policy-content').value = data.content || '';
     document.getElementById('policy-url').value = data.url || '';
+    
+    // 使用CKEditor设置内容
+    if (window.CKEditorHelper && data.content) {
+      window.CKEditorHelper.setContent('policy', data.content);
+    } else {
+      document.getElementById('policy-content').value = data.content || '';
+    }
     
     statusDiv.innerHTML = '<span style="color: var(--success-color);"><i class="fas fa-check-circle"></i> 识别成功！已自动填充标题、发布部门、发布日期和内容</span>';
     showNotification('政策识别成功', 'success');

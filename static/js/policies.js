@@ -129,8 +129,8 @@ function renderPolicies(container, policies) {
         </div>
         <span class="tag ${getLevelTagClass(policy.level)}">${escapeHtml(policy.level || '未分类')}</span>
       </div>
-      <div class="list-item-content">
-        ${truncateText(stripHtml(policy.content), 200)}
+      <div class="list-item-content rich-text-preview">
+        ${formatRichTextPreview(policy.content, 200)}
       </div>
       ${policy.tags && policy.tags.length > 0 ? `
         <div style="margin-top: 12px;">
