@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="JavaScriptLibraryMappings">
-    <file url="file://$PROJECT_DIR$" libraries="{@fortawesome/fontawesome-free, echarts}" />
+    <file url="file://$PROJECT_DIR$" libraries="{@fortawesome/fontawesome-free, ckeditor, ckeditor5, ckeditor5.umd, echarts, zh-cn, zh-cn.umd}" />
   </component>
 </project>
