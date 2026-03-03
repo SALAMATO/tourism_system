@@ -1,4 +1,4 @@
-﻿/**
+/**
  * CKEditor 5 Classic版本集成脚本
  * 使用Classic版本可用的功能
  */

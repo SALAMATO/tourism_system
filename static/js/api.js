@@ -296,6 +296,22 @@ class API {
     });
     return await this.getTableData('messages', { ...params, search: queryParams.get('user_id') });
   }
+
+  // 从URL提取政策内容
+  async fetchPolicyFromUrl(url) {
+    return await this.request(`${this.baseURL}policies/fetch_from_url/`, {
+      method: 'POST',
+      body: JSON.stringify({ url })
+    });
+  }
+
+  // 从URL提取新闻内容
+  async fetchNewsFromUrl(url) {
+    return await this.request(`${this.baseURL}news/fetch_from_url/`, {
+      method: 'POST',
+      body: JSON.stringify({ url })
+    });
+  }
 }
 
 // 创建全局API实例

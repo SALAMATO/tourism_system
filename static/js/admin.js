@@ -85,10 +85,20 @@ function initForms() {
     await submitPolicy();
   });
   
+  // 智能原文识别按钮
+  document.getElementById('fetch-policy-btn').addEventListener('click', async () => {
+    await fetchPolicyFromUrl();
+  });
+  
   // 新闻资讯表单
   document.getElementById('news-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     await submitNews();
+  });
+  
+  // 智能新闻识别按钮
+  document.getElementById('fetch-news-btn').addEventListener('click', async () => {
+    await fetchNewsFromUrl();
   });
   
   // 安全隐患表单
@@ -1586,4 +1596,99 @@ async function resetUserPasswordAction(userId) {
     showNotification('重置密码失败：' + error.message, 'error');
   }
 }
+// 智能原文识别
+async function fetchPolicyFromUrl() {
+  const urlInput = document.getElementById('policy-url-input');
+  const statusDiv = document.getElementById('fetch-policy-status');
+  const fetchBtn = document.getElementById('fetch-policy-btn');
+  
+  const url = urlInput.value.trim();
+  if (!url) {
+    statusDiv.innerHTML = '<span style="color: var(--danger-color);">请输入政策URL</span>';
+    return;
+  }
+  
+  try {
+    // 显示加载状态
+    fetchBtn.disabled = true;
+    fetchBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 识别中...';
+    statusDiv.innerHTML = '<span style="color: var(--primary-color);">正在识别原文，请稍候...</span>';
+    
+    // 调用API
+    const data = await api.fetchPolicyFromUrl(url);
+    
+    // 填充表单
+    if (data.title) document.getElementById('policy-title').value = data.title;
+    if (data.department) document.getElementById('policy-department').value = data.department;
+    if (data.publish_date) document.getElementById('policy-date').value = data.publish_date;
+    if (data.content) {
+      // 使用CKEditor设置内容
+      if (window.CKEditorHelper) {
+        setTimeout(() => {
+          window.CKEditorHelper.setContent('policy-content', data.content);
+        }, 100);
+      } else {
+        document.getElementById('policy-content').value = data.content;
+      }
+    }
+    
+    statusDiv.innerHTML = '<span style="color: var(--success-color);"><i class="fas fa-check-circle"></i> 识别成功！已自动填充表单</span>';
+    showNotification('原文识别成功', 'success');
+    
+  } catch (error) {
+    console.error('识别失败:', error);
+    statusDiv.innerHTML = `<span style="color: var(--danger-color);"><i class="fas fa-exclamation-circle"></i> 识别失败：${error.message}</span>`;
+    showNotification('识别失败：' + error.message, 'error');
+  } finally {
+    fetchBtn.disabled = false;
+    fetchBtn.innerHTML = '<i class="fas fa-download"></i> 识别原文';
+  }
+}
 
+// 智能新闻识别
+async function fetchNewsFromUrl() {
+  const urlInput = document.getElementById('news-url-input');
+  const statusDiv = document.getElementById('fetch-news-status');
+  const fetchBtn = document.getElementById('fetch-news-btn');
+  
+  const url = urlInput.value.trim();
+  if (!url) {
+    statusDiv.innerHTML = '<span style="color: var(--danger-color);">请输入新闻URL</span>';
+    return;
+  }
+  
+  try {
+    // 显示加载状态
+    fetchBtn.disabled = true;
+    fetchBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 识别中...';
+    statusDiv.innerHTML = '<span style="color: var(--primary-color);">正在识别新闻，请稍候...</span>';
+    
+    // 调用API
+    const data = await api.fetchNewsFromUrl(url);
+    
+    // 填充表单
+    if (data.title) document.getElementById('news-title').value = data.title;
+    if (data.author) document.getElementById('news-author').value = data.author;
+    if (data.content) {
+      // 使用CKEditor设置内容
+      if (window.CKEditorHelper) {
+        setTimeout(() => {
+          window.CKEditorHelper.setContent('news-content', data.content);
+        }, 100);
+      } else {
+        document.getElementById('news-content').value = data.content;
+      }
+    }
+    
+    statusDiv.innerHTML = '<span style="color: var(--success-color);"><i class="fas fa-check-circle"></i> 识别成功！已自动填充表单</span>';
+    showNotification('新闻识别成功', 'success');
+    
+  } catch (error) {
+    console.error('识别失败:', error);
+    statusDiv.innerHTML = `<span style="color: var(--danger-color);"><i class="fas fa-exclamation-circle"></i> 识别失败：${error.message}</span>`;
+    showNotification('识别失败：' + error.message, 'error');
+  } finally {
+    fetchBtn.disabled = false;
+    fetchBtn.innerHTML = '<i class="fas fa-download"></i> 识别新闻';
+  }
+}
