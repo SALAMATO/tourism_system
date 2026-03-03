@@ -1778,3 +1778,40 @@ body {
 	background-color: #141517;
 }
 
+/* 富文本内容全局样式 - 修复图片显示问题 */
+.rich-text-content img,
+.rich-text-preview img,
+.card-content img,
+.ck-content img {
+  max-width: 100% !important;
+  height: auto !important;
+  display: block;
+  margin: 1em auto;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.rich-text-content figure,
+.rich-text-preview figure,
+.card-content figure,
+.ck-content figure {
+  margin: 1em 0;
+  max-width: 100%;
+}
+
+.rich-text-content figure img,
+.rich-text-preview figure img,
+.card-content figure img,
+.ck-content figure img {
+  margin: 0 auto;
+}
+
+/* 确保图片容器不会溢出 */
+.rich-text-content,
+.rich-text-preview,
+.card-content,
+.ck-content {
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+}
+

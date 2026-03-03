@@ -55,6 +55,24 @@
             font-weight: bold;
             color: #e74c3c;
         }
+        
+        /* 修复图片显示问题 - 限制图片最大宽度 */
+        .rich-text-content img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 1em auto;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .rich-text-content figure {
+            margin: 1em 0;
+        }
+        
+        .rich-text-content figure img {
+            margin: 0 auto;
+        }
     </style>
 </head>
 <body>

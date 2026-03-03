@@ -39,9 +39,9 @@ async function fetchNewsFromUrl() {
     document.getElementById('news-title').value = data.title || '';
     document.getElementById('news-author').value = data.author || '';
     
-    // 使用CKEditor设置内容
-    if (window.CKEditorHelper && data.content) {
-      window.CKEditorHelper.setContent('news', data.content);
+    // 使用超级编辑器设置内容
+    if (window.CKEditorSuperHelper && data.content) {
+      window.CKEditorSuperHelper.setContent('news-content', data.content);
     } else {
       document.getElementById('news-content').value = data.content || '';
     }
@@ -112,9 +112,9 @@ async function fetchPolicyFromUrl() {
     document.getElementById('policy-date').value = data.publish_date || '';
     document.getElementById('policy-url').value = data.url || '';
     
-    // 使用CKEditor设置内容
-    if (window.CKEditorHelper && data.content) {
-      window.CKEditorHelper.setContent('policy', data.content);
+    // 使用超级编辑器设置内容
+    if (window.CKEditorSuperHelper && data.content) {
+      window.CKEditorSuperHelper.setContent('policy-content', data.content);
     } else {
       document.getElementById('policy-content').value = data.content || '';
     }
