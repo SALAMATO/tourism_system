@@ -1,4 +1,4 @@
-//管理后台逻辑
+﻿//管理后台逻辑
 let currentReplyMessageId = null;
 const replyModal = new Modal('reply-modal');
 
@@ -40,6 +40,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 通过校验后再初始化后台功能
     initForms();
     initDeleteButtons();
+    
+    // 初始化超级编辑器（政策法规和新闻资讯）
+    await initSuperEditors();
+    await initBasicEditors();
   } catch (error) {
     console.error('管理后台权限校验失败:', error);
     showNotification('访问管理后台失败，请重新登录', 'error');
@@ -48,6 +52,30 @@ document.addEventListener('DOMContentLoaded', async () => {
     }, 1500);
   }
 });
+
+// 初始化超级编辑器
+async function initSuperEditors() {
+  try {
+    // 等待CKEditorSuperHelper加载
+    if (typeof window.CKEditorSuperHelper === 'undefined') {
+      console.warn('CKEditorSuperHelper未加载，等待...');
+      setTimeout(initSuperEditors, 500);
+      return;
+    }
+    
+    // 初始化政策法规和新闻资讯的超级编辑器
+    await window.CKEditorSuperHelper.initEditor('policy-content', {
+      placeholder: '请输入政策法规内容...'
+    });
+    await window.CKEditorSuperHelper.initEditor('news-content', {
+      placeholder: '请输入新闻资讯内容...'
+    });
+    
+    console.log('超级编辑器初始化完成');
+  } catch (error) {
+    console.error('初始化超级编辑器失败:', error);
+  }
+}
 
 function showModule(moduleName) {
   // 隐藏所有模块
@@ -153,7 +181,7 @@ async function submitPolicy() {
       category: document.getElementById('policy-category').value,
       department: document.getElementById('policy-department').value,
       publish_date: publishDate,
-      content: document.getElementById('policy-content').value,
+      content: (window.CKEditorSuperHelper && window.CKEditorSuperHelper.editorInstances['policy-content']) ? window.CKEditorSuperHelper.getContent('policy-content') : document.getElementById('policy-content').value,
       file_url: document.getElementById('policy-url').value || '',
       tags: tags
     };
@@ -200,9 +228,9 @@ async function editPolicy(id) {
     document.getElementById('policy-date').value = formatDate(policy.publish_date);
     
     // 使用CKEditor设置内容
-    if (window.CKEditorHelper && policy.content) {
+    if (window.CKEditorSuperHelper && policy.content) {
       setTimeout(() => {
-        window.CKEditorHelper.setContent('policy-content', policy.content);
+        window.CKEditorSuperHelper.setContent('policy-content', policy.content);
       }, 100);
     } else {
       document.getElementById('policy-content').value = policy.content || '';
@@ -270,7 +298,7 @@ async function submitNews() {
       category: document.getElementById('news-category').value,
       author: document.getElementById('news-author').value,
       cover_image: document.getElementById('news-cover').value || '',
-      content: document.getElementById('news-content').value,
+      content: (window.CKEditorSuperHelper && window.CKEditorSuperHelper.editorInstances['news-content']) ? window.CKEditorSuperHelper.getContent('news-content') : document.getElementById('news-content').value,
       tags: tags,
       publish_date: publishDate,
     };
@@ -321,9 +349,9 @@ async function editNews(id) {
     document.getElementById('news-cover').value = news.cover_image || '';
     
     // 使用CKEditor设置内容
-    if (window.CKEditorHelper && news.content) {
+    if (window.CKEditorSuperHelper && news.content) {
       setTimeout(() => {
-        window.CKEditorHelper.setContent('news-content', news.content);
+        window.CKEditorSuperHelper.setContent('news-content', news.content);
       }, 100);
     } else {
       document.getElementById('news-content').value = news.content || '';
@@ -433,11 +461,11 @@ async function editSafetyAlert(id) {
     document.getElementById('safety-category').value = alert.category || '';
     
     // 使用CKEditor设置内容
-    if (window.CKEditorHelper) {
+    if (window.CKEditorSuperHelper) {
       setTimeout(() => {
-        window.CKEditorHelper.setContent('safety-description', alert.description || '');
-        window.CKEditorHelper.setContent('safety-prevention', alert.prevention || '');
-        window.CKEditorHelper.setContent('safety-plan', alert.emergency_plan || '');
+        window.CKEditorSuperHelper.setContent('safety-description', alert.description || '');
+        window.CKEditorSuperHelper.setContent('safety-prevention', alert.prevention || '');
+        window.CKEditorSuperHelper.setContent('safety-plan', alert.emergency_plan || '');
       }, 100);
     } else {
       document.getElementById('safety-description').value = alert.description || '';
@@ -993,9 +1021,9 @@ async function openReplyModal(messageId) {
     
     // 设置回复内容（支持CKEditor）
     const replyContent = message.reply || '';
-    if (window.CKEditorHelper && window.CKEditorHelper.editorInstances['reply-content']) {
+    if (window.CKEditorSuperHelper && window.CKEditorSuperHelper.editorInstances['reply-content']) {
       // 如果CKEditor已初始化，使用CKEditor API
-      window.CKEditorHelper.setContent('reply-content', replyContent);
+      window.CKEditorSuperHelper.setContent('reply-content', replyContent);
     } else {
       // 否则直接设置textarea的值
       document.getElementById('reply-content').value = replyContent;
@@ -1019,9 +1047,9 @@ async function openReplyModal(messageId) {
 async function submitReply() {
   // 获取回复内容（支持CKEditor）
   let replyContent;
-  if (window.CKEditorHelper && window.CKEditorHelper.editorInstances['reply-content']) {
+  if (window.CKEditorSuperHelper && window.CKEditorSuperHelper.editorInstances['reply-content']) {
     // 如果CKEditor已初始化，使用CKEditor API
-    replyContent = window.CKEditorHelper.getContent('reply-content').trim();
+    replyContent = window.CKEditorSuperHelper.getContent('reply-content').trim();
   } else {
     // 否则直接获取textarea的值
     replyContent = document.getElementById('reply-content').value.trim();
@@ -1623,9 +1651,9 @@ async function fetchPolicyFromUrl() {
     if (data.publish_date) document.getElementById('policy-date').value = data.publish_date;
     if (data.content) {
       // 使用CKEditor设置内容
-      if (window.CKEditorHelper) {
+      if (window.CKEditorSuperHelper) {
         setTimeout(() => {
-          window.CKEditorHelper.setContent('policy-content', data.content);
+          window.CKEditorSuperHelper.setContent('policy-content', data.content);
         }, 100);
       } else {
         document.getElementById('policy-content').value = data.content;
@@ -1671,9 +1699,9 @@ async function fetchNewsFromUrl() {
     if (data.author) document.getElementById('news-author').value = data.author;
     if (data.content) {
       // 使用CKEditor设置内容
-      if (window.CKEditorHelper) {
+      if (window.CKEditorSuperHelper) {
         setTimeout(() => {
-          window.CKEditorHelper.setContent('news-content', data.content);
+          window.CKEditorSuperHelper.setContent('news-content', data.content);
         }, 100);
       } else {
         document.getElementById('news-content').value = data.content;
@@ -1692,3 +1720,35 @@ async function fetchNewsFromUrl() {
     fetchBtn.innerHTML = '<i class="fas fa-download"></i> 识别新闻';
   }
 }
+
+// 初始化基础编辑器（安全隐患和留言回复）
+async function initBasicEditors() {
+  try {
+    // 等待CKEditorHelper加载
+    if (typeof window.CKEditorSuperHelper === 'undefined') {
+      console.warn('CKEditorHelper未加载，等待...');
+      setTimeout(initBasicEditors, 500);
+      return;
+    }
+    
+    // 初始化安全隐患和留言回复的基础编辑器
+    await window.CKEditorSuperHelper.initEditor('safety-description', { placeholder: '请输入安全隐患描述...' });
+    await window.CKEditorSuperHelper.initEditor('safety-prevention', { placeholder: '请输入预防措施...' });
+    await window.CKEditorSuperHelper.initEditor('safety-plan', { placeholder: '请输入应急预案...' });
+    await window.CKEditorSuperHelper.initEditor('reply-content', { placeholder: '请输入回复内容...' });
+    
+    console.log('基础编辑器初始化完成');
+  } catch (error) {
+    console.error('初始化基础编辑器失败:', error);
+  }
+}
+
+
+
+
+
+
+
+
+
+

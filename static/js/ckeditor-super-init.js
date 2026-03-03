@@ -1,4 +1,4 @@
-/**
+﻿/**
  * This configuration was generated using the CKEditor 5 Builder. You can modify it anytime using this link:
  * https://ckeditor.com/ckeditor-5/builder/#installation/NoNgNARATAdAjABhgik4HYAsUoFYDM2AnEQBxxn45Ejpya6b6HojMIgL4hnaaoQAXgAtUCMMDhhx4qbIC6kELgAmAQwBGuDRHlA=
  */
@@ -216,8 +216,6 @@ const editorConfig = {
 	image: {
 		toolbar: ['toggleImageCaption', 'imageTextAlternative', '|', 'imageStyle:inline', 'imageStyle:wrapText', 'imageStyle:breakText']
 	},
-	initialData:
-		'<h2>Evaluation license key 🔑</h2>\n<p>\n\tAn evaluation key is being used in this editor. <a href="https://portal.ckeditor.com/checkout?plan=free">\n\t\tCreate an account to use your own license keys.\n\t</a>\n</p>\n\n<h2>Congratulations on setting up CKEditor 5! 🎉</h2>\n<p>\n\tYou\'ve successfully created a CKEditor 5 project. This powerful text editor\n\twill enhance your application, enabling rich text editing capabilities that\n\tare customizable and easy to use.\n</p>\n<h3>What\'s next?</h3>\n<ol>\n\t<li>\n\t\t<strong>Integrate into your app</strong>: time to bring the editing into\n\t\tyour application. Take the code you created and add to your application.\n\t</li>\n\t<li>\n\t\t<strong>Explore features:</strong> Experiment with different plugins and\n\t\ttoolbar options to discover what works best for your needs.\n\t</li>\n\t<li>\n\t\t<strong>Customize your editor:</strong> Tailor the editor\'s\n\t\tconfiguration to match your application\'s style and requirements. Or\n\t\teven write your plugin!\n\t</li>\n</ol>\n<p>\n\tKeep experimenting, and don\'t hesitate to push the boundaries of what you\n\tcan achieve with CKEditor 5. Your feedback is invaluable to us as we strive\n\tto improve and evolve. Happy editing!\n</p>\n<h3>Helpful resources</h3>\n<ul>\n\t<li>📝 <a href="https://portal.ckeditor.com/checkout?plan=free">Trial sign up</a>,</li>\n\t<li>📕 <a href="https://ckeditor.com/docs/ckeditor5/latest/installation/index.html">Documentation</a>,</li>\n\t<li>⭐️ <a href="https://github.com/ckeditor/ckeditor5">GitHub</a> (star us if you can!),</li>\n\t<li>🏠 <a href="https://ckeditor.com">CKEditor Homepage</a>,</li>\n\t<li>🧑‍💻 <a href="https://ckeditor.com/ckeditor-5/demo/">CKEditor 5 Demos</a>,</li>\n</ul>\n<h3>Need help?</h3>\n<p>\n\tSee this text, but the editor is not starting up? Check the browser\'s\n\tconsole for clues and guidance. It may be related to an incorrect license\n\tkey if you use premium features or another feature-related requirement. If\n\tyou cannot make it work, file a GitHub issue, and we will help as soon as\n\tpossible!\n</p>\n',
 	language: 'zh',
 	licenseKey: LICENSE_KEY,
 	link: {
@@ -283,4 +281,116 @@ const editorConfig = {
 	}
 };
 
-ClassicEditor.create(document.querySelector('#editor'), editorConfig);
+// CKEditor Super 实例存储
+const superEditorInstances = {};
+
+// 初始化指定的超级编辑器
+async function initSuperEditor(elementId, customConfig = {}) {
+	try {
+		const element = document.getElementById(elementId);
+		if (!element) {
+			console.warn(`元素 ${elementId} 不存在`);
+			return null;
+		}
+
+		// 如果已经初始化过，先销毁
+		if (superEditorInstances[elementId]) {
+			await superEditorInstances[elementId].destroy();
+		}
+
+		// 合并配置
+		const finalConfig = {
+			...editorConfig,
+			...customConfig,
+			placeholder: customConfig.placeholder || editorConfig.placeholder
+		};
+
+		// 使用ClassicEditor创建超级编辑器
+		const editor = await ClassicEditor.create(element, finalConfig);
+		superEditorInstances[elementId] = editor;
+
+		console.log(`超级编辑器 ${elementId} 初始化成功`);
+
+		// 监听内容变化，同步到textarea
+		editor.model.document.on('change:data', () => {
+			element.value = editor.getData();
+		});
+
+		return editor;
+	} catch (error) {
+		console.error(`初始化超级编辑器 ${elementId} 失败:`, error);
+		return null;
+	}
+}
+
+// 设置超级编辑器内容
+function setSuperEditorContent(elementId, content) {
+	try {
+		const editor = superEditorInstances[elementId];
+		if (editor) {
+			editor.setData(content || '');
+			console.log(`设置超级编辑器 ${elementId} 内容成功`);
+		} else {
+			console.warn(`超级编辑器 ${elementId} 未初始化`);
+		}
+	} catch (error) {
+		console.error('设置超级编辑器内容失败:', error);
+	}
+}
+
+// 获取超级编辑器内容
+function getSuperEditorContent(elementId) {
+	try {
+		const editor = superEditorInstances[elementId];
+		if (editor) {
+			return editor.getData();
+		}
+		return '';
+	} catch (error) {
+		console.error('获取超级编辑器内容失败:', error);
+		return '';
+	}
+}
+
+// 清空超级编辑器内容
+function clearSuperEditorContent(elementId) {
+	try {
+		const editor = superEditorInstances[elementId];
+		if (editor) {
+			editor.setData('');
+			console.log(`清空超级编辑器 ${elementId} 内容`);
+		}
+	} catch (error) {
+		console.error('清空超级编辑器内容失败:', error);
+	}
+}
+
+// 销毁超级编辑器
+async function destroySuperEditor(elementId) {
+	try {
+		const editor = superEditorInstances[elementId];
+		if (editor) {
+			await editor.destroy();
+			delete superEditorInstances[elementId];
+			console.log(`超级编辑器 ${elementId} 已销毁`);
+		}
+	} catch (error) {
+		console.error('销毁超级编辑器失败:', error);
+	}
+}
+
+// 导出函数供其他脚本使用
+window.CKEditorSuperHelper = {
+	initEditor: initSuperEditor,
+	setContent: setSuperEditorContent,
+	getContent: getSuperEditorContent,
+	clearContent: clearSuperEditorContent,
+	destroyEditor: destroySuperEditor,
+	editorInstances: superEditorInstances,
+	editorConfig: editorConfig
+};
+
+// 如果页面有 #editor 元素，自动初始化（用于测试）
+if (document.querySelector('#editor')) {
+	ClassicEditor.create(document.querySelector('#editor'), editorConfig);
+}

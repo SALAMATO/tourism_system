@@ -494,17 +494,25 @@
   
 
 
-<!-- CKEditor 5 CDN - Classic版本 -->
-<script src="https://cdn.ckeditor.com/ckeditor5/41.1.0/classic/ckeditor.js"></script>
-<script src="https://cdn.ckeditor.com/ckeditor5/41.1.0/classic/translations/zh-cn.js"></script>
+<!-- CKEditor 5 CDN - 加载两个版本以支持不同的编辑器 -->
+<!-- Classic版本 - 用于基础编辑器 -->
+
+
+
+<!-- Super-build版本 - 用于超级编辑器 -->
 <script src="https://cdn.ckeditor.com/ckeditor5/47.5.0/ckeditor5.umd.js" crossorigin></script>
 <script src="https://cdn.ckeditor.com/ckeditor5/47.5.0/translations/zh-cn.umd.js" crossorigin></script>
 
+<!-- 基础工具脚本 -->
 <script src="{% static 'js/utils.js' %}"></script>
 <script src="{% static 'js/api.js' %}"></script>
 <script src="{% static 'js/auth.js' %}"></script>
+
+<!-- 编辑器初始化脚本 - 必须在CKEditor加载后 -->
 <script src="{% static 'js/ckeditor-init.js' %}"></script>
 <script src="{% static 'js/ckeditor-super-init.js' %}"></script>
+
+<!-- 业务逻辑脚本 -->
 <script src="{% static 'js/fetchers.js' %}"></script>
 <script src="{% static 'js/admin.js' %}"></script>
 </body>
