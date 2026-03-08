@@ -3,7 +3,7 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     PolicyViewSet, NewsViewSet, SafetyAlertViewSet,
     MessageViewSet, MessageCommentViewSet, StatisticViewSet, DestinationViewSet,
-    UserViewSet
+    UserViewSet, LowSkyAIViewSet
 )
 
 
@@ -16,6 +16,7 @@ router.register(r'message-comments', MessageCommentViewSet, basename='message-co
 router.register(r'statistics', StatisticViewSet, basename='statistic')
 router.register(r'destinations', DestinationViewSet, basename='destination')
 router.register(r'user', UserViewSet, basename='user')
+router.register(r'ai', LowSkyAIViewSet, basename='lowsky-ai')
 
 
 # 兼容前端：/api/auth/* 作为纯 API（返回 JSON），不再返回 HTML 模板

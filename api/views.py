@@ -13,6 +13,7 @@ from .serializers import (
     StatisticSerializer, DestinationSerializer,
     UserSerializer, UserRegisterSerializer
 )
+from ai import lowsky_ai
 
 
 # 禁用CSRF类
@@ -427,5 +428,134 @@ def create(self, request, *args, **kwargs):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     self.perform_create(serializer)
     return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+# LowSkyAI 智能助手视图集
+class LowSkyAIViewSet(viewsets.ViewSet):
+    """LowSkyAI智能助手API"""
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [AllowAny]
+    
+    @action(detail=False, methods=['post'])
+    def chat(self, request):
+        """与AI对话（非流式）"""
+        message = request.data.get('message')
+        context = request.data.get('context', {})
+        
+        if not message:
+            return Response({'error': '消息不能为空'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            response = lowsky_ai.chat(message, context, stream=False)
+            return Response(response)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    @action(detail=False, methods=['post'])
+    def chat_stream(self, request):
+        """与AI对话（流式）"""
+        from django.http import StreamingHttpResponse
+        import json
+        
+        message = request.data.get('message')
+        context = request.data.get('context', {})
+        
+        if not message:
+            return Response({'error': '消息不能为空'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        def event_stream():
+            try:
+                for chunk in lowsky_ai.chat_stream(message, context):
+                    # 使用SSE格式
+                    yield f"data: {json.dumps({'content': chunk})}\n\n"
+                yield f"data: {json.dumps({'done': True})}\n\n"
+            except Exception as e:
+                yield f"data: {json.dumps({'error': str(e)})}\n\n"
+        
+        response = StreamingHttpResponse(event_stream(), content_type='text/event-stream')
+        response['Cache-Control'] = 'no-cache'
+        response['X-Accel-Buffering'] = 'no'
+        return response
+    
+    @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
+    def add_model(self, request):
+        """添加AI模型配置（需要管理员权限）"""
+        if not request.user.is_staff:
+            return Response({'error': '需要管理员权限'}, status=status.HTTP_403_FORBIDDEN)
+        
+        model_id = request.data.get('model_id')
+        model_name = request.data.get('model_name')
+        api_key = request.data.get('api_key')
+        api_base = request.data.get('api_base')
+        max_tokens = request.data.get('max_tokens', 8000)
+        temperature = request.data.get('temperature', 0.7)
+        
+        if not all([model_id, model_name, api_key]):
+            return Response({'error': '缺少必要参数'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        success = lowsky_ai.add_model(
+            model_id=model_id,
+            model_name=model_name,
+            api_key=api_key,
+            api_base=api_base,
+            max_tokens=max_tokens,
+            temperature=temperature
+        )
+        
+        if success:
+            return Response({'message': '模型添加成功', 'model_id': model_id})
+        else:
+            return Response({'error': '模型添加失败'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    @action(detail=False, methods=['delete'], permission_classes=[IsAuthenticated])
+    def remove_model(self, request):
+        """移除AI模型配置（需要管理员权限）"""
+        if not request.user.is_staff:
+            return Response({'error': '需要管理员权限'}, status=status.HTTP_403_FORBIDDEN)
+        
+        model_id = request.data.get('model_id')
+        if not model_id:
+            return Response({'error': '缺少model_id参数'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        success = lowsky_ai.remove_model(model_id)
+        if success:
+            return Response({'message': '模型移除成功'})
+        else:
+            return Response({'error': '模型不存在'}, status=status.HTTP_404_NOT_FOUND)
+    
+    @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
+    def switch_model(self, request):
+        """切换当前使用的模型（需要管理员权限）"""
+        if not request.user.is_staff:
+            return Response({'error': '需要管理员权限'}, status=status.HTTP_403_FORBIDDEN)
+        
+        model_id = request.data.get('model_id')
+        if not model_id:
+            return Response({'error': '缺少model_id参数'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        success = lowsky_ai.switch_model(model_id)
+        if success:
+            return Response({'message': '模型切换成功', 'current_model': model_id})
+        else:
+            return Response({'error': '模型不存在'}, status=status.HTTP_404_NOT_FOUND)
+    
+    @action(detail=False, methods=['get'])
+    def models(self, request):
+        """获取所有已配置的模型"""
+        models = lowsky_ai.get_models()
+        return Response({'models': models})
+    
+    @action(detail=False, methods=['get'])
+    def history(self, request):
+        """获取对话历史"""
+        limit = int(request.query_params.get('limit', 10))
+        history = lowsky_ai.get_history(limit)
+        return Response({'history': history})
+    
+    @action(detail=False, methods=['post'])
+    def clear_history(self, request):
+        """清空对话历史"""
+        lowsky_ai.clear_history()
+        return Response({'message': '对话历史已清空'})
 
 
