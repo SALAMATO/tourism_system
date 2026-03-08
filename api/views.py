@@ -558,4 +558,19 @@ class LowSkyAIViewSet(viewsets.ViewSet):
         lowsky_ai.clear_history()
         return Response({'message': '对话历史已清空'})
 
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def clear_ai_history(request):
+    """Clear AI conversation history"""
+    try:
+        lowsky_ai.clear_history()
+        return Response({
+            'success': True,
+            'message': 'Conversation history cleared'
+        })
+    except Exception as e:
+        return Response({
+            'success': False,
+            'error': str(e)
+        }, status=500)
 

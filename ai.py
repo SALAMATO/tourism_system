@@ -176,6 +176,10 @@ Be professional and friendly."""
                 "error": "No AI model configured"
             }
         
+        # Limit conversation history to prevent residual text
+        if len(self.conversation_history) > 10:
+            self.conversation_history = self.conversation_history[-10:]
+        
         self.conversation_history.append({
             "role": "user",
             "content": message
@@ -205,6 +209,10 @@ Be professional and friendly."""
             yield json.dumps({"error": "No AI model configured"})
             return
         
+        # Limit conversation history to prevent residual text
+        if len(self.conversation_history) > 10:
+            self.conversation_history = self.conversation_history[-10:]
+        
         self.conversation_history.append({
             "role": "user",
             "content": message
@@ -212,33 +220,37 @@ Be professional and friendly."""
         
         config = self.models[self.current_model]
         
+        # Collect all content first, then filter and stream
         full_content = ""
-        tool_call_pattern = r'\[TOOL:[a-zA-Z_]+(?:\|[^\]]+)?\]'
-        
         for chunk in self._call_ollama_stream(message, config):
             full_content += chunk
-            # Aggressively filter out ALL tool calls before yielding
-            # Match [TOOL:anything] pattern
-            filtered_chunk = re.sub(r'\[TOOL:[^\]]+\]', '', chunk)
-            if filtered_chunk.strip():
-                yield filtered_chunk
         
-        # Process tool calls after streaming is complete
+        # Filter out ALL tool calls from the complete content
+        filtered_content = re.sub(r'\[TOOL:[^\]]+\]', '', full_content)
+        
+        # Process tool calls if any
         if self.tools and "[TOOL:" in full_content:
             tool_results = self._process_tool_calls(full_content)
-            # Extract only the new content (tool results)
+            # Append tool results to filtered content
             if tool_results != full_content:
-                # Remove original content and tool markers, keep only results
-                clean_original = re.sub(tool_call_pattern, '', full_content).strip()
+                # Extract only the tool results (not the original text)
+                clean_original = re.sub(r'\[TOOL:[^\]]+\]', '', full_content).strip()
                 if tool_results.startswith(clean_original):
                     new_content = tool_results[len(clean_original):].strip()
                     if new_content:
-                        yield "\n\n" + new_content
-                full_content = tool_results
+                        filtered_content = filtered_content.strip() + "\n\n" + new_content
+                else:
+                    # If structure is different, just append
+                    filtered_content = filtered_content.strip() + "\n\n" + tool_results
         
+        # Now stream the filtered content character by character for smooth display
+        for char in filtered_content:
+            yield char
+        
+        # Save to history
         self.conversation_history.append({
             "role": "assistant",
-            "content": full_content
+            "content": filtered_content
         })
     
     def _call_ai_model(

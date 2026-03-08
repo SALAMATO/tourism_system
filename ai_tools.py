@@ -104,7 +104,9 @@ class AITools:
             for policy in data[:limit]:
                 result += f"• {policy.get('title', '未知标题')}\n"
                 result += f"  发布时间：{policy.get('publish_date', '未知')}\n"
-                result += f"  摘要：{policy.get('summary', '无摘要')[:100]}...\n\n"
+                # 返回完整内容而不是摘要
+                content = policy.get('content', policy.get('summary', '无内容'))
+                result += f"  内容：{content}\n\n"
             
             return result
         except Exception as e:
@@ -131,8 +133,9 @@ class AITools:
             for news in data[:limit]:
                 result += f"• {news.get('title', '未知标题')}\n"
                 result += f"  发布时间：{news.get('publish_date', '未知')}\n"
-                result += f"  作者：{news.get('author', '未知')}\n"
-                result += f"  浏览量：{news.get('views', 0)}\n\n"
+                # 返回完整内容
+                content = news.get('content', '无内容')
+                result += f"  内容：{content}\n\n"
             
             return result
         except Exception as e:

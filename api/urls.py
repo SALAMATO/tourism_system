@@ -1,5 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
+from . import views
 from .views import (
     PolicyViewSet, NewsViewSet, SafetyAlertViewSet,
     MessageViewSet, MessageCommentViewSet, StatisticViewSet, DestinationViewSet,
@@ -26,6 +27,8 @@ auth_logout_view = UserViewSet.as_view({'post': 'logout'})
 auth_me_view = UserViewSet.as_view({'get': 'me'})
 
 urlpatterns = [
+    path('ai/clear_history/', views.clear_ai_history, name='clear_ai_history'),
+
     path('auth/register/', auth_register_view, name='auth_register'),
     path('auth/login/', auth_login_view, name='auth_login'),
     path('auth/logout/', auth_logout_view, name='auth_logout'),

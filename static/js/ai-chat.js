@@ -324,9 +324,11 @@ class LowSkyAIChat {
       .replace(/>/g, '&gt;');
     
     // 解析标题（### -> h3, ## -> h2, # -> h1）
-    html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
-    html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
-    html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+    // 注意：必须从最长的开始匹配，避免 ### 被 # 匹配
+    html = html.replace(/^####\s+(.+)$/gm, '<h4>$1</h4>');
+    html = html.replace(/^###\s+(.+)$/gm, '<h3>$1</h3>');
+    html = html.replace(/^##\s+(.+)$/gm, '<h2>$1</h2>');
+    html = html.replace(/^#\s+(.+)$/gm, '<h1>$1</h1>');
     
     // 解析粗体 **text** 或 __text__
     html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
@@ -445,4 +447,12 @@ class LowSkyAIChat {
 // 页面加载完成后初始化
 document.addEventListener('DOMContentLoaded', () => {
   window.lowSkyAI = new LowSkyAIChat();
+});
+
+
+// Auto-clear history on page load
+window.addEventListener('DOMContentLoaded', () => {
+  if (window.aiChat) {
+    window.aiChat.clearHistory();
+  }
 });
