@@ -56,7 +56,7 @@ class LowSkyAIChat {
           <div class="ai-welcome-message">
             <i class="fas fa-plane-departure"></i>
             <h4>欢迎使用 LowSkyAI</h4>
-            <p>我是您的低空旅游智能助手，支持8K上下文对话和联网搜索<br>可以为您解答低空旅游相关问题、推荐目的地、解释政策法规等</p>
+            <p>我是您的低空旅游智能助手<br>可以为您解答低空旅游相关问题、推荐目的地、解释政策法规等</p>
           </div>
         </div>
         <div class="ai-chat-input-area">
