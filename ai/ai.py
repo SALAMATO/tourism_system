@@ -43,8 +43,8 @@ class LowSkyAI:
     def _init_tools(self):
         """Initialize tools"""
         try:
-            from ai_tools import ai_tools
-            self.tools = ai_tools
+            from .ai_tools import AITools
+            self.tools = AITools()
         except ImportError:
             print("Warning: ai_tools module not found, tool calling disabled")
         
@@ -252,36 +252,70 @@ Be professional and friendly."""
         })
     
     def _format_output(self, text: str) -> str:
-        """Format output with proper line breaks and structure"""
+        """Format output with proper structure and line breaks"""
         if not text:
             return ""
         
         lines = text.split('\n')
         formatted_lines = []
+        in_list = False
         
-        for line in lines:
+        for i, line in enumerate(lines):
             line = line.strip()
+            
+            # Skip empty lines
             if not line:
-                formatted_lines.append('')
+                if formatted_lines and formatted_lines[-1]:
+                    formatted_lines.append('')
                 continue
             
-            # Add extra line break after headers
+            # Headers (# ## ### ####)
             if line.startswith('#'):
+                # Add blank line before header (except first line)
                 if formatted_lines and formatted_lines[-1]:
                     formatted_lines.append('')
                 formatted_lines.append(line)
-                formatted_lines.append('')
-            # Add line break after list items
-            elif line.startswith(('• ', '- ', '* ', '1. ', '2. ', '3. ', '4. ', '5. ', '6. ', '7. ', '8. ', '9. ')):
+                formatted_lines.append('')  # Blank line after header
+                in_list = False
+                continue
+            
+            # Numbered lists (1. 2. 3. etc)
+            if line[0].isdigit() and '. ' in line[:4]:
+                if not in_list and formatted_lines and formatted_lines[-1]:
+                    formatted_lines.append('')  # Blank before list starts
                 formatted_lines.append(line)
-            # Regular paragraphs
-            else:
+                in_list = True
+                continue
+            
+            # Bullet lists (• - *)
+            if line.startswith(('• ', '- ', '* ')):
+                if not in_list and formatted_lines and formatted_lines[-1]:
+                    formatted_lines.append('')  # Blank before list starts
                 formatted_lines.append(line)
-                # Add line break after paragraph if next line is not a list
-                if formatted_lines:
-                    formatted_lines.append('')
+                in_list = True
+                continue
+            
+            # Regular paragraph
+            if in_list:
+                formatted_lines.append('')  # Blank after list ends
+                in_list = False
+            
+            formatted_lines.append(line)
+            formatted_lines.append('')  # Blank after paragraph
         
-        return '\n'.join(formatted_lines)
+        # Clean up multiple consecutive blank lines
+        result = []
+        prev_blank = False
+        for line in formatted_lines:
+            if not line:
+                if not prev_blank:
+                    result.append(line)
+                prev_blank = True
+            else:
+                result.append(line)
+                prev_blank = False
+        
+        return '\n'.join(result)
     
     def _call_ai_model(
         self,
