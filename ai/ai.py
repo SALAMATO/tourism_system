@@ -1,12 +1,15 @@
 """
 LowSkyAI - Low Altitude Tourism AI Assistant
 Supports 8K context, streaming, and tool calling (web search and website data access)
+集成display_handler处理文本显示
 """
 
 import os
 from typing import Dict, List, Optional, Any, Generator
+from openai import OpenAI
 import json
 import re
+from .display_handler import display_handler
 
 
 class AIModelConfig:
@@ -125,31 +128,19 @@ Be professional and friendly."""
         }
     
     def _process_tool_calls(self, text: str) -> str:
-        """Process tool calls in text"""
+        """Process tool calls in text using display_handler"""
         if not self.tools:
             return text
         
-        # Match tool call pattern
-        pattern = r'\[TOOL:([a-zA-Z_]+)(?:\|([^\]]+))?\]'
-        matches = re.findall(pattern, text)
+        # 提取工具调用
+        tool_calls = display_handler.extract_tool_calls(text)
         
-        # Remove all tool call markers from text first
-        for tool_name, params_str in matches:
-            tool_call = f"[TOOL:{tool_name}|{params_str}]" if params_str else f"[TOOL:{tool_name}]"
-            text = text.replace(tool_call, "")
+        # 过滤工具标记
+        filtered_text = display_handler.filter_tool_calls(text)
         
-        # Execute tools and collect results
+        # 执行工具并收集结果
         results = []
-        for tool_name, params_str in matches:
-            params = {}
-            if params_str:
-                for param in params_str.split('|'):
-                    param = param.strip()
-                    if '=' in param:
-                        key, value = param.split('=', 1)
-                        params[key.strip()] = value.strip()
-            
-            # Execute tool
+        for tool_name, params in tool_calls:
             try:
                 result = self.tools.execute_tool(tool_name, **params)
                 if result and not result.startswith("暂无"):
@@ -157,11 +148,12 @@ Be professional and friendly."""
             except Exception as e:
                 pass  # Silently ignore errors
         
-        # Add results to text if any
+        # 合并内容和工具结果
         if results:
-            text = text.strip() + "\n\n" + "\n\n".join(results)
+            tool_results_text = "\n\n".join(results)
+            return display_handler.merge_content_with_tool_results(filtered_text, tool_results_text)
         
-        return text.strip()
+        return filtered_text
 
     def chat(
         self,
@@ -199,12 +191,40 @@ Be professional and friendly."""
         
         return response
     
+    def _call_cloud_stream(self, message: str, config: AIModelConfig) -> Generator[str, None, None]:
+        """Call Alibaba Cloud Qianwen API with streaming"""
+        try:
+            # Initialize OpenAI client for Alibaba Cloud
+            client = OpenAI(
+                api_key=config.api_key,
+                base_url=config.api_base or "https://dashscope.aliyuncs.com/compatible-mode/v1"
+            )
+            
+            # Call API with streaming
+            completion = client.chat.completions.create(
+                model=config.model_name,
+                messages=self.conversation_history,
+                temperature=config.temperature,
+                max_tokens=config.max_tokens,
+                stream=True
+            )
+            
+            # Stream response
+            for chunk in completion:
+                if chunk.choices and len(chunk.choices) > 0:
+                    delta = chunk.choices[0].delta
+                    if hasattr(delta, 'content') and delta.content:
+                        yield delta.content
+                        
+        except Exception as e:
+            yield f"Error calling cloud API: {str(e)}"
+    
     def chat_stream(
         self,
         message: str,
         context: Optional[Dict[str, Any]] = None
     ) -> Generator[str, None, None]:
-        """Streaming chat generator with pre-formatted output"""
+        """Streaming chat generator with pre-formatted output using display_handler"""
         if not self.current_model or self.current_model not in self.models:
             yield json.dumps({"error": "No AI model configured"})
             return
@@ -222,100 +242,27 @@ Be professional and friendly."""
         
         # Step 1: Collect all AI output
         full_content = ""
-        for chunk in self._call_ollama_stream(message, config):
+        for chunk in self._call_cloud_stream(message, config):
             full_content += chunk
         
-        # Step 2: Filter tool calls
-        filtered_content = re.sub(r'\[TOOL:[^\]]+\]', '', full_content)
-        
-        # Step 3: Process tools and get results
+        # Step 2: Process tools and filter tool calls using display_handler
         if self.tools and "[TOOL:" in full_content:
-            tool_results = self._process_tool_calls(full_content)
-            clean_original = re.sub(r'\[TOOL:[^\]]+\]', '', full_content).strip()
-            if tool_results != full_content and tool_results.startswith(clean_original):
-                new_content = tool_results[len(clean_original):].strip()
-                if new_content:
-                    filtered_content = filtered_content.strip() + "\n\n" + new_content
+            processed_content = self._process_tool_calls(full_content)
+        else:
+            processed_content = display_handler.filter_tool_calls(full_content)
         
-        # Step 4: Format content with proper structure
-        formatted_content = self._format_output(filtered_content)
+        # Step 3: Format content with proper structure using display_handler
+        formatted_content = display_handler.format_output(processed_content)
         
-        # Step 5: Stream the formatted content
-        chunk_size = 20  # Larger chunks for better performance
-        for i in range(0, len(formatted_content), chunk_size):
-            yield formatted_content[i:i+chunk_size]
+        # Step 4: Stream the formatted content using display_handler
+        for chunk in display_handler.stream_formatted_output(formatted_content):
+            yield chunk
         
         # Save to history
         self.conversation_history.append({
             "role": "assistant",
             "content": formatted_content
         })
-    
-    def _format_output(self, text: str) -> str:
-        """Format output with proper structure and line breaks"""
-        if not text:
-            return ""
-        
-        lines = text.split('\n')
-        formatted_lines = []
-        in_list = False
-        
-        for i, line in enumerate(lines):
-            line = line.strip()
-            
-            # Skip empty lines
-            if not line:
-                if formatted_lines and formatted_lines[-1]:
-                    formatted_lines.append('')
-                continue
-            
-            # Headers (# ## ### ####)
-            if line.startswith('#'):
-                # Add blank line before header (except first line)
-                if formatted_lines and formatted_lines[-1]:
-                    formatted_lines.append('')
-                formatted_lines.append(line)
-                formatted_lines.append('')  # Blank line after header
-                in_list = False
-                continue
-            
-            # Numbered lists (1. 2. 3. etc)
-            if line[0].isdigit() and '. ' in line[:4]:
-                if not in_list and formatted_lines and formatted_lines[-1]:
-                    formatted_lines.append('')  # Blank before list starts
-                formatted_lines.append(line)
-                in_list = True
-                continue
-            
-            # Bullet lists (• - *)
-            if line.startswith(('• ', '- ', '* ')):
-                if not in_list and formatted_lines and formatted_lines[-1]:
-                    formatted_lines.append('')  # Blank before list starts
-                formatted_lines.append(line)
-                in_list = True
-                continue
-            
-            # Regular paragraph
-            if in_list:
-                formatted_lines.append('')  # Blank after list ends
-                in_list = False
-            
-            formatted_lines.append(line)
-            formatted_lines.append('')  # Blank after paragraph
-        
-        # Clean up multiple consecutive blank lines
-        result = []
-        prev_blank = False
-        for line in formatted_lines:
-            if not line:
-                if not prev_blank:
-                    result.append(line)
-                prev_blank = True
-            else:
-                result.append(line)
-                prev_blank = False
-        
-        return '\n'.join(result)
     
     def _call_ai_model(
         self,

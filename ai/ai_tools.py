@@ -1,18 +1,18 @@
 """
 AI工具函数 - 提供联网搜索和网站数据读取功能
+使用Django ORM直接读取数据库
 """
 
-import requests
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any
 from datetime import datetime
-import json
 
 
 class AITools:
     """AI助手工具集"""
     
     def __init__(self):
-        self.base_url = "http://127.0.0.1:8000"
+        # 不再需要base_url，直接使用Django ORM
+        pass
     
     def search_web(self, query: str) -> str:
         """
@@ -76,16 +76,12 @@ class AITools:
             
         except ImportError:
             return "联网搜索需要安装依赖：pip install requests beautifulsoup4"
-        except requests.exceptions.Timeout:
-            return "搜索超时，请稍后再试。"
-        except requests.exceptions.RequestException as e:
-            return "搜索暂时不可用，请稍后再试。"
         except Exception as e:
-            return "搜索出现问题，请稍后再试。"
+            return "搜索暂时不可用，请稍后再试。"
     
     def get_policies(self, limit: int = 5) -> str:
         """
-        获取网站政策法规数据
+        获取网站政策法规数据（使用Django ORM）
         
         Args:
             limit: 返回数量
@@ -94,27 +90,30 @@ class AITools:
             str: 政策法规列表
         """
         try:
-            response = requests.get(f"{self.base_url}/api/policies/?limit={limit}")
-            data = response.json()
+            from api.models import Policy
             
-            if not data:
+            policies = Policy.objects.all().order_by('-publish_date')[:limit]
+            
+            if not policies:
                 return "暂无政策法规数据。"
             
             result = "网站政策法规：\n\n"
-            for policy in data[:limit]:
-                result += f"• {policy.get('title', '未知标题')}\n"
-                result += f"  发布时间：{policy.get('publish_date', '未知')}\n"
-                # 返回完整内容而不是摘要
-                content = policy.get('content', policy.get('summary', '无内容'))
+            for policy in policies:
+                result += f"• {policy.title}\n"
+                result += f"  发布部门：{policy.department}\n"
+                result += f"  政策级别：{policy.level}\n"
+                result += f"  发布时间：{policy.publish_date.strftime('%Y-%m-%d')}\n"
+                # 返回完整内容（截取前500字符）
+                content = policy.content[:500] + '...' if len(policy.content) > 500 else policy.content
                 result += f"  内容：{content}\n\n"
             
             return result
         except Exception as e:
-            return "暂无政策法规数据。"
+            return f"获取政策法规数据失败：{str(e)}"
     
     def get_news(self, limit: int = 5) -> str:
         """
-        获取网站新闻资讯数据
+        获取网站新闻资讯数据（使用Django ORM）
         
         Args:
             limit: 返回数量
@@ -123,52 +122,61 @@ class AITools:
             str: 新闻列表
         """
         try:
-            response = requests.get(f"{self.base_url}/api/news/?limit={limit}")
-            data = response.json()
+            from api.models import News
             
-            if not data:
+            news_list = News.objects.all().order_by('-publish_date')[:limit]
+            
+            if not news_list:
                 return "暂无新闻资讯数据。"
             
             result = "网站新闻资讯：\n\n"
-            for news in data[:limit]:
-                result += f"• {news.get('title', '未知标题')}\n"
-                result += f"  发布时间：{news.get('publish_date', '未知')}\n"
-                # 返回完整内容
-                content = news.get('content', '无内容')
+            for news in news_list:
+                result += f"• {news.title}\n"
+                result += f"  作者：{news.author}\n"
+                result += f"  分类：{news.category}\n"
+                result += f"  发布时间：{news.publish_date.strftime('%Y-%m-%d')}\n"
+                # 返回完整内容（截取前500字符）
+                content = news.content[:500] + '...' if len(news.content) > 500 else news.content
                 result += f"  内容：{content}\n\n"
             
             return result
         except Exception as e:
-            return "暂无新闻资讯数据。"
+            return f"获取新闻资讯数据失败：{str(e)}"
     
     def get_statistics(self, limit: int = 5) -> str:
         """
-        获取网站统计数据
+        获取网站统计数据（使用Django ORM）
         
+        Args:
+            limit: 返回数量
+            
         Returns:
             str: 统计数据
         """
         try:
-            response = requests.get(f"{self.base_url}/api/statistics/")
-            data = response.json()
+            from api.models import Statistic
             
-            if not data:
+            statistics = Statistic.objects.all().order_by('-year', 'region')[:limit]
+            
+            if not statistics:
                 return "暂无统计数据。"
             
             result = "低空旅游统计数据：\n\n"
-            for stat in data[:limit]:
-                result += f"• {stat.get('region', '未知地区')} ({stat.get('year', '未知年份')})\n"
-                result += f"  游客数量：{stat.get('tourist_count', 0):,} 人\n"
-                result += f"  收入：{stat.get('revenue', 0):,.2f} 万元\n"
-                result += f"  项目数量：{stat.get('project_count', 0)} 个\n\n"
+            for stat in statistics:
+                result += f"• {stat.region} ({stat.year}年)\n"
+                result += f"  游客数量：{stat.tourist_count:,.1f} 万人次\n"
+                result += f"  营收：{stat.revenue:,.2f} 万元\n"
+                result += f"  航班次数：{stat.flight_count:,} 次\n"
+                result += f"  航空器数量：{stat.aircraft_count} 架\n"
+                result += f"  增长率：{stat.growth_rate}%\n\n"
             
             return result
         except Exception as e:
-            return "暂无统计数据。"
+            return f"获取统计数据失败：{str(e)}"
     
     def get_safety_alerts(self, limit: int = 5) -> str:
         """
-        获取安全预警信息
+        获取安全预警信息（使用Django ORM）
         
         Args:
             limit: 返回数量
@@ -177,26 +185,30 @@ class AITools:
             str: 安全预警列表
         """
         try:
-            response = requests.get(f"{self.base_url}/api/safety-alerts/?limit={limit}")
-            data = response.json()
+            from api.models import SafetyAlert
             
-            if not data:
+            alerts = SafetyAlert.objects.all().order_by('-report_date')[:limit]
+            
+            if not alerts:
                 return "暂无安全预警信息。"
             
-            result = "安全预警信息：\n\n"
-            for alert in data[:limit]:
-                result += f"• {alert.get('title', '未知标题')}\n"
-                result += f"  级别：{alert.get('level', '未知')}\n"
-                result += f"  地区：{alert.get('region', '未知')}\n"
-                result += f"  发布时间：{alert.get('alert_time', '未知')}\n\n"
+            result = "安全隐患预警信息：\n\n"
+            for alert in alerts:
+                result += f"• {alert.title}\n"
+                result += f"  风险等级：{alert.risk_level}\n"
+                result += f"  隐患类别：{alert.category}\n"
+                result += f"  状态：{alert.status}\n"
+                result += f"  报告日期：{alert.report_date.strftime('%Y-%m-%d')}\n"
+                result += f"  描述：{alert.description[:200]}...\n"
+                result += f"  预防措施：{alert.prevention[:200]}...\n\n"
             
             return result
         except Exception as e:
-            return "暂无安全预警信息。"
+            return f"获取安全预警信息失败：{str(e)}"
     
     def search_site_content(self, keyword: str) -> str:
         """
-        搜索网站内容
+        搜索网站内容（使用Django ORM）
         
         Args:
             keyword: 搜索关键词
@@ -205,31 +217,55 @@ class AITools:
             str: 搜索结果
         """
         try:
+            from api.models import Policy, News, Destination
+            from django.db.models import Q
+            
             # 搜索政策
-            policies = requests.get(f"{self.base_url}/api/policies/?search={keyword}").json()
+            policies = Policy.objects.filter(
+                Q(title__icontains=keyword) | 
+                Q(content__icontains=keyword) |
+                Q(department__icontains=keyword)
+            )[:3]
+            
             # 搜索新闻
-            news = requests.get(f"{self.base_url}/api/news/?search={keyword}").json()
+            news = News.objects.filter(
+                Q(title__icontains=keyword) | 
+                Q(content__icontains=keyword)
+            )[:3]
+            
+            # 搜索目的地
+            destinations = Destination.objects.filter(
+                Q(name__icontains=keyword) | 
+                Q(location__icontains=keyword) |
+                Q(description__icontains=keyword)
+            )[:3]
             
             result = f"网站内搜索：{keyword}\n\n"
             
             if policies:
                 result += "相关政策法规：\n"
-                for p in policies[:3]:
-                    result += f"• {p.get('title', '未知')}\n"
+                for p in policies:
+                    result += f"• {p.title} - {p.department}\n"
                 result += "\n"
             
             if news:
                 result += "相关新闻：\n"
-                for n in news[:3]:
-                    result += f"• {n.get('title', '未知')}\n"
+                for n in news:
+                    result += f"• {n.title} - {n.publish_date.strftime('%Y-%m-%d')}\n"
                 result += "\n"
             
-            if not policies and not news:
+            if destinations:
+                result += "相关旅游目的地：\n"
+                for d in destinations:
+                    result += f"• {d.name} - {d.location}\n"
+                result += "\n"
+            
+            if not policies and not news and not destinations:
                 result += "未找到相关内容。\n"
             
             return result
         except Exception as e:
-            return "搜索暂时不可用，请稍后再试。"
+            return f"搜索失败：{str(e)}"
     
     def get_current_time(self) -> str:
         """获取当前时间"""
@@ -275,7 +311,7 @@ def get_available_tools() -> List[Dict[str, Any]]:
     return [
         {
             "name": "search_web",
-            "description": "联网搜索最新信息（使用DuckDuckGo）",
+            "description": "联网搜索最新信息（使用必应搜索）",
             "parameters": {
                 "query": "搜索关键词"
             }
@@ -297,7 +333,9 @@ def get_available_tools() -> List[Dict[str, Any]]:
         {
             "name": "get_statistics",
             "description": "获取低空旅游统计数据",
-            "parameters": {}
+            "parameters": {
+                "limit": "返回数量（默认5）"
+            }
         },
         {
             "name": "get_safety_alerts",

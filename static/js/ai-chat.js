@@ -1,4 +1,4 @@
-// LowSkyAI 智能助手前端交互（支持流式调用、停止生成和Markdown渲染）
+// LowSkyAI 智能助手前端交互（简化版 - 仅负责渲染和工具调用）
 class LowSkyAIChat {
   constructor() {
     this.modal = null;
@@ -262,17 +262,10 @@ class LowSkyAIChat {
               }
               
               if (data.content) {
-                // 先过滤再添加到fullContent，避免闪现
-                // 过滤所有工具调用标记（包括换行符）
-                const filtered = data.content
-                  .replace(/\[TOOL:[^\]]+\]/g, '')  // 移除工具标记
-                  .replace(/^\s*$/gm, '')  // 移除空行
-                  .trim();
-                if (filtered.trim()) {  // 只添加非空内容
-                  fullContent += filtered;
-                  // 使用优化渲染
-                  this.renderWithDebounce(fullContent, contentDiv);
-                }
+                // 后端已经处理好格式，直接累加和渲染
+                fullContent += data.content;
+                contentDiv.innerHTML = this.parseMarkdown(fullContent);
+                this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
               }
             } catch (e) {
               console.error('Parse error:', e);
@@ -302,28 +295,6 @@ class LowSkyAIChat {
     }
   }
   
-  
-
-  // Optimized rendering with debounce
-  renderWithDebounce(content, container) {
-    if (this.renderTimer) {
-      clearTimeout(this.renderTimer);
-    }
-    
-    // Immediate render for better responsiveness
-    container.innerHTML = this.parseMarkdown(content);
-    this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
-  }
-
-  filterToolCalls(text) {
-    if (!text) return '';
-    // Remove [TOOL:...] markers and clean up
-    return text
-      .replace(/\[TOOL:[^\]]+\]/g, '')  // 移除工具标记
-      .replace(/^\s*[\r\n]+/gm, '')  // 移除空行
-      .trim();
-  }
-  
   parseMarkdown(text) {
     if (!text) return '';
     
@@ -349,7 +320,7 @@ class LowSkyAIChat {
       return placeholder;
     });
     
-    // 处理标题（后端已经添加了换行）
+    // 处理标题
     html = html.replace(/^####\s+(.+)$/gm, '<h4>$1</h4>');
     html = html.replace(/^###\s+(.+)$/gm, '<h3>$1</h3>');
     html = html.replace(/^##\s+(.+)$/gm, '<h2>$1</h2>');
@@ -378,7 +349,7 @@ class LowSkyAIChat {
     // 处理分隔线
     html = html.replace(/^[-*_]{3,}$/gm, '<hr>');
     
-    // 处理换行（后端已经添加了空行）
+    // 处理换行
     html = html.replace(/\n\n/g, '</p><p>');
     html = html.replace(/^(.+)$/gm, (match) => {
       // 如果不是HTML标签，包裹为段落
@@ -459,8 +430,7 @@ document.addEventListener('DOMContentLoaded', () => {
   window.lowSkyAI = new LowSkyAIChat();
 });
 
-
-// Auto-clear history on page load
+// 页面加载时自动清空历史
 window.addEventListener('DOMContentLoaded', () => {
   if (window.aiChat) {
     window.aiChat.clearHistory();
