@@ -1,7 +1,7 @@
 """
 LowSkyAI - Low Altitude Tourism AI Assistant
 Supports 8K context, streaming, and tool calling (web search and website data access)
-集成display_handler处理文本显示
+集成display_handler处理文本显示，使用官方流式输出方法，实时格式化
 """
 
 import os
@@ -191,40 +191,12 @@ Be professional and friendly."""
         
         return response
     
-    def _call_cloud_stream(self, message: str, config: AIModelConfig) -> Generator[str, None, None]:
-        """Call Alibaba Cloud Qianwen API with streaming"""
-        try:
-            # Initialize OpenAI client for Alibaba Cloud
-            client = OpenAI(
-                api_key=config.api_key,
-                base_url=config.api_base or "https://dashscope.aliyuncs.com/compatible-mode/v1"
-            )
-            
-            # Call API with streaming
-            completion = client.chat.completions.create(
-                model=config.model_name,
-                messages=self.conversation_history,
-                temperature=config.temperature,
-                max_tokens=config.max_tokens,
-                stream=True
-            )
-            
-            # Stream response
-            for chunk in completion:
-                if chunk.choices and len(chunk.choices) > 0:
-                    delta = chunk.choices[0].delta
-                    if hasattr(delta, 'content') and delta.content:
-                        yield delta.content
-                        
-        except Exception as e:
-            yield f"Error calling cloud API: {str(e)}"
-    
     def chat_stream(
         self,
         message: str,
         context: Optional[Dict[str, Any]] = None
     ) -> Generator[str, None, None]:
-        """Streaming chat generator with pre-formatted output using display_handler"""
+        """Streaming chat generator - 使用官方流式输出方法，实时格式化"""
         if not self.current_model or self.current_model not in self.models:
             yield json.dumps({"error": "No AI model configured"})
             return
@@ -240,29 +212,91 @@ Be professional and friendly."""
         
         config = self.models[self.current_model]
         
-        # Step 1: Collect all AI output
-        full_content = ""
-        for chunk in self._call_cloud_stream(message, config):
-            full_content += chunk
+        # 使用官方流式输出方法 - 边接收边格式化边输出
+        content_parts = []  # 用列表暂存响应片段
+        accumulated_content = ""  # 累积的完整内容
+        last_output_length = 0  # 上次输出的长度
+        tool_calls_detected = False
         
-        # Step 2: Process tools and filter tool calls using display_handler
-        if self.tools and "[TOOL:" in full_content:
-            processed_content = self._process_tool_calls(full_content)
-        else:
-            processed_content = display_handler.filter_tool_calls(full_content)
-        
-        # Step 3: Format content with proper structure using display_handler
-        formatted_content = display_handler.format_output(processed_content)
-        
-        # Step 4: Stream the formatted content using display_handler
-        for chunk in display_handler.stream_formatted_output(formatted_content):
-            yield chunk
-        
-        # Save to history
-        self.conversation_history.append({
-            "role": "assistant",
-            "content": formatted_content
-        })
+        try:
+            # Initialize OpenAI client for Alibaba Cloud
+            client = OpenAI(
+                api_key=config.api_key,
+                base_url=config.api_base or "https://dashscope.aliyuncs.com/compatible-mode/v1"
+            )
+            
+            # 发起流式请求（官方方法）
+            completion = client.chat.completions.create(
+                model=config.model_name,
+                messages=self.conversation_history,
+                temperature=config.temperature,
+                max_tokens=config.max_tokens,
+                stream=True,
+                stream_options={"include_usage": True}
+            )
+            
+            # 处理流式响应（官方方法 - 实时格式化）
+            for chunk in completion:
+                if chunk.choices:
+                    content = chunk.choices[0].delta.content or ""
+                    if content:
+                        content_parts.append(content)
+                        
+                        # 检测工具调用
+                        if "[TOOL:" in content:
+                            tool_calls_detected = True
+                            continue  # 不输出工具调用标记
+                        
+                        # 累积内容
+                        accumulated_content += content
+                        
+                        # 过滤工具标记
+                        clean_accumulated = display_handler.filter_tool_calls(accumulated_content)
+                        
+                        # 格式化累积的内容
+                        formatted_content = display_handler.format_output(clean_accumulated)
+                        
+                        # 只输出新增的部分（增量输出）
+                        if len(formatted_content) > last_output_length:
+                            new_content = formatted_content[last_output_length:]
+                            if new_content:
+                                # 分小块输出，获得流畅效果
+                                for i in range(0, len(new_content), 3):
+                                    yield new_content[i:i+3]
+                            last_output_length = len(formatted_content)
+                
+                elif chunk.usage:
+                    # 可选：记录用量信息
+                    pass
+            
+            # 完整回复
+            full_response = "".join(content_parts)
+            
+            # 执行工具调用并输出结果
+            if self.tools and tool_calls_detected:
+                tool_calls = display_handler.extract_tool_calls(full_response)
+                if tool_calls:
+                    yield "\n\n"  # 添加分隔
+                    for tool_name, params in tool_calls:
+                        try:
+                            result = self.tools.execute_tool(tool_name, **params)
+                            if result and not result.startswith("暂无"):
+                                # 格式化工具结果后逐段输出
+                                formatted_result = display_handler.format_output(result)
+                                for result_chunk in display_handler.stream_formatted_output(formatted_result):
+                                    yield result_chunk
+                        except Exception as e:
+                            pass  # Silently ignore errors
+            
+            # 保存到历史（过滤工具标记）
+            final_content = display_handler.filter_tool_calls(full_response)
+            self.conversation_history.append({
+                "role": "assistant",
+                "content": final_content
+            })
+            
+        except Exception as e:
+            yield f"Error calling cloud API: {str(e)}"
     
     def _call_ai_model(
         self,

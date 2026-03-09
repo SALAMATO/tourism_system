@@ -11,11 +11,11 @@ class DisplayHandler:
     """文本显示处理器"""
     
     def __init__(self):
-        self.chunk_size = 20  # 流式输出的块大小
+        self.chunk_size = 3  # 流式输出的块大小
     
     def format_output(self, text: str) -> str:
         """
-        格式化输出文本，添加适当的结构和换行
+        格式化输出文本 - 简化版，不做过度处理
         
         Args:
             text: 原始文本
@@ -26,66 +26,15 @@ class DisplayHandler:
         if not text:
             return ""
         
+        # 只做最基本的清理，保持原始格式
+        # 移除多余的空行（超过2个连续换行变成2个）
+        text = re.sub(r'\n{3,}', '\n\n', text)
+        
+        # 移除行尾的空白字符
         lines = text.split('\n')
-        formatted_lines = []
-        in_list = False
+        cleaned_lines = [line.rstrip() for line in lines]
         
-        for line in lines:
-            line = line.strip()
-            
-            # 跳过空行
-            if not line:
-                if formatted_lines and formatted_lines[-1]:
-                    formatted_lines.append('')
-                continue
-            
-            # 标题 (# ## ### ####)
-            if line.startswith('#'):
-                # 标题前添加空行（除非是第一行）
-                if formatted_lines and formatted_lines[-1]:
-                    formatted_lines.append('')
-                formatted_lines.append(line)
-                formatted_lines.append('')  # 标题后空行
-                in_list = False
-                continue
-            
-            # 数字列表 (1. 2. 3. 等)
-            if line[0].isdigit() and '. ' in line[:4]:
-                if not in_list and formatted_lines and formatted_lines[-1]:
-                    formatted_lines.append('')  # 列表开始前空行
-                formatted_lines.append(line)
-                in_list = True
-                continue
-            
-            # 项目符号列表 (• - *)
-            if line.startswith(('• ', '- ', '* ')):
-                if not in_list and formatted_lines and formatted_lines[-1]:
-                    formatted_lines.append('')  # 列表开始前空行
-                formatted_lines.append(line)
-                in_list = True
-                continue
-            
-            # 普通段落
-            if in_list:
-                formatted_lines.append('')  # 列表结束后空行
-                in_list = False
-            
-            formatted_lines.append(line)
-            formatted_lines.append('')  # 段落后空行
-        
-        # 清理多个连续空行
-        result = []
-        prev_blank = False
-        for line in formatted_lines:
-            if not line:
-                if not prev_blank:
-                    result.append(line)
-                prev_blank = True
-            else:
-                result.append(line)
-                prev_blank = False
-        
-        return '\n'.join(result)
+        return '\n'.join(cleaned_lines)
     
     def filter_tool_calls(self, text: str) -> str:
         """

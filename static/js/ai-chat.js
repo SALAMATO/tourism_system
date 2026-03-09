@@ -1,4 +1,4 @@
-// LowSkyAI 智能助手前端交互（简化版 - 仅负责渲染和工具调用）
+// LowSkyAI 智能助手前端交互（优化流式显示效果）
 class LowSkyAIChat {
   constructor() {
     this.modal = null;
@@ -232,11 +232,13 @@ class LowSkyAIChat {
       // 清除思考中提示
       contentDiv.innerHTML = '';
       
-      // 读取流式响应
+      // 读取流式响应 - 优化流式显示效果
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let buffer = '';
       let fullContent = '';
+      let lastRenderTime = 0;
+      const renderInterval = 30; // 每30ms最多渲染一次，获得流畅效果
       
       while (true) {
         const { done, value } = await reader.read();
@@ -262,10 +264,16 @@ class LowSkyAIChat {
               }
               
               if (data.content) {
-                // 后端已经处理好格式，直接累加和渲染
+                // 累加内容
                 fullContent += data.content;
-                contentDiv.innerHTML = this.parseMarkdown(fullContent);
-                this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
+                
+                // 节流渲染：避免过于频繁的DOM操作，提升流畅度
+                const now = Date.now();
+                if (now - lastRenderTime > renderInterval) {
+                  contentDiv.innerHTML = this.parseMarkdown(fullContent);
+                  this.smoothScrollToBottom();
+                  lastRenderTime = now;
+                }
               }
             } catch (e) {
               console.error('Parse error:', e);
@@ -274,8 +282,11 @@ class LowSkyAIChat {
         }
       }
       
-      // 如果没有内容，显示错误
-      if (!fullContent) {
+      // 最终渲染（确保所有内容都显示）
+      if (fullContent) {
+        contentDiv.innerHTML = this.parseMarkdown(fullContent);
+        this.smoothScrollToBottom();
+      } else {
         contentDiv.innerHTML = this.parseMarkdown('抱歉，AI没有返回任何内容。');
       }
       
@@ -293,6 +304,14 @@ class LowSkyAIChat {
       this.updateButtonState(false);
       this.abortController = null;
     }
+  }
+  
+  smoothScrollToBottom() {
+    // 平滑滚动到底部
+    this.messagesContainer.scrollTo({
+      top: this.messagesContainer.scrollHeight,
+      behavior: 'smooth'
+    });
   }
   
   parseMarkdown(text) {
@@ -407,7 +426,7 @@ class LowSkyAIChat {
     this.messagesContainer.appendChild(messageDiv);
     
     // 滚动到底部
-    this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
+    this.smoothScrollToBottom();
     
     // 保存到历史
     this.messages.push({ role, content, timestamp: new Date() });
