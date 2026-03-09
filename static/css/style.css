@@ -2306,3 +2306,141 @@ body {
   }
 }
 
+
+
+/* AI消息优化排版 */
+.ai-message-content h1,
+.ai-message-content h2,
+.ai-message-content h3,
+.ai-message-content h4 {
+    margin-top: 1.2em;
+    margin-bottom: 0.6em;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.ai-message-content h1 {
+    font-size: 1.8em;
+    color: #2c3e50;
+    border-bottom: 2px solid #3498db;
+    padding-bottom: 0.3em;
+}
+
+.ai-message-content h2 {
+    font-size: 1.5em;
+    color: #34495e;
+    border-bottom: 1px solid #bdc3c7;
+    padding-bottom: 0.2em;
+}
+
+.ai-message-content h3 {
+    font-size: 1.3em;
+    color: #7f8c8d;
+}
+
+.ai-message-content h4 {
+    font-size: 1.1em;
+    color: #95a5a6;
+}
+
+.ai-message-content p {
+    margin: 0.8em 0;
+    line-height: 1.8;
+    text-align: justify;
+}
+
+.ai-message-content ul,
+.ai-message-content ol {
+    margin: 1em 0;
+    padding-left: 2em;
+}
+
+.ai-message-content li {
+    margin: 0.5em 0;
+    line-height: 1.6;
+}
+
+.ai-message-content blockquote {
+    margin: 1em 0;
+    padding: 0.8em 1.2em;
+    background: #f8f9fa;
+    border-left: 4px solid #3498db;
+    color: #555;
+    font-style: italic;
+}
+
+.ai-message-content code {
+    background: #f4f4f4;
+    padding: 0.2em 0.4em;
+    border-radius: 3px;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 0.9em;
+    color: #e74c3c;
+}
+
+.ai-message-content pre {
+    background: #2c3e50;
+    color: #ecf0f1;
+    padding: 1em;
+    border-radius: 5px;
+    overflow-x: auto;
+    margin: 1em 0;
+}
+
+.ai-message-content pre code {
+    background: none;
+    color: inherit;
+    padding: 0;
+}
+
+.ai-message-content strong {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.ai-message-content em {
+    font-style: italic;
+    color: #7f8c8d;
+}
+
+.ai-message-content a {
+    color: #3498db;
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.3s;
+}
+
+.ai-message-content a:hover {
+    border-bottom-color: #3498db;
+}
+
+/* 表格样式 */
+.ai-message-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1em 0;
+}
+
+.ai-message-content th,
+.ai-message-content td {
+    padding: 0.6em;
+    border: 1px solid #ddd;
+    text-align: left;
+}
+
+.ai-message-content th {
+    background: #3498db;
+    color: white;
+    font-weight: 600;
+}
+
+.ai-message-content tr:nth-child(even) {
+    background: #f8f9fa;
+}
+
+/* 分隔线 */
+.ai-message-content hr {
+    border: none;
+    border-top: 2px solid #ecf0f1;
+    margin: 1.5em 0;
+}

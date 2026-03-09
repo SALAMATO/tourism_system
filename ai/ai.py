@@ -204,12 +204,12 @@ Be professional and friendly."""
         message: str,
         context: Optional[Dict[str, Any]] = None
     ) -> Generator[str, None, None]:
-        """Streaming chat generator"""
+        """Streaming chat generator with pre-formatted output"""
         if not self.current_model or self.current_model not in self.models:
             yield json.dumps({"error": "No AI model configured"})
             return
         
-        # Limit conversation history to prevent residual text
+        # Limit conversation history
         if len(self.conversation_history) > 10:
             self.conversation_history = self.conversation_history[-10:]
         
@@ -220,38 +220,68 @@ Be professional and friendly."""
         
         config = self.models[self.current_model]
         
-        # Collect all content first, then filter and stream
+        # Step 1: Collect all AI output
         full_content = ""
         for chunk in self._call_ollama_stream(message, config):
             full_content += chunk
         
-        # Filter out ALL tool calls from the complete content
+        # Step 2: Filter tool calls
         filtered_content = re.sub(r'\[TOOL:[^\]]+\]', '', full_content)
         
-        # Process tool calls if any
+        # Step 3: Process tools and get results
         if self.tools and "[TOOL:" in full_content:
             tool_results = self._process_tool_calls(full_content)
-            # Append tool results to filtered content
-            if tool_results != full_content:
-                # Extract only the tool results (not the original text)
-                clean_original = re.sub(r'\[TOOL:[^\]]+\]', '', full_content).strip()
-                if tool_results.startswith(clean_original):
-                    new_content = tool_results[len(clean_original):].strip()
-                    if new_content:
-                        filtered_content = filtered_content.strip() + "\n\n" + new_content
-                else:
-                    # If structure is different, just append
-                    filtered_content = filtered_content.strip() + "\n\n" + tool_results
+            clean_original = re.sub(r'\[TOOL:[^\]]+\]', '', full_content).strip()
+            if tool_results != full_content and tool_results.startswith(clean_original):
+                new_content = tool_results[len(clean_original):].strip()
+                if new_content:
+                    filtered_content = filtered_content.strip() + "\n\n" + new_content
         
-        # Now stream the filtered content character by character for smooth display
-        for char in filtered_content:
-            yield char
+        # Step 4: Format content with proper structure
+        formatted_content = self._format_output(filtered_content)
+        
+        # Step 5: Stream the formatted content
+        chunk_size = 20  # Larger chunks for better performance
+        for i in range(0, len(formatted_content), chunk_size):
+            yield formatted_content[i:i+chunk_size]
         
         # Save to history
         self.conversation_history.append({
             "role": "assistant",
-            "content": filtered_content
+            "content": formatted_content
         })
+    
+    def _format_output(self, text: str) -> str:
+        """Format output with proper line breaks and structure"""
+        if not text:
+            return ""
+        
+        lines = text.split('\n')
+        formatted_lines = []
+        
+        for line in lines:
+            line = line.strip()
+            if not line:
+                formatted_lines.append('')
+                continue
+            
+            # Add extra line break after headers
+            if line.startswith('#'):
+                if formatted_lines and formatted_lines[-1]:
+                    formatted_lines.append('')
+                formatted_lines.append(line)
+                formatted_lines.append('')
+            # Add line break after list items
+            elif line.startswith(('• ', '- ', '* ', '1. ', '2. ', '3. ', '4. ', '5. ', '6. ', '7. ', '8. ', '9. ')):
+                formatted_lines.append(line)
+            # Regular paragraphs
+            else:
+                formatted_lines.append(line)
+                # Add line break after paragraph if next line is not a list
+                if formatted_lines:
+                    formatted_lines.append('')
+        
+        return '\n'.join(formatted_lines)
     
     def _call_ai_model(
         self,

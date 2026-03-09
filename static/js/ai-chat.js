@@ -270,10 +270,8 @@ class LowSkyAIChat {
                   .trim();
                 if (filtered.trim()) {  // 只添加非空内容
                   fullContent += filtered;
-                  // 实时解析并显示Markdown
-                  contentDiv.innerHTML = this.parseMarkdown(fullContent);
-                  // 滚动到底部
-                  this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
+                  // 使用优化渲染
+                  this.renderWithDebounce(fullContent, contentDiv);
                 }
               }
             } catch (e) {
@@ -305,6 +303,18 @@ class LowSkyAIChat {
   }
   
   
+
+  // Optimized rendering with debounce
+  renderWithDebounce(content, container) {
+    if (this.renderTimer) {
+      clearTimeout(this.renderTimer);
+    }
+    
+    // Immediate render for better responsiveness
+    container.innerHTML = this.parseMarkdown(content);
+    this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
+  }
+
   filterToolCalls(text) {
     if (!text) return '';
     // Remove [TOOL:...] markers and clean up
@@ -323,77 +333,77 @@ class LowSkyAIChat {
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;');
     
-    // 解析标题（### -> h3, ## -> h2, # -> h1）
-    // 注意：必须从最长的开始匹配，避免 ### 被 # 匹配
+    // 保护代码块
+    const codeBlocks = [];
+    html = html.replace(/```([\s\S]+?)```/g, (match, code) => {
+      const placeholder = `__CODE_BLOCK_${codeBlocks.length}__`;
+      codeBlocks.push(`<pre><code>${code}</code></pre>`);
+      return placeholder;
+    });
+    
+    // 保护行内代码
+    const inlineCodes = [];
+    html = html.replace(/`(.+?)`/g, (match, code) => {
+      const placeholder = `__INLINE_CODE_${inlineCodes.length}__`;
+      inlineCodes.push(`<code>${code}</code>`);
+      return placeholder;
+    });
+    
+    // 处理标题（后端已经添加了换行）
     html = html.replace(/^####\s+(.+)$/gm, '<h4>$1</h4>');
     html = html.replace(/^###\s+(.+)$/gm, '<h3>$1</h3>');
     html = html.replace(/^##\s+(.+)$/gm, '<h2>$1</h2>');
     html = html.replace(/^#\s+(.+)$/gm, '<h1>$1</h1>');
     
-    // 解析粗体 **text** 或 __text__
+    // 处理列表
+    html = html.replace(/^[•\-\*]\s+(.+)$/gm, '<li>$1</li>');
+    html = html.replace(/^\d+\.\s+(.+)$/gm, '<li>$1</li>');
+    
+    // 包裹连续的<li>为<ul>
+    html = html.replace(/(<li>.*?<\/li>\n?)+/g, (match) => {
+      return '<ul>' + match + '</ul>';
+    });
+    
+    // 处理粗体和斜体
     html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
     html = html.replace(/__(.+?)__/g, '<strong>$1</strong>');
-    
-    // 解析斜体 *text* 或 _text_ (但不匹配列表标记)
     html = html.replace(/(?<!\*)\*([^\*\n]+?)\*(?!\*)/g, '<em>$1</em>');
-    html = html.replace(/(?<!_)_([^_\n]+?)_(?!_)/g, '<em>$1</em>');
     
-    // 解析代码块 ```code```
-    html = html.replace(/```([\s\S]+?)```/g, '<pre><code>$1</code></pre>');
-    
-    // 解析行内代码 `code`
-    html = html.replace(/`(.+?)`/g, '<code>$1</code>');
-    
-    // 解析链接 [text](url)
+    // 处理链接
     html = html.replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" target="_blank">$1</a>');
     
-    // 解析无序列表 * item 或 - item
-    const lines = html.split('\n');
-    let inList = false;
-    let result = [];
+    // 处理引用
+    html = html.replace(/^>\s+(.+)$/gm, '<blockquote>$1</blockquote>');
     
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      const listMatch = line.match(/^[\*\-] (.+)$/);
-      
-      if (listMatch) {
-        if (!inList) {
-          result.push('<ul>');
-          inList = true;
-        }
-        result.push('<li>' + listMatch[1] + '</li>');
-      } else {
-        if (inList) {
-          result.push('</ul>');
-          inList = false;
-        }
-        result.push(line);
+    // 处理分隔线
+    html = html.replace(/^[-*_]{3,}$/gm, '<hr>');
+    
+    // 处理换行（后端已经添加了空行）
+    html = html.replace(/\n\n/g, '</p><p>');
+    html = html.replace(/^(.+)$/gm, (match) => {
+      // 如果不是HTML标签，包裹为段落
+      if (!match.match(/^<[^>]+>/) && match.trim()) {
+        return '<p>' + match + '</p>';
       }
-    }
+      return match;
+    });
     
-    if (inList) {
-      result.push('</ul>');
-    }
+    // 清理多余的<p>标签
+    html = html.replace(/<p>(<h[1-4]>.*?<\/h[1-4]>)<\/p>/g, '$1');
+    html = html.replace(/<p>(<ul>.*?<\/ul>)<\/p>/g, '$1');
+    html = html.replace(/<p>(<blockquote>.*?<\/blockquote>)<\/p>/g, '$1');
+    html = html.replace(/<p>(<hr>)<\/p>/g, '$1');
+    html = html.replace(/<p>(<pre>.*?<\/pre>)<\/p>/g, '$1');
     
-    html = result.join('\n');
+    // 恢复代码块
+    codeBlocks.forEach((code, i) => {
+      html = html.replace(`__CODE_BLOCK_${i}__`, code);
+    });
     
-    // 解析引用 > text
-    html = html.replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>');
-    
-    // 解析段落（非标签行）
-    html = html.split('\n').map(line => {
-      line = line.trim();
-      if (!line) return '';
-      if (line.startsWith('<h') || line.startsWith('<ul') || line.startsWith('</ul') || 
-          line.startsWith('<li') || line.startsWith('<blockquote') || line.startsWith('<pre')) {
-        return line;
-      }
-      return '<p>' + line + '</p>';
-    }).join('\n');
-    
-    // 清理多余的空段落
-    html = html.replace(/<p>\s*<\/p>/g, '');
-    html = html.replace(/\n+/g, '\n');
+    // 恢复行内代码
+    inlineCodes.forEach((code, i) => {
+      html = html.replace(`__INLINE_CODE_${i}__`, code);
+    });
     
     return html;
   }
