@@ -1,4 +1,4 @@
-﻿{% load static %}
+{% load static %}
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -227,6 +227,55 @@
             <textarea id="policy-content" class="form-textarea" rows="8" required></textarea>
           </div>
 
+
+
+          <!-- AI 智能摘要（政策） -->
+          <div style="background: linear-gradient(135deg, rgba(0,113,227,0.06), rgba(99,179,237,0.08)); border: 1px solid rgba(0,113,227,0.2); border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+              <h4 style="font-size: 16px; color: var(--text-primary); margin: 0;">
+                <i class="fas fa-robot" style="color: var(--primary-color);"></i> AI 智能助手
+              </h4>
+              <div style="display: flex; gap: 8px;">
+                <button type="button" id="policy-ai-format-btn" class="btn btn-secondary" style="font-size: 13px; padding: 6px 16px;">
+                  <i class="fas fa-align-left"></i> 整理原文
+                </button>
+                <button type="button" id="policy-ai-summary-btn" class="btn btn-primary" style="font-size: 13px; padding: 6px 16px;">
+                  <i class="fas fa-magic"></i> 生成摘要
+                </button>
+              </div>
+            </div>
+            <p style="font-size: 13px; color: var(--text-secondary); margin: 0 0 12px;">
+              <strong>整理原文</strong>：AI 自动识别标题层级、段落结构，清洗数据并格式化<br>
+              <strong>生成摘要</strong>：生成关键摘要、核心观点、推荐标签与分类，并自动排版原文
+            </p>
+            <div id="policy-ai-summary-loading" style="display:none; text-align:center; padding: 12px; color: var(--text-secondary); font-size: 14px;">
+              <i class="fas fa-spinner fa-spin"></i> AI 正在分析，请稍候...
+            </div>
+            <div id="policy-ai-summary-error" style="display:none; color: var(--danger-color); font-size: 13px; margin-top: 8px;"></div>
+            <div id="policy-ai-summary-result" style="display:none;">
+              <div style="margin-bottom: 10px;">
+                <div style="font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px;">关键摘要</div>
+                <div id="policy-ai-summary-text" style="font-size: 14px; line-height: 1.7; padding: 10px 14px; background: var(--background); border-radius: 8px; border-left: 3px solid var(--primary-color);"></div>
+              </div>
+              <div style="margin-bottom: 10px;">
+                <div style="font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px;">核心观点</div>
+                <ul id="policy-ai-keypoints" style="margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.8;"></ul>
+              </div>
+              <div style="display: flex; gap: 16px; flex-wrap: wrap; align-items: center; margin-bottom: 12px;">
+                <div>
+                  <span style="font-size: 13px; font-weight: 600; color: var(--text-secondary);">推荐分类：</span>
+                  <span id="policy-ai-category" style="font-size: 13px; padding: 2px 10px; background: rgba(0,113,227,0.1); color: var(--primary-color); border-radius: 20px;"></span>
+                </div>
+                <div>
+                  <span style="font-size: 13px; font-weight: 600; color: var(--text-secondary);">推荐标签：</span>
+                  <span id="policy-ai-tags" style="font-size: 13px;"></span>
+                </div>
+              </div>
+              <button type="button" id="policy-ai-apply-btn" class="btn btn-primary" style="font-size: 12px; padding: 5px 14px;">
+                <i class="fas fa-check"></i> 应用标签与分类
+              </button>
+            </div>
+          </div>
           <div style="margin-top: 8px;">
             <button type="submit" class="btn btn-primary">提交</button>
             <!-- 删除按钮事件由 admin.js 中的事件委托统一绑定，这里不再使用 inline onclick，避免触发两次 -->
@@ -327,6 +376,55 @@
             <textarea id="news-content" class="form-textarea" rows="10" required></textarea>
           </div>
 
+
+
+          <!-- AI 智能摘要（新闻） -->
+          <div style="background: linear-gradient(135deg, rgba(0,113,227,0.06), rgba(99,179,237,0.08)); border: 1px solid rgba(0,113,227,0.2); border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+              <h4 style="font-size: 16px; color: var(--text-primary); margin: 0;">
+                <i class="fas fa-robot" style="color: var(--primary-color);"></i> AI 智能助手
+              </h4>
+              <div style="display: flex; gap: 8px;">
+                <button type="button" id="news-ai-format-btn" class="btn btn-secondary" style="font-size: 13px; padding: 6px 16px;">
+                  <i class="fas fa-align-left"></i> 整理原文
+                </button>
+                <button type="button" id="news-ai-summary-btn" class="btn btn-primary" style="font-size: 13px; padding: 6px 16px;">
+                  <i class="fas fa-magic"></i> 生成摘要
+                </button>
+              </div>
+            </div>
+            <p style="font-size: 13px; color: var(--text-secondary); margin: 0 0 12px;">
+              <strong>整理原文</strong>：AI 自动识别标题层级、段落结构，清洗数据并格式化<br>
+              <strong>生成摘要</strong>：生成关键摘要、核心观点、推荐标签与分类，并自动排版原文
+            </p>
+            <div id="news-ai-summary-loading" style="display:none; text-align:center; padding: 12px; color: var(--text-secondary); font-size: 14px;">
+              <i class="fas fa-spinner fa-spin"></i> AI 正在分析，请稍候...
+            </div>
+            <div id="news-ai-summary-error" style="display:none; color: var(--danger-color); font-size: 13px; margin-top: 8px;"></div>
+            <div id="news-ai-summary-result" style="display:none;">
+              <div style="margin-bottom: 10px;">
+                <div style="font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px;">关键摘要</div>
+                <div id="news-ai-summary-text" style="font-size: 14px; line-height: 1.7; padding: 10px 14px; background: var(--background); border-radius: 8px; border-left: 3px solid var(--primary-color);"></div>
+              </div>
+              <div style="margin-bottom: 10px;">
+                <div style="font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px;">核心观点</div>
+                <ul id="news-ai-keypoints" style="margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.8;"></ul>
+              </div>
+              <div style="display: flex; gap: 16px; flex-wrap: wrap; align-items: center; margin-bottom: 12px;">
+                <div>
+                  <span style="font-size: 13px; font-weight: 600; color: var(--text-secondary);">推荐分类：</span>
+                  <span id="news-ai-category" style="font-size: 13px; padding: 2px 10px; background: rgba(0,113,227,0.1); color: var(--primary-color); border-radius: 20px;"></span>
+                </div>
+                <div>
+                  <span style="font-size: 13px; font-weight: 600; color: var(--text-secondary);">推荐标签：</span>
+                  <span id="news-ai-tags" style="font-size: 13px;"></span>
+                </div>
+              </div>
+              <button type="button" id="news-ai-apply-btn" class="btn btn-primary" style="font-size: 12px; padding: 5px 14px;">
+                <i class="fas fa-check"></i> 应用标签与分类
+              </button>
+            </div>
+          </div>
           <div style="margin-top: 8px;">
             <button type="submit" class="btn btn-primary">发布</button>
             <button type="button" id="news-delete-btn" class="btn btn-danger" style="display:none; margin-left: 12px;">

@@ -1,3 +1,4 @@
+import re
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.authentication import BasicAuthentication, TokenAuthentication
 from rest_framework import viewsets, filters, status
@@ -239,6 +240,109 @@ class PolicyViewSet(PublicModelViewSet):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
+    @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
+    def format_content(self, request):
+        """独立的内容格式化功能（不生成摘要）"""
+        content = request.data.get('content', '').strip()
+        if not content:
+            return Response({'error': '请提供内容'}, status=status.HTTP_400_BAD_REQUEST)
+
+        format_prompt = (
+            f"请将以下文本整理为规范的 HTML 格式，要求：\n"
+            f"1. 识别标题层级，使用 <h2>、<h3>、<h4> 标签\n"
+            f"2. 段落使用 <p> 标签，段落首行缩进 2 字符（使用 &emsp;&emsp;）\n"
+            f"3. 去除多余空格、换行和无用符号\n"
+            f"4. 保持内容完整，不要省略\n"
+            f"5. 只输出 HTML 代码，不要包含任何解释\n\n"
+            f"原文：\n{content}"
+        )
+
+        try:
+            from openai import OpenAI
+            from ai.config import QIANWEN_API_KEY, QIANWEN_BASE_URL
+
+            client = OpenAI(api_key=QIANWEN_API_KEY, base_url=QIANWEN_BASE_URL)
+            
+            format_resp = client.chat.completions.create(
+                model='qwen-turbo',
+                messages=[{'role': 'user', 'content': format_prompt}],
+                max_tokens=4000,
+                temperature=0.2,
+            )
+            formatted_content = format_resp.choices[0].message.content.strip()
+            formatted_content = re.sub(r'^```(?:html)?\s*', '', formatted_content, flags=re.MULTILINE)
+            formatted_content = re.sub(r'```\s*$', '', formatted_content, flags=re.MULTILINE).strip()
+            
+            return Response({'formatted_content': formatted_content})
+        except Exception as e:
+            logger.error(f'格式化失败: {str(e)}')
+            return Response({'error': f'格式化失败: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
+    def ai_summary(self, request):
+        """对政策全文进行 AI 摘要 + 格式化原文"""
+        content = request.data.get('content', '').strip()
+        title = request.data.get('title', '').strip()
+        if not content:
+            return Response({'error': '请提供政策内容'}, status=status.HTTP_400_BAD_REQUEST)
+
+        text_for_ai = content[:3000]
+        summary_prompt = (
+            f"请对以下政策法规内容进行分析，输出严格的 JSON 格式，不要包含任何 Markdown 代码块标记。"
+            f"JSON 结构如下："
+            f'{{"summary": "100字以内的关键摘要", '
+            f'"key_points": ["核心观点1", "核心观点2", "核心观点3"], '
+            f'"tags": ["标签1", "标签2", "标签3"], '
+            f'"category": "最匹配的分类（安全管理/运营规范/市场监管/环境保护/基础设施/综合政策之一）"}}\n\n'
+            f"标题：{title}\n\n内容：{text_for_ai}"
+        )
+
+        format_prompt = (
+            f"请将以下文本整理为规范的 HTML 格式，要求：\n"
+            f"1. 识别标题层级，使用 <h2>、<h3>、<h4> 标签\n"
+            f"2. 段落使用 <p> 标签，段落首行缩进 2 字符（使用 &emsp;&emsp;）\n"
+            f"3. 去除多余空格、换行和无用符号\n"
+            f"4. 保持内容完整，不要省略\n"
+            f"5. 只输出 HTML 代码，不要包含任何解释\n\n"
+            f"原文：\n{content}"
+        )
+
+        try:
+            from openai import OpenAI
+            from ai.config import QIANWEN_API_KEY, QIANWEN_BASE_URL
+            import json as _json
+
+            client = OpenAI(api_key=QIANWEN_API_KEY, base_url=QIANWEN_BASE_URL)
+            
+            # 1. 生成摘要
+            summary_resp = client.chat.completions.create(
+                model='qwen-turbo',
+                messages=[{'role': 'user', 'content': summary_prompt}],
+                max_tokens=800,
+                temperature=0.3,
+            )
+            raw = summary_resp.choices[0].message.content.strip()
+            raw = re.sub(r'^```(?:json)?\s*', '', raw, flags=re.MULTILINE)
+            raw = re.sub(r'```\s*$', '', raw, flags=re.MULTILINE).strip()
+            result = _json.loads(raw)
+            
+            # 2. 格式化原文
+            format_resp = client.chat.completions.create(
+                model='qwen-turbo',
+                messages=[{'role': 'user', 'content': format_prompt}],
+                max_tokens=4000,
+                temperature=0.2,
+            )
+            formatted_content = format_resp.choices[0].message.content.strip()
+            formatted_content = re.sub(r'^```(?:html)?\s*', '', formatted_content, flags=re.MULTILINE)
+            formatted_content = re.sub(r'```\s*$', '', formatted_content, flags=re.MULTILINE).strip()
+            
+            result['formatted_content'] = formatted_content
+            return Response(result)
+        except Exception as e:
+            logger.error(f'AI 处理失败: {str(e)}')
+            return Response({'error': f'AI 处理失败: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 # 新闻资讯视图集
 class NewsViewSet(PublicModelViewSet):
     queryset = News.objects.all()
@@ -270,6 +374,108 @@ class NewsViewSet(PublicModelViewSet):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
+    @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
+    def format_content(self, request):
+        """独立的内容格式化功能（不生成摘要）"""
+        content = request.data.get('content', '').strip()
+        if not content:
+            return Response({'error': '请提供内容'}, status=status.HTTP_400_BAD_REQUEST)
+
+        format_prompt = (
+            f"请将以下文本整理为规范的 HTML 格式，要求：\n"
+            f"1. 识别标题层级，使用 <h2>、<h3>、<h4> 标签\n"
+            f"2. 段落使用 <p> 标签，段落首行缩进 2 字符（使用 &emsp;&emsp;）\n"
+            f"3. 去除多余空格、换行和无用符号\n"
+            f"4. 保持内容完整，不要省略\n"
+            f"5. 只输出 HTML 代码，不要包含任何解释\n\n"
+            f"原文：\n{content}"
+        )
+
+        try:
+            from openai import OpenAI
+            from ai.config import QIANWEN_API_KEY, QIANWEN_BASE_URL
+
+            client = OpenAI(api_key=QIANWEN_API_KEY, base_url=QIANWEN_BASE_URL)
+            
+            format_resp = client.chat.completions.create(
+                model='qwen-turbo',
+                messages=[{'role': 'user', 'content': format_prompt}],
+                max_tokens=4000,
+                temperature=0.2,
+            )
+            formatted_content = format_resp.choices[0].message.content.strip()
+            formatted_content = re.sub(r'^```(?:html)?\s*', '', formatted_content, flags=re.MULTILINE)
+            formatted_content = re.sub(r'```\s*$', '', formatted_content, flags=re.MULTILINE).strip()
+            
+            return Response({'formatted_content': formatted_content})
+        except Exception as e:
+            logger.error(f'格式化失败: {str(e)}')
+            return Response({'error': f'格式化失败: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
+    def ai_summary(self, request):
+        """对新闻全文进行 AI 摘要 + 格式化原文"""
+        content = request.data.get('content', '').strip()
+        title = request.data.get('title', '').strip()
+        if not content:
+            return Response({'error': '请提供新闻内容'}, status=status.HTTP_400_BAD_REQUEST)
+
+        text_for_ai = content[:3000]
+        summary_prompt = (
+            f"请对以下新闻内容进行分析，输出严格的 JSON 格式，不要包含任何 Markdown 代码块标记。"
+            f"JSON 结构如下："
+            f'{{"summary": "100字以内的关键摘要", '
+            f'"key_points": ["核心观点1", "核心观点2", "核心观点3"], '
+            f'"tags": ["标签1", "标签2", "标签3"], '
+            f'"category": "最匹配的分类（行业动态/政策解读/技术创新/企业新闻/市场分析之一）"}}\n\n'
+            f"标题：{title}\n\n内容：{text_for_ai}"
+        )
+
+        format_prompt = (
+            f"请将以下文本整理为规范的 HTML 格式，要求：\n"
+            f"1. 识别标题层级，使用 <h2>、<h3>、<h4> 标签\n"
+            f"2. 段落使用 <p> 标签，段落首行缩进 2 字符（使用 &emsp;&emsp;）\n"
+            f"3. 去除多余空格、换行和无用符号\n"
+            f"4. 保持内容完整，不要省略\n"
+            f"5. 只输出 HTML 代码，不要包含任何解释\n\n"
+            f"原文：\n{content}"
+        )
+
+        try:
+            from openai import OpenAI
+            from ai.config import QIANWEN_API_KEY, QIANWEN_BASE_URL
+            import json as _json
+
+            client = OpenAI(api_key=QIANWEN_API_KEY, base_url=QIANWEN_BASE_URL)
+            
+            # 1. 生成摘要
+            summary_resp = client.chat.completions.create(
+                model='qwen-turbo',
+                messages=[{'role': 'user', 'content': summary_prompt}],
+                max_tokens=800,
+                temperature=0.3,
+            )
+            raw = summary_resp.choices[0].message.content.strip()
+            raw = re.sub(r'^```(?:json)?\s*', '', raw, flags=re.MULTILINE)
+            raw = re.sub(r'```\s*$', '', raw, flags=re.MULTILINE).strip()
+            result = _json.loads(raw)
+            
+            # 2. 格式化原文
+            format_resp = client.chat.completions.create(
+                model='qwen-turbo',
+                messages=[{'role': 'user', 'content': format_prompt}],
+                max_tokens=4000,
+                temperature=0.2,
+            )
+            formatted_content = format_resp.choices[0].message.content.strip()
+            formatted_content = re.sub(r'^```(?:html)?\s*', '', formatted_content, flags=re.MULTILINE)
+            formatted_content = re.sub(r'```\s*$', '', formatted_content, flags=re.MULTILINE).strip()
+            
+            result['formatted_content'] = formatted_content
+            return Response(result)
+        except Exception as e:
+            logger.error(f'AI 处理失败: {str(e)}')
+            return Response({'error': f'AI 处理失败: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 # 安全隐患视图集

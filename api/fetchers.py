@@ -11,6 +11,13 @@ from datetime import datetime
 import logging
 import json
 
+# newspaper3k 可选依赖
+try:
+    from newspaper import Article
+    NEWSPAPER_AVAILABLE = True
+except ImportError:
+    NEWSPAPER_AVAILABLE = False
+
 logger = logging.getLogger(__name__)
 
 
@@ -393,6 +400,29 @@ class ContentFetcher:
         return None
 
 
+    def _extract_via_newspaper(self):
+        """newspaper3k 备用提取"""
+        if not NEWSPAPER_AVAILABLE:
+            return None
+        try:
+            article = Article(self.url, language='zh')
+            article.download()
+            article.parse()
+            result = {}
+            if article.title and len(article.title.strip()) > 5:
+                result['title'] = article.title.strip()
+            if article.text and len(article.text.strip()) > 50:
+                result['content'] = article.text.strip()
+            if article.authors:
+                result['author'] = ', '.join(article.authors)
+            if article.publish_date:
+                result['publish_date'] = article.publish_date.strftime('%Y-%m-%d')
+            logger.info(f'newspaper3k: title={result.get("title","")[:30]}, content_len={len(result.get("content",""))}')
+            return result if result else None
+        except Exception as e:
+            logger.warning(f'newspaper3k 提取失败: {str(e)}')
+            return None
+
 class NewsFetcher(ContentFetcher):
     """新闻爬取器 - 支持传统HTML和API接口"""
     
@@ -605,20 +635,32 @@ class NewsFetcher(ContentFetcher):
         return publish_date
     
     def fetch(self):
-        """爬取新闻"""
+        """爬取新闻，优先 HTML/API 解析，内容不足时回退到 newspaper3k"""
         self.fetch_page()
-        
+
         title = self.extract_title()
-        if not title:
-            raise Exception('无法提取标题，请检查URL或手动输入')
-        
         author = self.extract_author()
         publish_date = self.extract_publish_date()
-        
         content = self.extract_content()
+
+        if (not content or len(content) < 100) and NEWSPAPER_AVAILABLE:
+            logger.info('HTML 内容不足，尝试 newspaper3k 补充提取')
+            np_result = self._extract_via_newspaper()
+            if np_result:
+                if not title and np_result.get('title'):
+                    title = np_result['title']
+                if (not content or len(content) < 100) and np_result.get('content'):
+                    content = np_result['content']
+                if (not author or author == '未知作者') and np_result.get('author'):
+                    author = np_result['author']
+                if np_result.get('publish_date') and publish_date == datetime.now().strftime('%Y-%m-%d'):
+                    publish_date = np_result['publish_date']
+
+        if not title:
+            raise Exception('无法提取标题，请检查URL或手动输入')
         if not content or len(content) < 50:
             raise Exception(f'无法提取内容或内容过短（{len(content) if content else 0}字符），请检查URL或手动输入')
-        
+
         return {
             'title': title,
             'author': author,
@@ -678,20 +720,30 @@ class PolicyFetcher(ContentFetcher):
         return publish_date
     
     def fetch(self):
-        """爬取政策"""
+        """爬取政策，优先 HTML 解析，内容不足时回退到 newspaper3k"""
         self.fetch_page()
-        
+
         title = self.extract_title()
-        if not title:
-            raise Exception('无法提取标题，请检查URL或手动输入')
-        
         department = self.extract_author()  # 政策的"作者"就是发布部门
         publish_date = self.extract_publish_date()
-        
         content = self.extract_content()
+
+        if (not content or len(content) < 100) and NEWSPAPER_AVAILABLE:
+            logger.info('政策 HTML 内容不足，尝试 newspaper3k 补充提取')
+            np_result = self._extract_via_newspaper()
+            if np_result:
+                if not title and np_result.get('title'):
+                    title = np_result['title']
+                if (not content or len(content) < 100) and np_result.get('content'):
+                    content = np_result['content']
+                if np_result.get('publish_date') and publish_date == datetime.now().strftime('%Y-%m-%d'):
+                    publish_date = np_result['publish_date']
+
+        if not title:
+            raise Exception('无法提取标题，请检查URL或手动输入')
         if not content or len(content) < 50:
             raise Exception(f'无法提取内容或内容过短（{len(content) if content else 0}字符），请检查URL或手动输入')
-        
+
         return {
             'title': title,
             'department': department,

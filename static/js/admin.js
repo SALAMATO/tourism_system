@@ -1,4 +1,4 @@
-﻿//管理后台逻辑
+//管理后台逻辑
 let currentReplyMessageId = null;
 const replyModal = new Modal('reply-modal');
 
@@ -1752,3 +1752,180 @@ async function initBasicEditors() {
 
 
 
+
+
+// ===== AI 智能摘要 =====
+
+// 存储最近一次 AI 摘要结果
+let lastPolicyAiResult = null;
+let lastNewsAiResult = null;
+
+// ===== 整理原文功能 =====
+async function formatContent(type) {
+  const isPolicy = type === 'policy';
+  const apiUrl = isPolicy
+    ? 'http://127.0.0.1:8000/api/policies/format_content/'
+    : 'http://127.0.0.1:8000/api/news/format_content/';
+  
+  const rawContent = window.CKEditorSuperHelper
+    ? window.CKEditorSuperHelper.getContent(isPolicy ? 'policy-content' : 'news-content')
+    : document.getElementById(isPolicy ? 'policy-content' : 'news-content').value;
+  
+  const plainContent = rawContent.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  
+  if (!plainContent || plainContent.length < 50) {
+    showNotification('请先填写内容再整理原文', 'error');
+    return;
+  }
+  
+  const btn = document.getElementById(type + '-ai-format-btn');
+  const originalHtml = btn.innerHTML;
+  
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 整理中...';
+  
+  try {
+    const resp = await fetch(apiUrl, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ content: rawContent })
+    });
+    
+    if (!resp.ok) {
+      const err = await resp.json();
+      throw new Error(err.error || '整理失败');
+    }
+    
+    const data = await resp.json();
+    
+    // 应用格式化后的内容到编辑器
+    if (data.formatted_content) {
+      if (window.CKEditorSuperHelper) {
+        window.CKEditorSuperHelper.setContent(
+          isPolicy ? 'policy-content' : 'news-content',
+          data.formatted_content
+        );
+      } else {
+        document.getElementById(isPolicy ? 'policy-content' : 'news-content').value = data.formatted_content;
+      }
+      showNotification('原文整理完成', 'success');
+    }
+  } catch (e) {
+    showNotification('整理失败：' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = originalHtml;
+  }
+}
+
+async function runAiSummary(type) {
+  const isPolicy = type === 'policy';
+  const apiUrl = isPolicy
+    ? 'http://127.0.0.1:8000/api/policies/ai_summary/'
+    : 'http://127.0.0.1:8000/api/news/ai_summary/';
+
+  const title = document.getElementById(isPolicy ? 'policy-title' : 'news-title').value.trim();
+  const content = window.CKEditorSuperHelper
+    ? window.CKEditorSuperHelper.getContent(isPolicy ? 'policy-content' : 'news-content')
+    : document.getElementById(isPolicy ? 'policy-content' : 'news-content').value;
+
+  // Strip HTML tags for plain text
+  const plainContent = content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+
+  if (!plainContent || plainContent.length < 50) {
+    showNotification('请先填写内容再生成摘要', 'error');
+    return;
+  }
+
+  const loadingEl = document.getElementById(`${type}-ai-summary-loading`);
+  const resultEl  = document.getElementById(`${type}-ai-summary-result`);
+  const errorEl   = document.getElementById(`${type}-ai-summary-error`);
+  const btn       = document.getElementById(`${type}-ai-summary-btn`);
+
+  loadingEl.style.display = 'block';
+  resultEl.style.display  = 'none';
+  errorEl.style.display   = 'none';
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 分析中...';
+
+  try {
+    const resp = await fetch(apiUrl, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ title, content: plainContent })
+    });
+
+    if (!resp.ok) {
+      const err = await resp.json();
+      throw new Error(err.error || '摘要生成失败');
+    }
+
+    const data = await resp.json();
+    if (isPolicy) lastPolicyAiResult = data; else lastNewsAiResult = data;
+
+    // Render summary
+    document.getElementById(`${type}-ai-summary-text`).textContent = data.summary || '';
+
+    const kpList = document.getElementById(`${type}-ai-keypoints`);
+    kpList.innerHTML = (data.key_points || []).map(p => `<li>${escapeHtml(p)}</li>`).join('');
+
+    document.getElementById(`${type}-ai-category`).textContent = data.category || '';
+
+    const tagsEl = document.getElementById(`${type}-ai-tags`);
+    tagsEl.innerHTML = (data.tags || []).map(t =>
+      `<span style="display:inline-block;margin:2px 4px;padding:2px 10px;background:rgba(0,113,227,0.1);color:var(--primary-color);border-radius:20px;font-size:12px;">${escapeHtml(t)}</span>`
+    ).join('');
+
+    loadingEl.style.display = 'none';
+    resultEl.style.display  = 'block';
+    showNotification('摘要生成成功', 'success');
+  } catch (e) {
+    loadingEl.style.display = 'none';
+    errorEl.style.display   = 'block';
+    errorEl.textContent     = '生成失败：' + e.message;
+    showNotification('AI 摘要失败：' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-magic"></i> 生成摘要';
+  }
+}
+
+function applyAiResult(type) {
+  const data = type === 'policy' ? lastPolicyAiResult : lastNewsAiResult;
+  
+  if (!data) {
+    showNotification('请先生成摘要', 'warning');
+    return;
+  }
+
+  // 应用分类（支持 input 文本框和 select 下拉框）
+  const catEl = document.getElementById(type + '-category');
+  if (catEl && data.category) {
+    catEl.value = data.category;
+  }
+
+  // 应用标签（增加安全检查，防止 undefined 错误）
+  const tagsEl = document.getElementById(type + '-tags');
+  if (tagsEl && data.tags && Array.isArray(data.tags) && data.tags.length > 0) {
+    tagsEl.value = data.tags.join(',');
+  }
+
+  showNotification('标签与分类已应用', 'success');
+}
+
+// Bind buttons after DOM ready
+document.addEventListener('DOMContentLoaded', function () {
+  document.addEventListener('click', function (e) {
+    // 整理原文按钮
+    if (e.target.closest('#policy-ai-format-btn')) formatContent('policy');
+    if (e.target.closest('#news-ai-format-btn'))   formatContent('news');
+    
+    // 生成摘要按钮
+    if (e.target.closest('#policy-ai-summary-btn')) runAiSummary('policy');
+    if (e.target.closest('#news-ai-summary-btn'))   runAiSummary('news');
+    
+    // 应用标签与分类按钮
+    if (e.target.closest('#policy-ai-apply-btn'))   applyAiResult('policy');
+    if (e.target.closest('#news-ai-apply-btn'))     applyAiResult('news');
+  });
+});
