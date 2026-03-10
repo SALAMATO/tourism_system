@@ -453,20 +453,53 @@ class LowSkyAIViewSet(viewsets.ViewSet):
     
     @action(detail=False, methods=['post'])
     def chat_stream(self, request):
-        """与AI对话（流式）"""
+        """与AI对话（流式）
+        
+        支持 tool_mode 参数：
+          - 'auto'     : 默认，AI 自行决定是否调用工具
+          - 'db_only'  : 强制只查询本地数据库（db_query 工具）
+          - 'web_only' : 强制只使用联网搜索（search_web 工具）
+        """
         from django.http import StreamingHttpResponse
         import json
         
         message = request.data.get('message')
         context = request.data.get('context', {})
+        tool_mode = request.data.get('tool_mode', 'auto')  # 新增：工具模式
         
         if not message:
             return Response({'error': '消息不能为空'}, status=status.HTTP_400_BAD_REQUEST)
         
         def event_stream():
             try:
-                for chunk in lowsky_ai.chat_stream(message, context):
-                    # 使用SSE格式
+                # ── 本地数据库模式：直接走 qwen-turbo 快速链路 ────────────────
+                if tool_mode == 'db_only':
+                    from ai.db_tools import get_db, get_llm, SQLDatabaseChain
+                    from ai.config import QIANWEN_API_KEY, QIANWEN_BASE_URL
+                    
+                    yield f"data: {json.dumps({'content': '🔍 正在查询本地数据库...'})}\n\n"
+                    
+                    db = get_db()
+                    llm = get_llm(
+                        api_key=QIANWEN_API_KEY,
+                        api_base=QIANWEN_BASE_URL,
+                    )  # 内部固定使用 qwen-turbo
+                    db_chain = SQLDatabaseChain.from_llm(llm, db)
+                    result = db_chain.run(message)
+                    
+                    # 分块输出结果（模拟流式）
+                    chunk_size = 20
+                    for i in range(0, len(result), chunk_size):
+                        yield f"data: {json.dumps({'content': result[i:i+chunk_size]})}\n\n"
+                    yield f"data: {json.dumps({'done': True})}\n\n"
+                    return
+                
+                # ── 联网搜索模式：在消息前加强制指令 ────────────────────────
+                forced_message = message
+                if tool_mode == 'web_only':
+                    forced_message = f'[强制使用联网搜索，必须调用search_web工具] {message}'
+                
+                for chunk in lowsky_ai.chat_stream(forced_message, context):
                     yield f"data: {json.dumps({'content': chunk})}\n\n"
                 yield f"data: {json.dumps({'done': True})}\n\n"
             except Exception as e:

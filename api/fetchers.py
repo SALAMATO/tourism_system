@@ -494,56 +494,52 @@ class NewsFetcher(ContentFetcher):
         return '腾讯新闻'
     
     def extract_content(self):
-        """提取内容"""
-        # 如果有API数据，从API提取
+        """提取内容，返回CKEditor兼容的HTML"""
         if self.api_data:
             try:
                 content_parts = []
-                
-                # 提取摘要
-                abstract = self.api_data.get('abstract', '')
-                if abstract:
-                    content_parts.append(abstract)
-                
-                # 提取正文内容
-                content = self.api_data.get('content', '')
-                if content:
-                    # 清理HTML标签
-                    content = re.sub(r'<[^>]+>', '', content)
-                    # 清理多余空白
-                    content = re.sub(r'\s+', ' ', content)
-                    content = content.strip()
-                    if content:
-                        content_parts.append(content)
-                
-                # 尝试其他可能的字段
+                seen_texts = set()
+
+                def _to_ck_html(raw):
+                    """将原始字符串转为CKEditor兼容的HTML段落"""
+                    if re.search(r'<(p|h[1-6]|ul|ol|blockquote)[\s>]', raw, re.I):
+                        return raw.strip()
+                    lines = [l.strip() for l in re.split(r'\n+', raw) if l.strip()]
+                    return ''.join(f'<p>{html_module.escape(l)}</p>' for l in lines)
+
+                abstract = self.api_data.get('abstract', '') or ''
+                if abstract.strip() and abstract not in seen_texts:
+                    content_parts.append(f'<p>{html_module.escape(abstract.strip())}</p>')
+                    seen_texts.add(abstract)
+
+                content = self.api_data.get('content', '') or ''
+                if content.strip() and content not in seen_texts:
+                    content_parts.append(_to_ck_html(content))
+                    seen_texts.add(content)
+
                 for key in ['info', 'text', 'body']:
                     if key in self.api_data:
                         value = self.api_data[key]
-                        if isinstance(value, str):
-                            value = re.sub(r'<[^>]+>', '', value)
-                            value = re.sub(r'\s+', ' ', value).strip()
-                            if value and value not in content_parts:
-                                content_parts.append(value)
-                        elif isinstance(value, dict) and 'content' in value:
-                            value_content = value['content']
-                            value_content = re.sub(r'<[^>]+>', '', value_content)
-                            value_content = re.sub(r'\s+', ' ', value_content).strip()
-                            if value_content and value_content not in content_parts:
-                                content_parts.append(value_content)
-                
+                        if isinstance(value, str) and value.strip() and value not in seen_texts:
+                            content_parts.append(_to_ck_html(value))
+                            seen_texts.add(value)
+                        elif isinstance(value, dict):
+                            vc = value.get('content', '') or ''
+                            if vc.strip() and vc not in seen_texts:
+                                content_parts.append(_to_ck_html(vc))
+                                seen_texts.add(vc)
+
                 if content_parts:
-                    final_content = '\n\n'.join(content_parts)
+                    final_content = '\n'.join(content_parts)
                     logger.info(f"从API提取到内容，长度: {len(final_content)}")
                     return final_content
-                    
+
             except Exception as e:
                 logger.error(f"从API提取内容失败: {str(e)}")
-        
-        # 使用父类方法
+
         if self.tree is not None:
             return super().extract_content()
-        
+
         return None
     
     def extract_publish_date(self):

@@ -1,9 +1,9 @@
 """
-AI工具函数 - 提供联网搜索和网站数据读取功能
-使用Django ORM直接读取数据库
+AI工具函数 - 提供联网搜索、网站数据读取和数据库自然语言查询功能
+使用Django ORM直接读取数据库，并集成 LangChain SQL 智能查询
 """
 
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 from datetime import datetime
 
 
@@ -12,7 +12,29 @@ class AITools:
     
     def __init__(self):
         # 不再需要base_url，直接使用Django ORM
-        pass
+        # db_tool 延迟初始化，等待 LLM 配置注入
+        self._db_tool = None
+        self._llm_config: Optional[Dict] = None
+
+    def set_llm_config(self, api_key: str, api_base: str = None, model_name: str = None):
+        """
+        注入 LLM 配置，用于数据库自然语言查询（db_query 工具）。
+        在 LowSkyAI 初始化模型后调用此方法。
+        """
+        self._llm_config = {
+            'api_key': api_key,
+            'api_base': api_base or 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+            'model_name': model_name or 'qwen-plus',
+        }
+        # 重置，下次使用时重建
+        self._db_tool = None
+
+    def _get_db_tool(self):
+        """懒加载数据库查询工具"""
+        if self._db_tool is None:
+            from .db_tools import get_db_tool
+            self._db_tool = get_db_tool(llm_config=self._llm_config)
+        return self._db_tool
     
     def search_web(self, query: str) -> str:
         """
@@ -267,6 +289,24 @@ class AITools:
         except Exception as e:
             return f"搜索失败：{str(e)}"
     
+    def db_query(self, question: str) -> str:
+        """
+        自然语言数据库查询（LangChain SQL Agent）
+        流程：用户问题 → AI生成SQL → 数据库执行 → 返回数据 → AI整理回答
+
+        Args:
+            question: 用户的自然语言问题，例如 "统计各地区游客数量" 
+
+        Returns:
+            str: AI 整理后的查询结果
+        """
+        try:
+            tool = self._get_db_tool()
+            result = tool.query(question)
+            return result
+        except Exception as e:
+            return f"数据库查询失败：{str(e)}"
+
     def get_current_time(self) -> str:
         """获取当前时间"""
         now = datetime.now()
@@ -291,6 +331,7 @@ class AITools:
             "get_safety_alerts": self.get_safety_alerts,
             "search_site_content": self.search_site_content,
             "get_current_time": self.get_current_time,
+            "db_query": self.db_query,
         }
         
         if tool_name not in tools:
@@ -355,5 +396,12 @@ def get_available_tools() -> List[Dict[str, Any]]:
             "name": "get_current_time",
             "description": "获取当前时间",
             "parameters": {}
+        },
+        {
+            "name": "db_query",
+            "description": "自然语言数据库查询：将问题转为SQL执行并返回结构化结果。适用于统计分析、数据汇总、多条件筛选等复杂查询",
+            "parameters": {
+                "question": "自然语言查询问题，例如：各地区游客数量排名、高风险安全预警列表、最新10条政策"
+            }
         }
     ]

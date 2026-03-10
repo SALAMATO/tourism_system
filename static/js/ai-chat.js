@@ -6,10 +6,13 @@ class LowSkyAIChat {
     this.input = null;
     this.sendBtn = null;
     this.stopBtn = null;
+    this.toolBtn = null;
+    this.toolMenu = null;
     this.isOpen = false;
     this.messages = [];
     this.isGenerating = false;
     this.abortController = null;
+    this.toolMode = 'auto'; // 'auto' | 'db_only' | 'web_only'
     
     this.init();
   }
@@ -60,7 +63,36 @@ class LowSkyAIChat {
           </div>
         </div>
         <div class="ai-chat-input-area">
+          <div class="ai-tool-mode-bar" id="ai-tool-mode-bar" style="display:none;"></div>
           <div class="ai-chat-input-wrapper">
+            <div class="ai-tool-menu-wrap">
+              <button class="ai-tool-btn" id="ai-tool-btn" title="选择工具模式">
+                <i class="fas fa-tools"></i>
+              </button>
+              <div class="ai-tool-menu" id="ai-tool-menu">
+                <div class="ai-tool-menu-item active" data-mode="auto">
+                  <i class="fas fa-magic"></i>
+                  <div>
+                    <div class="ai-tool-menu-title">默认模式</div>
+                    <div class="ai-tool-menu-desc">解答低空旅游相关信息</div>
+                  </div>
+                </div>
+                <div class="ai-tool-menu-item" data-mode="db_only">
+                  <i class="fas fa-database"></i>
+                  <div>
+                    <div class="ai-tool-menu-title">数据库查询</div>
+                    <div class="ai-tool-menu-desc">查询系统数据库信息</div>
+                  </div>
+                </div>
+                <div class="ai-tool-menu-item" data-mode="web_only">
+                  <i class="fas fa-globe"></i>
+                  <div>
+                    <div class="ai-tool-menu-title">联网搜索</div>
+                    <div class="ai-tool-menu-desc">搜索互联网最新信息</div>
+                  </div>
+                </div>
+              </div>
+            </div>
             <textarea 
               class="ai-chat-input" 
               id="ai-chat-input" 
@@ -87,6 +119,8 @@ class LowSkyAIChat {
     this.input = modal.querySelector('#ai-chat-input');
     this.sendBtn = modal.querySelector('#ai-chat-send');
     this.stopBtn = modal.querySelector('#ai-chat-stop');
+    this.toolBtn = modal.querySelector('#ai-tool-btn');
+    this.toolMenu = modal.querySelector('#ai-tool-menu');
   }
   
   bindEvents() {
@@ -131,6 +165,48 @@ class LowSkyAIChat {
         }
       }
     });
+
+    // 工具模式按鈕
+    this.toolBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.toolMenu.classList.toggle('show');
+    });
+    this.toolMenu.querySelectorAll('.ai-tool-menu-item').forEach(item => {
+      item.addEventListener('click', () => {
+        this.setToolMode(item.dataset.mode);
+        this.toolMenu.classList.remove('show');
+      });
+    });
+    document.addEventListener('click', (e) => {
+      if (!this.toolBtn.contains(e.target) && !this.toolMenu.contains(e.target)) {
+        this.toolMenu.classList.remove('show');
+      }
+    });
+  }
+
+  setToolMode(mode) {
+    this.toolMode = mode;
+    const modeBar = this.modal.querySelector('#ai-tool-mode-bar');
+    this.toolMenu.querySelectorAll('.ai-tool-menu-item').forEach(item => {
+      item.classList.toggle('active', item.dataset.mode === mode);
+    });
+    if (mode === 'db_only') {
+      this.toolBtn.className = 'ai-tool-btn active mode-db';
+      modeBar.style.display = 'flex';
+      modeBar.className = 'ai-tool-mode-bar mode-db';
+      modeBar.innerHTML = '<i class="fas fa-database"></i>&nbsp; <strong>数据库查询</strong> &mdash; 查询低空旅游信息管理系统数据，可询问政策法规、统计数据、安全预警、新闻资讯等信息';
+      this.input.placeholder = '例如：最近有哪些安全隐患？各地区游客数量排名？评分最高的目的地？';
+    } else if (mode === 'web_only') {
+      this.toolBtn.className = 'ai-tool-btn active mode-web';
+      modeBar.style.display = 'flex';
+      modeBar.className = 'ai-tool-mode-bar mode-web';
+      modeBar.innerHTML = '<i class="fas fa-globe"></i>&nbsp; <strong>联网搜索</strong> &mdash; 搜索互联网最新信息';
+      this.input.placeholder = '例如：2026年低空经济最新政策？最新行业动态？';
+    } else {
+      this.toolBtn.className = 'ai-tool-btn';
+      modeBar.style.display = 'none';
+      this.input.placeholder = '请输入您的问题...';
+    }
   }
   
   openChat() {
@@ -217,6 +293,7 @@ class LowSkyAIChat {
         },
         body: JSON.stringify({
           message: message,
+          tool_mode: this.toolMode,
           context: {
             page: window.location.pathname,
             timestamp: new Date().toISOString()
