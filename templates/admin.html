@@ -308,18 +308,19 @@
             </div>
           </div>
 
-          <!-- 标签 -->
-          <div class="form-group">
-            <label class="form-label">标签（用逗号分隔）</label>
-            <input type="text" id="news-tags" class="form-input" placeholder="低空旅游,行业发展">
+            <!-- 标签 + 封面 -->
+          <div class="form-row">
+              <!-- 标签 -->
+              <div class="form-group">
+                <label class="form-label">标签（用逗号分隔）</label>
+                <input type="text" id="news-tags" class="form-input" placeholder="低空旅游,行业发展">
+              </div>
+              <!-- 封面图片 -->
+              <div class="form-group">
+                <label class="form-label">封面图片URL（选填）</label>
+                <input type="url" id="news-cover" class="form-input" placeholder="https://...">
+              </div>
           </div>
-
-          <!-- 封面图片 -->
-          <div class="form-group">
-            <label class="form-label">封面图片URL（选填）</label>
-            <input type="url" id="news-cover" class="form-input" placeholder="https://...">
-          </div>
-
           <!-- 新闻内容 -->
           <div class="form-group">
             <label class="form-label">新闻内容 *</label>
@@ -348,43 +349,56 @@
       <h2 class="section-title">安全隐患管理</h2>
       <div class="card">
         <h3 class="card-title">添加安全隐患</h3>
-        <form id="safety-form">
-          <div class="form-group">
-            <label class="form-label">隐患标题 *</label>
-            <input type="text" id="safety-title" class="form-input" required>
+          
+                <form id="safety-form">
+          <!-- 第一行：隐患标题 + 隐患类别 -->
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">隐患标题 *</label>
+              <input type="text" id="safety-title" class="form-input" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">隐患类别 *</label>
+              <input type="text" id="safety-category" class="form-input" placeholder="如：天气因素、设备故障等" required>
+            </div>
           </div>
-          <div class="form-group">
-            <label class="form-label">风险等级 *</label>
-            <select id="safety-risk" class="form-select" required>
-              <option value="高">高</option>
-              <option value="中">中</option>
-              <option value="低">低</option>
-            </select>
+        
+          <!-- 第二行：风险等级 + 状态 -->
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">风险等级 *</label>
+              <select id="safety-risk" class="form-select" required>
+                <option value="高">高</option>
+                <option value="中">中</option>
+                <option value="低">低</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">状态 *</label>
+              <select id="safety-status" class="form-select" required>
+                <option value="待处理">待处理</option>
+                <option value="处理中">处理中</option>
+                <option value="已解决">已解决</option>
+              </select>
+            </div>
           </div>
-          <div class="form-group">
-            <label class="form-label">隐患类别 *</label>
-            <input type="text" id="safety-category" class="form-input" placeholder="如：天气因素、设备故障等" required>
-          </div>
+        
+          <!-- 其他单列字段 -->
           <div class="form-group">
             <label class="form-label">详细描述 *</label>
             <textarea id="safety-description" class="form-textarea" rows="5" required></textarea>
           </div>
+        
           <div class="form-group">
             <label class="form-label">预防措施 *</label>
             <textarea id="safety-prevention" class="form-textarea" rows="5" required></textarea>
           </div>
+        
           <div class="form-group">
             <label class="form-label">应急预案 *</label>
             <textarea id="safety-plan" class="form-textarea" rows="5" required></textarea>
           </div>
-          <div class="form-group">
-            <label class="form-label">状态 *</label>
-            <select id="safety-status" class="form-select" required>
-              <option value="待处理">待处理</option>
-              <option value="处理中">处理中</option>
-              <option value="已解决">已解决</option>
-            </select>
-          </div>
+            
           <div style="margin-top: 8px;">
             <button type="submit" class="btn btn-primary">提交</button>
             <button type="button" id="safety-delete-btn" class="btn btn-danger" style="display:none; margin-left: 12px;">
@@ -407,35 +421,50 @@
       <h2 class="section-title">统计数据管理</h2>
       <div class="card">
         <h3 class="card-title">添加统计数据</h3>
+          
         <form id="statistics-form">
-          <div class="form-group">
-            <label class="form-label">地区 *</label>
-            <input type="text" id="stat-region" class="form-input" placeholder="如：北京、上海等" required>
+          <!-- 第一行：地区 + 年份 -->
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">地区 *</label>
+              <input type="text" id="stat-region" class="form-input" placeholder="如：北京、上海等" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">年份 *</label>
+              <input type="number" id="stat-year" class="form-input" min="2020" max="2030" value="2024" required>
+            </div>
           </div>
-          <div class="form-group">
-            <label class="form-label">年份 *</label>
-            <input type="number" id="stat-year" class="form-input" min="2020" max="2030" value="2024" required>
+        
+          <!-- 第二行：游客数量 + 营收 -->
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">游客数量（万人次）*</label>
+              <input type="number" id="stat-tourists" class="form-input" min="0" step="0.1" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">营收（万元）*</label>
+              <input type="number" id="stat-revenue" class="form-input" min="0" step="0.01" required>
+            </div>
           </div>
-          <div class="form-group">
-            <label class="form-label">游客数量（万人次）*</label>
-            <input type="number" id="stat-tourists" class="form-input" min="0" step="0.1" required>
+        
+          <!-- 第三行：航班次数 + 航空器数量 -->
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">航班次数 *</label>
+              <input type="number" id="stat-flights" class="form-input" min="0" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">航空器数量 *</label>
+              <input type="number" id="stat-aircraft" class="form-input" min="0" required>
+            </div>
           </div>
-          <div class="form-group">
-            <label class="form-label">营收（万元）*</label>
-            <input type="number" id="stat-revenue" class="form-input" min="0" step="0.01" required>
-          </div>
-          <div class="form-group">
-            <label class="form-label">航班次数 *</label>
-            <input type="number" id="stat-flights" class="form-input" min="0" required>
-          </div>
-          <div class="form-group">
-            <label class="form-label">航空器数量 *</label>
-            <input type="number" id="stat-aircraft" class="form-input" min="0" required>
-          </div>
+        
+          <!-- 第四行：增长率 -->
           <div class="form-group">
             <label class="form-label">增长率（%）*</label>
             <input type="number" id="stat-growth" class="form-input" min="-100" max="1000" step="0.1" required>
           </div>
+            
           <div style="margin-top: 8px;">
             <button type="submit" class="btn btn-primary">提交</button>
             <button type="button" id="statistics-delete-btn" class="btn btn-danger" style="display:none; margin-left: 12px;">
