@@ -177,42 +177,56 @@
         </div>
         
         <form id="policy-form">
-          <div class="form-group">
-            <label class="form-label">政策标题 *</label>
-            <input type="text" id="policy-title" class="form-input" required>
+          <!-- 第一行：政策标题 + 发布部门 -->
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">政策标题 *</label>
+              <input type="text" id="policy-title" class="form-input" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">发布部门 *</label>
+              <input type="text" id="policy-department" class="form-input" required>
+            </div>
           </div>
-          <div class="form-group">
-            <label class="form-label">政策级别 *</label>
-            <select id="policy-level" class="form-select" required>
-              <option value="国家级">国家级</option>
-              <option value="省级">省级</option>
-              <option value="市级">市级</option>
-            </select>
+
+          <!-- 第二行：政策级别 + 发布日期 -->
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">政策级别 *</label>
+              <select id="policy-level" class="form-select" required>
+                <option value="国家级">国家级</option>
+                <option value="省级">省级</option>
+                <option value="市级">市级</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">发布日期 *</label>
+              <input type="date" id="policy-date" class="form-input" required>
+            </div>
           </div>
-          <div class="form-group">
-            <label class="form-label">分类 *</label>
-            <input type="text" id="policy-category" class="form-input" placeholder="如：安全管理、运营规范等" required>
+
+          <!-- 第三行：分类 + 标签 -->
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">分类 *</label>
+              <input type="text" id="policy-category" class="form-input" placeholder="如：安全管理、运营规范等" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">标签（用逗号分隔）</label>
+              <input type="text" id="policy-tags" class="form-input" placeholder="低空旅游,航空安全,政策解读">
+            </div>
           </div>
-          <div class="form-group">
-            <label class="form-label">发布部门 *</label>
-            <input type="text" id="policy-department" class="form-input" required>
-          </div>
-          <div class="form-group">
-            <label class="form-label">发布日期 *</label>
-            <input type="date" id="policy-date" class="form-input" required>
-          </div>
-          <div class="form-group">
-            <label class="form-label">政策内容 *</label>
-            <textarea id="policy-content" class="form-textarea" rows="8" required></textarea>
-          </div>
+
+          <!-- 原文链接和政策内容 -->
           <div class="form-group">
             <label class="form-label">原文链接（选填）</label>
             <input type="url" id="policy-url" class="form-input" placeholder="https://...">
           </div>
           <div class="form-group">
-            <label class="form-label">标签（用逗号分隔）</label>
-            <input type="text" id="policy-tags" class="form-input" placeholder="低空旅游,航空安全,政策解读">
+            <label class="form-label">政策内容 *</label>
+            <textarea id="policy-content" class="form-textarea" rows="8" required></textarea>
           </div>
+
           <div style="margin-top: 8px;">
             <button type="submit" class="btn btn-primary">提交</button>
             <!-- 删除按钮事件由 admin.js 中的事件委托统一绑定，这里不再使用 inline onclick，避免触发两次 -->
@@ -264,40 +278,54 @@
         </div>
         
         <form id="news-form">
-          <div class="form-group">
-            <label class="form-label">新闻标题 *</label>
-            <input type="text" id="news-title" class="form-input" required>
+          <!-- 第一行：新闻标题 + 作者 -->
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">新闻标题 *</label>
+              <input type="text" id="news-title" class="form-input" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">作者 *</label>
+              <input type="text" id="news-author" class="form-input" required>
+            </div>
           </div>
-          <div class="form-group">
-            <label class="form-label">分类 *</label>
-            <select id="news-category" class="form-select" required>
-              <option value="行业动态">行业动态</option>
-              <option value="政策解读">政策解读</option>
-              <option value="技术创新">技术创新</option>
-              <option value="企业新闻">企业新闻</option>
-              <option value="市场分析">市场分析</option>
-            </select>
+
+          <!-- 第二行：分类 + 发布日期 -->
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">分类 *</label>
+              <select id="news-category" class="form-select" required>
+                <option value="行业动态">行业动态</option>
+                <option value="政策解读">政策解读</option>
+                <option value="技术创新">技术创新</option>
+                <option value="企业新闻">企业新闻</option>
+                <option value="市场分析">市场分析</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">发布日期</label>
+              <input type="date" id="news-date" class="form-input">
+            </div>
           </div>
-          <div class="form-group">
-            <label class="form-label">作者 *</label>
-            <input type="text" id="news-author" class="form-input" required>
-          </div>
-          <div class="form-group">
-            <label class="form-label">发布日期</label>
-            <input type="date" id="news-date" class="form-input">
-          </div>
-          <div class="form-group">
-            <label class="form-label">封面图片URL（选填）</label>
-            <input type="url" id="news-cover" class="form-input" placeholder="https://...">
-          </div>
-          <div class="form-group">
-            <label class="form-label">新闻内容 *</label>
-            <textarea id="news-content" class="form-textarea" rows="10" required></textarea>
-          </div>
+
+          <!-- 标签 -->
           <div class="form-group">
             <label class="form-label">标签（用逗号分隔）</label>
             <input type="text" id="news-tags" class="form-input" placeholder="低空旅游,行业发展">
           </div>
+
+          <!-- 封面图片 -->
+          <div class="form-group">
+            <label class="form-label">封面图片URL（选填）</label>
+            <input type="url" id="news-cover" class="form-input" placeholder="https://...">
+          </div>
+
+          <!-- 新闻内容 -->
+          <div class="form-group">
+            <label class="form-label">新闻内容 *</label>
+            <textarea id="news-content" class="form-textarea" rows="10" required></textarea>
+          </div>
+
           <div style="margin-top: 8px;">
             <button type="submit" class="btn btn-primary">发布</button>
             <button type="button" id="news-delete-btn" class="btn btn-danger" style="display:none; margin-left: 12px;">
