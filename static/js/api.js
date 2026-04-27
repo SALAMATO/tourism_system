@@ -33,7 +33,20 @@ class API {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        let errorMessage = `HTTP error! status: ${response.status}`;
+        try {
+          const errorData = await response.json();
+          if (errorData && typeof errorData === 'object') {
+            const flattened = Object.entries(errorData)
+              .map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join('、') : value}`)
+              .join(' | ');
+            if (flattened) {
+              errorMessage = flattened;
+            }
+          }
+        } catch (parseError) {
+        }
+        throw new Error(errorMessage);
       }
 
       if (response.status === 204) {
@@ -74,12 +87,17 @@ class API {
   }
 
   async createRecord(tableName, data) {
-    const { id, ...submitData } = data;
-    const isFormData = submitData instanceof FormData;
+    if (data instanceof FormData) {
+      return await this.request(`${this.baseURL}${tableName}/`, {
+        method: 'POST',
+        body: data
+      });
+    }
 
+    const { id, ...submitData } = data;
     return await this.request(`${this.baseURL}${tableName}/`, {
       method: 'POST',
-      body: isFormData ? submitData : JSON.stringify(submitData)
+      body: JSON.stringify(submitData)
     });
   }
 
@@ -335,5 +353,3 @@ class API {
 }
 
 const api = new API();
-
-

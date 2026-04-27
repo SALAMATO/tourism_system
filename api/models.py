@@ -31,7 +31,7 @@ class Destination(models.Model):
     city = models.CharField(max_length=100, db_index=True, verbose_name='所属城市')
     location = models.CharField(max_length=200, verbose_name='地理位置')
     description = models.TextField(verbose_name='详细介绍')
-    cover_image = models.ImageField(upload_to='media-destination/', verbose_name='封面图片')
+    cover_image = models.ImageField(upload_to='media-destination/', blank=True, null=True, verbose_name='封面图片')
     category = models.CharField(max_length=100, verbose_name='类别')
     price_range = models.CharField(max_length=100, verbose_name='价格区间')
     duration = models.CharField(max_length=100, verbose_name='游玩时长')

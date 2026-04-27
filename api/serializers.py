@@ -46,6 +46,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
 class DestinationSerializer(serializers.ModelSerializer):
     """旅游目的地序列化器"""
 
+    cover_image = serializers.ImageField(required=False, allow_null=True)
     cover_image_url = serializers.SerializerMethodField(read_only=True)
     features_display = serializers.CharField(write_only=True, required=False, allow_blank=True)
 

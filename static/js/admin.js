@@ -915,12 +915,10 @@ function buildDestinationFormData() {
   formData.append('is_hot', document.getElementById('destination-is-hot').value);
   formData.append('description', document.getElementById('destination-description').value.trim());
   formData.append('features_display', document.getElementById('destination-features').value.trim());
-  formData.append('views', currentDestinationEditingData?.views || 0);
+  formData.append('views', String(currentDestinationEditingData?.views || 0));
 
   if (coverFile) {
     formData.append('cover_image', coverFile);
-  } else if (currentDestinationEditingData && currentDestinationEditingData.cover_image) {
-    formData.append('cover_image', currentDestinationEditingData.cover_image);
   }
 
   return formData;
@@ -946,12 +944,6 @@ function previewDestinationCover() {
 
 async function submitDestination() {
   try {
-    const coverInput = document.getElementById('destination-cover-image');
-    if (!currentDestinationEditingId && (!coverInput.files || !coverInput.files[0])) {
-      showNotification('请上传目的地封面图片', 'error');
-      return;
-    }
-
     const data = buildDestinationFormData();
 
     if (currentDestinationEditingId) {
