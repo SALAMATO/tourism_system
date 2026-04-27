@@ -199,6 +199,7 @@ class DestinationViewSet(PublicModelViewSet):
         city = self.request.query_params.get('city')
         is_featured = self.request.query_params.get('is_featured')
         is_hot = self.request.query_params.get('is_hot')
+        is_domestic = self.request.query_params.get('is_domestic')
 
         if recommendation_type:
             queryset = queryset.filter(recommendation_type=recommendation_type)
@@ -208,6 +209,8 @@ class DestinationViewSet(PublicModelViewSet):
             queryset = queryset.filter(is_featured=is_featured.lower() == 'true')
         if is_hot is not None:
             queryset = queryset.filter(is_hot=is_hot.lower() == 'true')
+        if is_domestic is not None:
+            queryset = queryset.filter(is_domestic=is_domestic.lower() == 'true')
 
         return queryset
 

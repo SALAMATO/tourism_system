@@ -58,6 +58,8 @@ class DestinationSerializer(serializers.ModelSerializer):
     gallery_image_4_url = serializers.SerializerMethodField(read_only=True)
     features_display = serializers.CharField(write_only=True, required=False, allow_blank=True)
     features_rich_text = serializers.SerializerMethodField(read_only=True)
+    is_domestic = serializers.BooleanField(read_only=True)
+    
     def get_features_rich_text(self, obj):
         features = obj.features or []
         if not features:

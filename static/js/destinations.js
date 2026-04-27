@@ -1,15 +1,25 @@
 document.addEventListener('DOMContentLoaded', async () => {
   const listContainer = document.getElementById('destination-page-list');
   const cityFilter = document.getElementById('destination-city-filter');
+  const levelButtons = Array.from(document.querySelectorAll('[data-domestic]'));
   const typeButtons = Array.from(document.querySelectorAll('[data-type]'));
 
+  let currentDomestic = 'true'; // 默认显示国内
   let currentCity = '';
   let currentType = 'all';
   let cache = [];
 
+  // 更新城市列表
+  function updateCities() {
+    const filteredCache = cache.filter(item => item.is_domestic === (currentDomestic === 'true'));
+    const cities = [...new Set(filteredCache.map(item => item.city).filter(Boolean))];
+    renderCities(cities);
+  }
+
   function renderCities(cities) {
     if (!cities.length) {
       cityFilter.innerHTML = '<span class="city-chip active">暂无城市</span>';
+      currentCity = '';
       return;
     }
 
@@ -32,16 +42,22 @@ document.addEventListener('DOMContentLoaded', async () => {
   function renderList() {
     let filtered = [...cache];
 
+    // 一级过滤：国内/海外
+    filtered = filtered.filter(item => item.is_domestic === (currentDomestic === 'true'));
+
+    // 二级过滤：城市
     if (currentCity) {
       filtered = filtered.filter(item => item.city === currentCity);
     }
 
+    // 三级过滤：推荐类型
     if (currentType !== 'all') {
       filtered = filtered.filter(item => item.recommendation_type === currentType);
     }
 
     if (!filtered.length) {
-      listContainer.innerHTML = '<div class="destination-page-empty">当前筛选条件下暂无目的地，请切换其他城市或推荐类型。</div>';
+      const msg = currentDomestic === 'true' ? '国内' : '海外';
+      listContainer.innerHTML = `<div class="destination-page-empty">当前筛选条件下暂无${msg}目的地，请切换其他筛选条件。</div>`;
       return;
     }
 
@@ -64,6 +80,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     `).join('');
   }
 
+  // 一级按钮事件：范围切换
+  levelButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      levelButtons.forEach(item => item.classList.remove('active'));
+      button.classList.add('active');
+      currentDomestic = button.dataset.domestic;
+      currentCity = ''; // 重置城市选择
+      currentType = 'all'; // 重置推荐类型
+      
+      // 重置三级按钮
+      typeButtons.forEach(item => item.classList.remove('active'));
+      typeButtons[0].classList.add('active');
+      
+      updateCities();
+      renderList();
+    });
+  });
+
+  // 三级按钮事件：推荐方式
   typeButtons.forEach(button => {
     button.addEventListener('click', () => {
       typeButtons.forEach(item => item.classList.remove('active'));
@@ -76,8 +111,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   try {
     const response = await api.getDestinations({ limit: 200, sort: 'sort_order' });
     cache = response.data || [];
-    const cities = [...new Set(cache.map(item => item.city).filter(Boolean))];
-    renderCities(cities);
+    updateCities();
     renderList();
   } catch (error) {
     console.error('加载旅游目的地列表失败:', error);

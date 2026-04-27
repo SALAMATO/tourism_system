@@ -42,6 +42,30 @@
       color: #6b7280;
       max-width: 760px;
       line-height: 1.8;
+      margin-bottom: 28px;
+    }
+    .destination-level-switch {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 28px;
+    }
+    .level-btn {
+      padding: 12px 24px;
+      border-radius: 999px;
+      border: 2px solid #e5e7eb;
+      background: #fff;
+      cursor: pointer;
+      transition: all .25s ease;
+      color: #374151;
+      font-size: 16px;
+      font-weight: 600;
+    }
+    .level-btn.active,
+    .level-btn:hover {
+      background: #111827;
+      color: #fff;
+      border-color: #111827;
     }
     .destination-toolbar {
       display: flex;
@@ -49,7 +73,8 @@
       flex-wrap: wrap;
       align-items: center;
       justify-content: space-between;
-      margin-top: 28px;
+      padding-top: 24px;
+      border-top: 1px solid #e5e7eb;
     }
     .chip-group {
       display: flex;
@@ -174,9 +199,18 @@
           <div class="recommend-tag">DESTINATIONS</div>
           <h1>低空旅游目的地</h1>
           <p>按城市探索低空观光、热气球、滑翔伞与空中巡航项目，快速发现更契合出行季节、预算与风景偏好的旅行目的地。</p>
+          
+          <!-- 一级按钮：范围切换 -->
+          <div class="destination-level-switch">
+            <button class="level-btn active" data-domestic="true">国内低空目的地</button>
+            <button class="level-btn" data-domestic="false">海外飞行目的地</button>
+          </div>
         </div>
+        
         <div class="destination-toolbar">
+          <!-- 二级按钮：城市筛选 -->
           <div class="chip-group" id="destination-city-filter"></div>
+          <!-- 三级按钮：推荐方式筛选 -->
           <div class="chip-group">
             <button class="city-chip active" data-type="all">全部目的地</button>
             <button class="city-chip" data-type="nearby">周边推荐</button>
