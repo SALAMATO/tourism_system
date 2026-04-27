@@ -204,12 +204,12 @@
           <div style="display: flex; gap: 16px; flex-wrap: wrap; align-items: center; justify-content: space-between; margin-bottom: 28px;">
             <div class="destination-level-switch" style="margin-bottom: 0;">
               <button class="level-btn active" data-domestic="true">国内</button>
+              <button class="level-btn" data-domestic="nearby">周边</button>
               <button class="level-btn" data-domestic="false">海外</button>
             </div>
             <div class="chip-group">
               <button class="city-chip active" data-type="all">智能推荐</button>
               <button class="city-chip" data-type="latest">最新发布</button>
-              <button class="city-chip" data-type="nearby">周边推荐</button>
               <button class="city-chip" data-type="managed">热门推荐</button>
               <button class="city-chip" data-type="selected">出行推荐</button>
             </div>
@@ -243,8 +243,7 @@
   <script src="{% static 'js/utils.js' %}"></script>
   <script src="{% static 'js/api.js' %}"></script>
   <script src="{% static 'js/auth.js' %}"></script>
-  <script src="{% static 'js/main.js' %}"></script>
-  <script src="{% static 'js/ai-chat.js' %}?"></script>
+  <script src="{% static 'js/ai-chat.js' %}"></script>
   <script src="{% static 'js/destinations.js' %}?v=20260427"></script>
 </body>
 </html>

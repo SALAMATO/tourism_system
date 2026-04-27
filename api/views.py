@@ -1,4 +1,5 @@
 import re
+import logging
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.authentication import BasicAuthentication, TokenAuthentication
 from rest_framework import viewsets, filters, status
@@ -15,6 +16,9 @@ from .serializers import (
     UserSerializer, UserRegisterSerializer
 )
 from ai import lowsky_ai
+
+# 配置日志
+logger = logging.getLogger(__name__)
 
 
 # 禁用CSRF类
@@ -230,93 +234,171 @@ class DestinationViewSet(PublicModelViewSet):
     def nearby_by_ip(self, request):
         """基于IP地理位置的周边推荐"""
         import requests
-        
+        import traceback
+            
+        print("\n" + "="*50)
+        print("开始处理 nearby_by_ip 请求")
+        print("="*50)
+            
         # 获取用户IP
         x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
         if x_forwarded_for:
             ip = x_forwarded_for.split(',')[0].strip()
         else:
             ip = request.META.get('REMOTE_ADDR', '127.0.0.1')
-        
+            
         # 如果是本地IP，使用默认城市
         if ip in ['127.0.0.1', 'localhost', '::1']:
             ip = '114.114.114.114'  # 使用南京作为示例
-        
+            
+        print(f'IP地址: {ip}')
+            
         # 高德地图IP定位API
         amap_key = '8fe3ebb5ad6cfbb67e7394f20668e0c7'
         try:
             amap_url = f'https://restapi.amap.com/v3/ip?key={amap_key}&ip={ip}'
+            print(f'请求高德地图API...')
             amap_resp = requests.get(amap_url, timeout=3)
+            print(f'高德地图API响应状态码: {amap_resp.status_code}')
             amap_data = amap_resp.json()
-            
+            print(f'高德地图API响应数据: {amap_data}')
+                
             # 获取城市信息
-            user_city = amap_data.get('city', '').strip()
-            user_province = amap_data.get('province', '').strip()
+            user_city = amap_data.get('city', '')
+            user_province = amap_data.get('province', '')
+            
+            # 处理API返回可能是列表的情况
+            if isinstance(user_city, list):
+                user_city = user_city[0] if user_city else ''
+            if isinstance(user_province, list):
+                user_province = user_province[0] if user_province else ''
+            
+            user_city = str(user_city).strip()
+            user_province = str(user_province).strip()
+            
+            print(f'原始城市数据: city={user_city}, province={user_province}')
             
             # 如果API返回城市为空，使用默认城市
             if not user_city:
+                print('高德地图API未返回城市信息，使用默认值')
                 user_city = '北京'
                 user_province = '北京'
-            
+                
             # 去除城市后缀（如“市”）
             user_city = user_city.replace('市', '').strip()
             user_province = user_province.replace('省', '').replace('自治区', '').replace('市', '').strip()
-            
+                
+            print(f'定位结果: {user_province} {user_city}')
+                        
             # 获取所有国内目的地
-            domestic_destinations = Destination.objects.filter(
-                is_domestic=True,
-                recommendation_type__contains=['nearby']
-            ).order_by('sort_order', '-rating', '-views')
-            
+            # 注意：SQLite不支持JSONField的__contains查询，需要特殊处理
+            from django.db import connection
+                        
+            if connection.vendor == 'sqlite':
+                # SQLite: 使用原始SQL或过滤后在Python中处理
+                domestic_destinations = list(
+                    Destination.objects.filter(is_domestic=True)
+                    .order_by('sort_order', '-rating', '-views')
+                )
+                # 在Python中过滤包含'nearby'的目的地
+                domestic_destinations = [
+                    dest for dest in domestic_destinations
+                    if 'nearby' in (dest.recommendation_type or [])
+                ]
+                print(f'SQLite模式：找到 {len(domestic_destinations)} 个标记为nearby的国内目的地')
+            else:
+                # MySQL/PostgreSQL: 使用JSONField的contains查询
+                domestic_destinations = Destination.objects.filter(
+                    is_domestic=True,
+                    recommendation_type__contains=['nearby']
+                ).order_by('sort_order', '-rating', '-views')
+                print(f'找到 {domestic_destinations.count()} 个标记为nearby的国内目的地')
+                
             # 计算每个目的地与用户城市的匹配度
             scored_destinations = []
             for dest in domestic_destinations:
                 score = 0
-                dest_city = dest.city.replace('市', '').strip()
+                dest_city = dest.city.replace('市', '').strip() if dest.city else ''
                 dest_state = (dest.state or '').replace('省', '').replace('自治区', '').replace('市', '').strip()
-                
+                    
                 # 完全匹配城市
-                if dest_city == user_city:
+                if dest_city and dest_city == user_city:
                     score = 100
                 # 同省份
-                elif dest_state == user_province:
+                elif dest_state and dest_state == user_province:
                     score = 50
                 # 其他城市
                 else:
                     score = 10
-                
+                    
                 scored_destinations.append((score, dest))
-            
-            # 按分数排序（高到低），分数相同时按rating和views排序
+                
+            # 按分数排序（高到低），分数相同时按 rating和views排序
             scored_destinations.sort(key=lambda x: (-x[0], -x[1].rating, -x[1].views))
-            
+                
             # 获取前20个
             top_destinations = [dest for score, dest in scored_destinations[:20]]
-            
+                
+            print(f'返回 {len(top_destinations)} 个周边推荐目的地')
+                
             serializer = self.get_serializer(top_destinations, many=True)
+            print("="*50)
+            print("请求处理成功\n")
             return Response({
                 'ip': ip,
                 'user_city': user_city,
                 'user_province': user_province,
                 'destinations': serializer.data
             })
-            
+                
         except Exception as e:
-            logger.error(f'IP定位失败: {str(e)}')
+            error_traceback = traceback.format_exc()
+            print("\n" + "!"*50)
+            print(f'IP定位失败: {str(e)}')
+            print("错误堆栈:")
+            print(error_traceback)
+            print("!"*50 + "\n")
+                
             # 失败时返回默认推荐
-            default_destinations = Destination.objects.filter(
-                is_domestic=True,
-                recommendation_type__contains=['nearby']
-            ).order_by('sort_order', '-rating', '-views')[:20]
-            
-            serializer = self.get_serializer(default_destinations, many=True)
-            return Response({
-                'ip': ip,
-                'user_city': '北京',
-                'user_province': '北京',
-                'error': str(e),
-                'destinations': serializer.data
-            })
+            try:
+                from django.db import connection
+                
+                if connection.vendor == 'sqlite':
+                    # SQLite: 在Python中过滤
+                    default_destinations = list(
+                        Destination.objects.filter(is_domestic=True)
+                        .order_by('sort_order', '-rating', '-views')
+                    )
+                    default_destinations = [
+                        dest for dest in default_destinations
+                        if 'nearby' in (dest.recommendation_type or [])
+                    ][:20]
+                else:
+                    # MySQL/PostgreSQL: 使用JSONField查询
+                    default_destinations = Destination.objects.filter(
+                        is_domestic=True,
+                        recommendation_type__contains=['nearby']
+                    ).order_by('sort_order', '-rating', '-views')[:20]
+                
+                print(f'失败时使用默认推荐，共 {len(default_destinations) if isinstance(default_destinations, list) else default_destinations.count()} 个目的地')
+                    
+                serializer = self.get_serializer(default_destinations, many=True)
+                return Response({
+                    'ip': ip,
+                    'user_city': '北京',
+                    'user_province': '北京',
+                    'error': str(e),
+                    'destinations': serializer.data
+                })
+            except Exception as e2:
+                print(f' fallback 也失败: {str(e2)}')
+                return Response({
+                    'ip': ip,
+                    'user_city': '北京',
+                    'user_province': '北京',
+                    'error': str(e2),
+                    'destinations': []
+                }, status=500)
 
     @action(detail=False, methods=['get'])
     def cities(self, request):
@@ -890,20 +972,6 @@ class MessageCommentViewSet(PublicModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
-
-
-# api/views.py - 添加详细的错误日志
-import logging
-logger = logging.getLogger(__name__)
-
-def create(self, request, *args, **kwargs):
-    logger.error(f"Received data: {request.data}")
-    serializer = self.get_serializer(data=request.data)
-    if not serializer.is_valid():
-        logger.error(f"Validation errors: {serializer.errors}")
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    self.perform_create(serializer)
-    return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 # LowSkyAI 智能助手视图集

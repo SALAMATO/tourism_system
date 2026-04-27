@@ -9,13 +9,64 @@ document.addEventListener('DOMContentLoaded', async () => {
   let currentType = 'all';
   let cache = [];
   let smartRecommendCache = []; // 智能推荐缓存
+  let nearbyDestinations = []; // 周边推荐缓存
 
   // 更新城市列表
   function updateCities() {
-    const filteredCache = cache.filter(item => item.is_domestic === (currentDomestic === 'true'));
-    // 国内显示城市，海外显示国家
-    const locationField = currentDomestic === 'true' ? 'city' : 'country';
+    let filteredCache = [];
+    
+    if (currentDomestic === 'nearby') {
+      // 周边模式使用IP定位的目的地
+      filteredCache = [...nearbyDestinations];
+      console.log(`周边模式：当前有 ${filteredCache.length} 个目的地`);
+      if (filteredCache.length > 0) {
+        console.log('第一个目的地数据示例:', filteredCache[0]);
+        console.log('所有城市的值:', filteredCache.map(item => item.city));
+      }
+    } else {
+      filteredCache = cache.filter(item => item.is_domestic === (currentDomestic === 'true'));
+    }
+    
+    // 国内显示省份，海外显示国家，周边显示城市
+    let locationField;
+    if (currentDomestic === 'nearby') {
+      locationField = 'city';
+    } else if (currentDomestic === 'true') {
+      locationField = 'state';
+    } else {
+      locationField = 'country';
+    }
+    
     const locations = [...new Set(filteredCache.map(item => item[locationField]).filter(Boolean))];
+    console.log(`更新城市列表：${locationField}字段，共 ${locations.length} 个唯一值`, locations);
+    
+    // 周边模式：按距离排序城市
+    if (currentDomestic === 'nearby' && locations.length > 0) {
+      // 计算每个城市的平均分数（分数越高表示距离越近）
+      const cityScores = {};
+      filteredCache.forEach(item => {
+        const city = item.city;
+        if (!cityScores[city]) {
+          cityScores[city] = [];
+        }
+        // 从scored_destinations中获取分数（如果有的话）
+        // 这里我们根据目的地的顺序来推断距离，前面的更近
+        const index = filteredCache.indexOf(item);
+        cityScores[city].push(filteredCache.length - index); // 越靠前分数越高
+      });
+      
+      // 计算每个城市的平均分数
+      const cityAvgScores = {};
+      Object.keys(cityScores).forEach(city => {
+        const scores = cityScores[city];
+        cityAvgScores[city] = scores.reduce((a, b) => a + b, 0) / scores.length;
+      });
+      
+      // 按平均分数降序排序（分数高的在前，表示距离近）
+      locations.sort((a, b) => (cityAvgScores[b] || 0) - (cityAvgScores[a] || 0));
+      console.log('周边城市按距离排序后:', locations);
+    }
+    
     renderCities(locations);
   }
 
@@ -45,16 +96,33 @@ document.addEventListener('DOMContentLoaded', async () => {
   function renderList() {
     let filtered = [];
 
+    // 周边模式：按IP地理位置排序
+    if (currentDomestic === 'nearby') {
+      filtered = [...nearbyDestinations];
+      
+      // 二级过滤：城市
+      if (currentCity) {
+        filtered = filtered.filter(item => item.city === currentCity);
+      }
+      
+      // 三级过滤：推荐类型（如果选择了）
+      if (currentType !== 'all') {
+        filtered = filtered.filter(item => {
+          const types = item.recommendation_type || [];
+          return Array.isArray(types) && types.includes(currentType);
+        });
+      }
+    }
     // 智能推荐模式
-    if (currentType === 'all') {
+    else if (currentType === 'all') {
       filtered = [...smartRecommendCache];
       
       // 一级过滤：国内/海外
       filtered = filtered.filter(item => item.is_domestic === (currentDomestic === 'true'));
 
-      // 二级过滤：城市/国家
+      // 二级过滤：省份/国家
       if (currentCity) {
-        const locationField = currentDomestic === 'true' ? 'city' : 'country';
+        const locationField = currentDomestic === 'true' ? 'state' : 'country';
         filtered = filtered.filter(item => item[locationField] === currentCity);
       }
     }
@@ -65,9 +133,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       // 一级过滤：国内/海外
       filtered = filtered.filter(item => item.is_domestic === (currentDomestic === 'true'));
 
-      // 二级过滤：城市/国家
+      // 二级过滤：省份/国家
       if (currentCity) {
-        const locationField = currentDomestic === 'true' ? 'city' : 'country';
+        const locationField = currentDomestic === 'true' ? 'state' : 'country';
         filtered = filtered.filter(item => item[locationField] === currentCity);
       }
       
@@ -81,9 +149,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       // 一级过滤：国内/海外
       filtered = filtered.filter(item => item.is_domestic === (currentDomestic === 'true'));
 
-      // 二级过滤：城市/国家
+      // 二级过滤：省份/国家
       if (currentCity) {
-        const locationField = currentDomestic === 'true' ? 'city' : 'country';
+        const locationField = currentDomestic === 'true' ? 'state' : 'country';
         filtered = filtered.filter(item => item[locationField] === currentCity);
       }
 
@@ -95,9 +163,30 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     if (!filtered.length) {
-      const msg = currentDomestic === 'true' ? '国内' : '海外';
+      let msg = '';
+      if (currentDomestic === 'nearby') {
+        msg = '周边';
+      } else {
+        msg = currentDomestic === 'true' ? '国内' : '海外';
+      }
       listContainer.innerHTML = `<div class="destination-page-empty">当前筛选条件下暂无${msg}目的地，请切换其他筛选条件。</div>`;
       return;
+    }
+
+    // 确定显示的位置字段和标签
+    let locationField, locationLabel;
+    if (currentDomestic === 'nearby') {
+      // 周边模式：显示 state · location（省份/州 · 具体位置）
+      locationField = 'city';
+      locationLabel = item => `${escapeHtml(item.state || item.city)} · ${escapeHtml(item.location || '')}`;
+    } else if (currentDomestic === 'true') {
+      // 国内模式：显示 state · location
+      locationField = 'state';
+      locationLabel = item => `${escapeHtml(item.state || item.city)} · ${escapeHtml(item.location || '')}`;
+    } else {
+      // 海外模式：显示 country · location
+      locationField = 'country';
+      locationLabel = item => `${escapeHtml(item.country)} · ${escapeHtml(item.location || '')}`;
     }
 
     listContainer.innerHTML = filtered.map(item => `
@@ -108,7 +197,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             <h3>${escapeHtml(item.name)}</h3>
             <div><i class="fas fa-star" style="color:#ef4444;"></i> ${Number(item.rating || 0).toFixed(1)}</div>
           </div>
-          <div class="destination-page-location"><i class="fas fa-location-dot"></i> ${escapeHtml(currentDomestic === 'true' ? item.city : item.country)} · ${escapeHtml(item.location || '')}</div>
+          <div class="destination-page-location"><i class="fas fa-location-dot"></i> ${locationLabel(item)}</div>
           <p class="destination-page-desc">${truncateText(stripHtmlTags(item.description || ''), 96)}</p>
           <div class="destination-page-meta">
             <span>${escapeHtml(item.duration || '')}</span>
@@ -151,9 +240,33 @@ document.addEventListener('DOMContentLoaded', async () => {
       typeButtons.forEach(item => item.classList.remove('active'));
       typeButtons[0].classList.add('active');
       
-      // 重新加载智能推荐
-      listContainer.innerHTML = '<div class="destination-page-empty">正在加载智能推荐...</div>';
-      await loadSmartRecommend();
+      // 如果是周边模式，加载IP定位数据
+      if (currentDomestic === 'nearby') {
+        listContainer.innerHTML = '<div class="destination-page-empty">正在获取周边推荐...</div>';
+        try {
+          const nearbyResponse = await api.request('/api/destinations/nearby_by_ip/');
+          console.log('周边推荐API响应:', nearbyResponse);
+          if (nearbyResponse && nearbyResponse.destinations) {
+            nearbyDestinations = nearbyResponse.destinations;
+            console.log(`周边推荐：基于IP ${nearbyResponse.ip}，定位到 ${nearbyResponse.user_province} ${nearbyResponse.user_city}`);
+            console.log(`获取到 ${nearbyDestinations.length} 个周边目的地`);
+            if (nearbyDestinations.length === 0) {
+              console.warn('警告：没有获取到任何周边目的地，请检查数据库中是否有标记为nearby推荐类型的目的地');
+            }
+          } else {
+            console.error('API响应格式错误:', nearbyResponse);
+            nearbyDestinations = [];
+          }
+        } catch (ipError) {
+          console.error('IP定位失败:', ipError);
+          nearbyDestinations = [];
+        }
+      }
+      // 否则加载智能推荐
+      else {
+        listContainer.innerHTML = '<div class="destination-page-empty">正在加载智能推荐...</div>';
+        await loadSmartRecommend();
+      }
       
       updateCities();
       renderList();
@@ -167,32 +280,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       button.classList.add('active');
       currentType = button.dataset.type;
       
-      // 智能推荐模式
-      if (currentType === 'all') {
+      // 智能推荐模式（仅在国内或海外模式下有效）
+      if (currentType === 'all' && currentDomestic !== 'nearby') {
         listContainer.innerHTML = '<div class="destination-page-empty">正在计算智能推荐...</div>';
         await loadSmartRecommend();
-      }
-      // 周边推荐模式
-      else if (currentType === 'nearby' && currentDomestic === 'true') {
-        try {
-          listContainer.innerHTML = '<div class="destination-page-empty">正在获取周边推荐...</div>';
-          const nearbyResponse = await api.request('/api/destinations/nearby_by_ip/');
-          if (nearbyResponse && nearbyResponse.destinations) {
-            const ipDestinations = nearbyResponse.destinations;
-            const ipIds = new Set(ipDestinations.map(d => d.id));
-            
-            // 移除原有的包含nearby的目的地，添加IP推荐的
-            cache = cache.filter(item => {
-              const types = item.recommendation_type || [];
-              return !(Array.isArray(types) && types.includes('nearby') && ipIds.has(item.id));
-            });
-            cache = cache.concat(ipDestinations);
-            
-            console.log(`周边推荐：基于IP ${nearbyResponse.ip}，定位到 ${nearbyResponse.user_province} ${nearbyResponse.user_city}`);
-          }
-        } catch (ipError) {
-          console.error('IP定位失败，使用默认推荐:', ipError);
-        }
       }
       
       updateCities();
