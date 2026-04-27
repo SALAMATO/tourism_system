@@ -90,7 +90,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             </div>
           </div>
           <a href="/destinations/" class="btn btn-primary" style="width:100%; text-align:center;">查看更多目的地</a>
-          <p style="text-align:center; margin-top:12px; color:#6b7280; font-size:12px;">推荐内容由系统热度、评分与管理员配置综合生成</p>
+          <p style="text-align:center; margin-top:12px; color:#6b7280; font-size:12px;">推荐内容由热度、评分综合生成</p>
         </aside>
       </div>
     `;
