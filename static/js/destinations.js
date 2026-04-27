@@ -52,7 +52,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 三级过滤：推荐类型
     if (currentType !== 'all') {
-      filtered = filtered.filter(item => item.recommendation_type === currentType);
+      if (currentType === 'nearby') {
+        // 基于IP的周边推荐需要特殊处理
+        filtered = filtered.filter(item => item.recommendation_type === 'nearby');
+      } else if (currentType === 'managed') {
+        filtered = filtered.filter(item => item.recommendation_type === 'managed');
+      } else if (currentType === 'selected') {
+        filtered = filtered.filter(item => item.recommendation_type === 'selected');
+      }
     }
 
     if (!filtered.length) {
@@ -100,17 +107,62 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // 三级按钮事件：推荐方式
   typeButtons.forEach(button => {
-    button.addEventListener('click', () => {
+    button.addEventListener('click', async () => {
       typeButtons.forEach(item => item.classList.remove('active'));
       button.classList.add('active');
       currentType = button.dataset.type;
+      
+      // 如果是周边推荐，需要重新加载IP定位数据
+      if (currentType === 'nearby' && currentDomestic === 'true') {
+        try {
+          listContainer.innerHTML = '<div class="destination-page-empty">正在获取周边推荐...</div>';
+          const nearbyResponse = await api.request('/api/destinations/nearby_by_ip/');
+          if (nearbyResponse && nearbyResponse.destinations) {
+            const ipDestinations = nearbyResponse.destinations;
+            const ipIds = new Set(ipDestinations.map(d => d.id));
+            
+            // 移除原有的nearby类型，添加IP推荐的
+            cache = cache.filter(item => !(item.recommendation_type === 'nearby' && ipIds.has(item.id)));
+            cache = cache.concat(ipDestinations);
+            
+            console.log(`周边推荐：基于IP ${nearbyResponse.ip}，定位到 ${nearbyResponse.user_province} ${nearbyResponse.user_city}`);
+          }
+        } catch (ipError) {
+          console.error('IP定位失败，使用默认推荐:', ipError);
+        }
+      }
+      
+      updateCities();
       renderList();
     });
   });
 
   try {
-    const response = await api.getDestinations({ limit: 200, sort: 'sort_order' });
+    // 先加载所有目的地
+    const response = await api.getDestinations({ limit: 500, sort: 'sort_order' });
     cache = response.data || [];
+    
+    // 如果是周边推荐模式，使用IP定位
+    if (currentType === 'nearby') {
+      try {
+        const nearbyResponse = await api.request('/api/destinations/nearby_by_ip/');
+        if (nearbyResponse && nearbyResponse.destinations) {
+          // 将IP定位的目的地合并到缓存中，并标记优先级
+          const ipDestinations = nearbyResponse.destinations;
+          const ipIds = new Set(ipDestinations.map(d => d.id));
+          
+          // 移除原有的nearby类型，添加IP推荐的
+          cache = cache.filter(item => !(item.recommendation_type === 'nearby' && ipIds.has(item.id)));
+          cache = cache.concat(ipDestinations);
+          
+          // 显示IP城市信息
+          console.log(`周边推荐：基于IP ${nearbyResponse.ip}，定位到 ${nearbyResponse.user_province} ${nearbyResponse.user_city}`);
+        }
+      } catch (ipError) {
+        console.error('IP定位失败，使用默认推荐:', ipError);
+      }
+    }
+    
     updateCities();
     renderList();
   } catch (error) {

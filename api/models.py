@@ -24,7 +24,8 @@ class Destination(models.Model):
 
     RECOMMENDATION_CHOICES = [
         ('nearby', 'IP周边推荐'),
-        ('managed', '管理员推荐'),
+        ('managed', '管理员精选'),
+        ('selected', '出行推荐'),
     ]
 
     name = models.CharField(max_length=200, verbose_name='目的地名称')
@@ -52,7 +53,8 @@ class Destination(models.Model):
         max_length=20,
         choices=RECOMMENDATION_CHOICES,
         default='managed',
-        verbose_name='推荐类型'
+        verbose_name='推荐类型',
+        db_index=True
     )
     sort_order = models.PositiveIntegerField(default=0, verbose_name='排序值')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')

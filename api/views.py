@@ -226,6 +226,98 @@ class DestinationViewSet(PublicModelViewSet):
         return Response(serializer.data)
 
     @action(detail=False, methods=['get'])
+    def nearby_by_ip(self, request):
+        """基于IP地理位置的周边推荐"""
+        import requests
+        
+        # 获取用户IP
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip = x_forwarded_for.split(',')[0].strip()
+        else:
+            ip = request.META.get('REMOTE_ADDR', '127.0.0.1')
+        
+        # 如果是本地IP，使用默认城市
+        if ip in ['127.0.0.1', 'localhost', '::1']:
+            ip = '114.114.114.114'  # 使用南京作为示例
+        
+        # 高德地图IP定位API
+        amap_key = '8fe3ebb5ad6cfbb67e7394f20668e0c7'
+        try:
+            amap_url = f'https://restapi.amap.com/v3/ip?key={amap_key}&ip={ip}'
+            amap_resp = requests.get(amap_url, timeout=3)
+            amap_data = amap_resp.json()
+            
+            # 获取城市信息
+            user_city = amap_data.get('city', '').strip()
+            user_province = amap_data.get('province', '').strip()
+            
+            # 如果API返回城市为空，使用默认城市
+            if not user_city:
+                user_city = '北京'
+                user_province = '北京'
+            
+            # 去除城市后缀（如“市”）
+            user_city = user_city.replace('市', '').strip()
+            user_province = user_province.replace('省', '').replace('自治区', '').replace('市', '').strip()
+            
+            # 获取所有国内目的地
+            domestic_destinations = Destination.objects.filter(
+                is_domestic=True,
+                recommendation_type='nearby'
+            ).order_by('sort_order', '-rating', '-views')
+            
+            # 计算每个目的地与用户城市的匹配度
+            scored_destinations = []
+            for dest in domestic_destinations:
+                score = 0
+                dest_city = dest.city.replace('市', '').strip()
+                dest_state = (dest.state or '').replace('省', '').replace('自治区', '').replace('市', '').strip()
+                
+                # 完全匹配城市
+                if dest_city == user_city:
+                    score = 100
+                # 同省份
+                elif dest_state == user_province:
+                    score = 50
+                # 其他城市
+                else:
+                    score = 10
+                
+                scored_destinations.append((score, dest))
+            
+            # 按分数排序（高到低），分数相同时按rating和views排序
+            scored_destinations.sort(key=lambda x: (-x[0], -x[1].rating, -x[1].views))
+            
+            # 获取前20个
+            top_destinations = [dest for score, dest in scored_destinations[:20]]
+            
+            serializer = self.get_serializer(top_destinations, many=True)
+            return Response({
+                'ip': ip,
+                'user_city': user_city,
+                'user_province': user_province,
+                'destinations': serializer.data
+            })
+            
+        except Exception as e:
+            logger.error(f'IP定位失败: {str(e)}')
+            # 失败时返回默认推荐
+            default_destinations = Destination.objects.filter(
+                is_domestic=True,
+                recommendation_type='nearby'
+            ).order_by('sort_order', '-rating', '-views')[:20]
+            
+            serializer = self.get_serializer(default_destinations, many=True)
+            return Response({
+                'ip': ip,
+                'user_city': '北京',
+                'user_province': '北京',
+                'error': str(e),
+                'destinations': serializer.data
+            })
+
+    @action(detail=False, methods=['get'])
     def cities(self, request):
         """获取目的地城市列表"""
         cities = list(
