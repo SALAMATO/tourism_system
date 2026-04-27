@@ -71,6 +71,12 @@ async function initSuperEditors() {
     await window.CKEditorSuperHelper.initEditor('news-content', {
       placeholder: '请输入新闻资讯内容...'
     });
+    await window.CKEditorSuperHelper.initEditor('destination-description', {
+      placeholder: '请输入旅游目的地的详细介绍...'
+    });
+    await window.CKEditorSuperHelper.initEditor('destination-features', {
+      placeholder: '请输入旅游目的地特色亮点，可使用富文本排版...'
+    });
     
     console.log('超级编辑器初始化完成');
   } catch (error) {
@@ -900,6 +906,7 @@ function buildDestinationFormData() {
   const formData = new FormData();
   const coverInput = document.getElementById('destination-cover-image');
   const coverFile = coverInput.files && coverInput.files[0];
+  const galleryInputs = [1, 2, 3, 4].map(index => document.getElementById(`destination-gallery-image-${index}`));
 
   formData.append('name', document.getElementById('destination-name').value.trim());
   formData.append('city', document.getElementById('destination-city').value.trim());
@@ -913,13 +920,30 @@ function buildDestinationFormData() {
   formData.append('sort_order', document.getElementById('destination-sort-order').value || '0');
   formData.append('is_featured', document.getElementById('destination-is-featured').value);
   formData.append('is_hot', document.getElementById('destination-is-hot').value);
-  formData.append('description', document.getElementById('destination-description').value.trim());
-  formData.append('features_display', document.getElementById('destination-features').value.trim());
+  formData.append(
+    'description',
+    (window.CKEditorSuperHelper && window.CKEditorSuperHelper.editorInstances['destination-description'])
+      ? window.CKEditorSuperHelper.getContent('destination-description')
+      : document.getElementById('destination-description').value.trim()
+  );
+  formData.append(
+    'features_display',
+    (window.CKEditorSuperHelper && window.CKEditorSuperHelper.editorInstances['destination-features'])
+      ? window.CKEditorSuperHelper.getContent('destination-features')
+      : document.getElementById('destination-features').value.trim()
+  );
   formData.append('views', String(currentDestinationEditingData?.views || 0));
 
   if (coverFile) {
     formData.append('cover_image', coverFile);
   }
+
+  galleryInputs.forEach((input, index) => {
+    const file = input?.files && input.files[0];
+    if (file) {
+      formData.append(`gallery_image_${index + 1}`, file);
+    }
+  });
 
   return formData;
 }
@@ -977,6 +1001,18 @@ function resetDestinationFormState() {
   const previewImage = document.getElementById('destination-cover-preview-img');
   if (preview) preview.style.display = 'none';
   if (previewImage) previewImage.src = '';
+
+  [1, 2, 3, 4].forEach(index => {
+    const galleryPreview = document.getElementById(`destination-gallery-preview-${index}`);
+    const galleryImage = document.getElementById(`destination-gallery-preview-img-${index}`);
+    if (galleryPreview) galleryPreview.style.display = 'none';
+    if (galleryImage) galleryImage.src = '';
+  });
+
+  if (window.CKEditorSuperHelper) {
+    window.CKEditorSuperHelper.setContent('destination-description', '');
+    window.CKEditorSuperHelper.setContent('destination-features', '');
+  }
 }
 
 async function editDestination(id) {
@@ -1000,10 +1036,25 @@ async function editDestination(id) {
     document.getElementById('destination-description').value = destination.description || '';
     document.getElementById('destination-features').value = destination.features_display || (destination.features || []).join('\n');
 
+    if (window.CKEditorSuperHelper) {
+      setTimeout(() => {
+        window.CKEditorSuperHelper.setContent('destination-description', destination.description || '');
+        window.CKEditorSuperHelper.setContent('destination-features', destination.features_display || '');
+      }, 100);
+    }
+
     const preview = document.getElementById('destination-cover-preview');
     const previewImage = document.getElementById('destination-cover-preview-img');
     previewImage.src = destination.cover_image_url || destination.cover_image || '';
     preview.style.display = previewImage.src ? 'block' : 'none';
+
+    [1, 2, 3, 4].forEach(index => {
+      const galleryPreview = document.getElementById(`destination-gallery-preview-${index}`);
+      const galleryImage = document.getElementById(`destination-gallery-preview-img-${index}`);
+      const imageUrl = destination[`gallery_image_${index}_url`] || destination[`gallery_image_${index}`] || '';
+      if (galleryImage) galleryImage.src = imageUrl;
+      if (galleryPreview) galleryPreview.style.display = imageUrl ? 'block' : 'none';
+    });
 
     const titleEl = document.querySelector('#destination-module .card-title');
     if (titleEl) titleEl.textContent = '编辑旅游目的地';

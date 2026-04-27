@@ -12,8 +12,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     const destination = await api.getDestination(id);
     await api.incrementDestinationViews(id);
 
-    const image = escapeHtml(destination.cover_image_url || destination.cover_image || '');
-    const features = Array.isArray(destination.features) ? destination.features : [];
+    const fallbackImage = 'https://via.placeholder.com/1200x800/f3f4f6/9ca3af?text=Low+Altitude+Tourism';
+    const images = [
+      destination.cover_image_url || destination.cover_image,
+      destination.gallery_image_1_url || destination.gallery_image_1,
+      destination.gallery_image_2_url || destination.gallery_image_2,
+      destination.gallery_image_3_url || destination.gallery_image_3,
+      destination.gallery_image_4_url || destination.gallery_image_4,
+    ].filter(Boolean);
+
+    const gallery = [...images];
+    while (gallery.length < 5) {
+      gallery.push(gallery[0] || fallbackImage);
+    }
+
+    const featuresHtml = destination.features_display || (Array.isArray(destination.features) ? destination.features.join('') : '');
 
     shell.innerHTML = `
       <header class="detail-header">
@@ -27,25 +40,23 @@ document.addEventListener('DOMContentLoaded', async () => {
       </header>
 
       <section class="detail-gallery">
-        <div class="detail-gallery-main" style="background-image:url('${image}')"></div>
-        <div class="detail-gallery-side" style="background-image:url('${image}')"></div>
-        <div class="detail-gallery-side" style="background-image:url('${image}')"></div>
-        <div class="detail-gallery-side" style="background-image:url('${image}')"></div>
-        <div class="detail-gallery-side" style="background-image:url('${image}')"></div>
+        <div class="detail-gallery-main" style="background-image:url('${gallery[0]}')"></div>
+        <div class="detail-gallery-side" style="background-image:url('${gallery[1]}')"></div>
+        <div class="detail-gallery-side" style="background-image:url('${gallery[2]}')"></div>
+        <div class="detail-gallery-side" style="background-image:url('${gallery[3]}')"></div>
+        <div class="detail-gallery-side" style="background-image:url('${gallery[4]}')"></div>
       </section>
 
       <div class="detail-main-layout">
         <div>
           <section class="detail-section">
             <h2>${escapeHtml(destination.city)}的精选低空旅行体验</h2>
-            <p>${escapeHtml(destination.description || '')}</p>
+            <div class="rich-text-content">${destination.description || ''}</div>
           </section>
 
           <section class="detail-section">
             <h2>目的地亮点</h2>
-            <div class="feature-list">
-              ${features.map(item => `<div class="feature-item">${escapeHtml(item)}</div>`).join('') || '<div class="feature-item">暂无亮点介绍</div>'}
-            </div>
+            <div class="rich-text-content">${featuresHtml || '<p>暂无亮点介绍</p>'}</div>
           </section>
 
           <section class="detail-section">

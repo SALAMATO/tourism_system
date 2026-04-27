@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             <div><i class="fas fa-star" style="color:#ef4444;"></i> ${Number(item.rating || 0).toFixed(1)}</div>
           </div>
           <div class="destination-page-location"><i class="fas fa-location-dot"></i> ${escapeHtml(item.city)} · ${escapeHtml(item.location || '')}</div>
-          <p class="destination-page-desc">${truncateText(escapeHtml(item.description || ''), 96)}</p>
+          <p class="destination-page-desc">${truncateText(stripHtmlTags(item.description || ''), 96)}</p>
           <div class="destination-page-meta">
             <span>${escapeHtml(item.duration || '')}</span>
             <span>${escapeHtml(item.price_range || '')}</span>

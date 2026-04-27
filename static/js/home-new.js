@@ -62,7 +62,7 @@ function renderHomepageDestinationModule(type, moduleData, container) {
     <div class="destination-explore-panel">
       <div class="destination-explore-toolbar">
         <div class="destination-switch-group">${citiesHtml}</div>
-        <a href="/destinations/" class="btn btn-secondary destination-more-btn">查看旅游目的地模块</a>
+        <a href="/destinations/" class="btn btn-secondary destination-more-btn">查看旅游目的地</a>
       </div>
       <div class="destination-explore-grid">
         ${itemsHtml || '<div class="loading"><div>当前城市暂无低空旅游项目</div></div>'}

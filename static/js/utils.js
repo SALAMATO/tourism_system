@@ -93,6 +93,13 @@ function truncateText(text, maxLength = 100) {
   return text.substring(0, maxLength) + '...';
 }
 
+function stripHtmlTags(html) {
+  if (!html) return '';
+  const div = document.createElement('div');
+  div.innerHTML = html;
+  return div.textContent || div.innerText || '';
+}
+
 // HTML转义
 function escapeHtml(text) {
   const map = {
@@ -102,7 +109,7 @@ function escapeHtml(text) {
     '"': '&quot;',
     "'": '&#039;'
   };
-  return text.replace(/[&<>"']/g, m => map[m]);
+  return String(text).replace(/[&<>"']/g, m => map[m]);
 }
 
 // 模态框控制

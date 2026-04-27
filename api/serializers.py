@@ -47,7 +47,15 @@ class DestinationSerializer(serializers.ModelSerializer):
     """旅游目的地序列化器"""
 
     cover_image = serializers.ImageField(required=False, allow_null=True)
+    gallery_image_1 = serializers.ImageField(required=False, allow_null=True)
+    gallery_image_2 = serializers.ImageField(required=False, allow_null=True)
+    gallery_image_3 = serializers.ImageField(required=False, allow_null=True)
+    gallery_image_4 = serializers.ImageField(required=False, allow_null=True)
     cover_image_url = serializers.SerializerMethodField(read_only=True)
+    gallery_image_1_url = serializers.SerializerMethodField(read_only=True)
+    gallery_image_2_url = serializers.SerializerMethodField(read_only=True)
+    gallery_image_3_url = serializers.SerializerMethodField(read_only=True)
+    gallery_image_4_url = serializers.SerializerMethodField(read_only=True)
     features_display = serializers.CharField(write_only=True, required=False, allow_blank=True)
 
     class Meta:
@@ -61,6 +69,25 @@ class DestinationSerializer(serializers.ModelSerializer):
         url = obj.cover_image.url
         return request.build_absolute_uri(url) if request else url
 
+    def _build_image_url(self, image_field):
+        request = self.context.get('request')
+        if not image_field:
+            return ''
+        url = image_field.url
+        return request.build_absolute_uri(url) if request else url
+
+    def get_gallery_image_1_url(self, obj):
+        return self._build_image_url(obj.gallery_image_1)
+
+    def get_gallery_image_2_url(self, obj):
+        return self._build_image_url(obj.gallery_image_2)
+
+    def get_gallery_image_3_url(self, obj):
+        return self._build_image_url(obj.gallery_image_3)
+
+    def get_gallery_image_4_url(self, obj):
+        return self._build_image_url(obj.gallery_image_4)
+
     def validate_features_display(self, value):
         if not value:
             return ''
@@ -69,14 +96,14 @@ class DestinationSerializer(serializers.ModelSerializer):
     def _normalize_features(self, validated_data):
         features_display = validated_data.pop('features_display', None)
         if features_display is not None:
-            validated_data['features'] = [item.strip() for item in features_display.split('\n') if item.strip()]
+            validated_data['features'] = [features_display.strip()] if features_display.strip() else []
         elif 'features' in validated_data and isinstance(validated_data['features'], str):
-            validated_data['features'] = [item.strip() for item in validated_data['features'].split('\n') if item.strip()]
+            validated_data['features'] = [validated_data['features'].strip()] if validated_data['features'].strip() else []
         return validated_data
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        data['features_display'] = '\n'.join(instance.features or [])
+        data['features_display'] = '\n'.join(instance.features or []) if len(instance.features or []) > 1 else ((instance.features or [''])[0] if (instance.features or []) else '')
         return data
 
     def create(self, validated_data):
