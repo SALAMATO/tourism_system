@@ -1,13 +1,94 @@
 
 document.addEventListener('DOMContentLoaded', () => {
-  loadHotDestinations();
+  const hotContainer = document.getElementById('destinations-container');
+  if (hotContainer) {
+    loadHotDestinations();
+  }
+  loadHomepageDestinationModules();
   loadLatestNews();
   loadStatistics();
 });
 
+async function loadHomepageDestinationModules() {
+  const nearbyContainer = document.getElementById('nearby-destination-content');
+  const managedContainer = document.getElementById('managed-destination-content');
+
+  if (!nearbyContainer || !managedContainer) {
+    return;
+  }
+
+  try {
+    const response = await api.getHomepageDestinationModules();
+    renderHomepageDestinationModule('nearby', response.nearby, nearbyContainer);
+    renderHomepageDestinationModule('managed', response.managed, managedContainer);
+  } catch (error) {
+    console.error('加载首页目的地模块失败:', error);
+    nearbyContainer.innerHTML = '<div class="loading"><div>加载失败，请稍后重试</div></div>';
+    managedContainer.innerHTML = '<div class="loading"><div>加载失败，请稍后重试</div></div>';
+  }
+}
+
+function renderHomepageDestinationModule(type, moduleData, container) {
+  if (!moduleData) {
+    container.innerHTML = '<div class="loading"><div>暂无推荐内容</div></div>';
+    return;
+  }
+
+  const citiesHtml = (moduleData.cities || []).map(city => `
+    <button class="destination-switch-btn ${city === moduleData.current_city ? 'active' : ''}" data-module-type="${type}" data-city="${escapeHtml(city)}">${escapeHtml(city)}</button>
+  `).join('');
+
+  const itemsHtml = (moduleData.items || []).map(item => `
+    <a href="/destination-detail.html?id=${item.id}" class="destination-explore-card">
+      <div class="destination-explore-image-wrap">
+        <img src="${escapeHtml(item.cover_image_url || item.cover_image || '')}" alt="${escapeHtml(item.name)}" class="destination-explore-image">
+      </div>
+      <div class="destination-explore-body">
+        <div class="destination-explore-title-row">
+          <h3>${escapeHtml(item.name)}</h3>
+          <span><i class="fas fa-star" style="color:#ef4444;"></i> ${Number(item.rating || 0).toFixed(1)}</span>
+        </div>
+        <div class="destination-explore-location"><i class="fas fa-location-dot"></i> ${escapeHtml(item.city)} · ${escapeHtml(item.location || '')}</div>
+        <p class="destination-explore-desc">${truncateText(escapeHtml(item.description || ''), 88)}</p>
+        <div class="destination-explore-meta">
+          <span>${escapeHtml(item.duration || '')}</span>
+          <strong>${escapeHtml(item.price_range || '')}</strong>
+        </div>
+      </div>
+    </a>
+  `).join('');
+
+  container.innerHTML = `
+    <div class="destination-explore-panel">
+      <div class="destination-explore-toolbar">
+        <div class="destination-switch-group">${citiesHtml}</div>
+        <a href="/destinations/" class="btn btn-secondary destination-more-btn">查看旅游目的地模块</a>
+      </div>
+      <div class="destination-explore-grid">
+        ${itemsHtml || '<div class="loading"><div>当前城市暂无低空旅游项目</div></div>'}
+      </div>
+    </div>
+  `;
+
+  container.querySelectorAll('.destination-switch-btn').forEach(button => {
+    button.addEventListener('click', async () => {
+      try {
+        const nearbyCity = type === 'nearby' ? button.dataset.city : document.querySelector('[data-module-type="nearby"].active')?.dataset.city;
+        const managedCity = type === 'managed' ? button.dataset.city : document.querySelector('[data-module-type="managed"].active')?.dataset.city;
+        const response = await api.getHomepageDestinationModules({ nearby_city: nearbyCity, managed_city: managedCity });
+        renderHomepageDestinationModule('nearby', response.nearby, document.getElementById('nearby-destination-content'));
+        renderHomepageDestinationModule('managed', response.managed, document.getElementById('managed-destination-content'));
+      } catch (error) {
+        console.error('切换首页目的地城市失败:', error);
+      }
+    });
+  });
+}
+
 // 加载热门目的地
 async function loadHotDestinations() {
   const container = document.getElementById('destinations-container');
+  if (!container) return;
   
   try {
     showLoading(container);
@@ -35,8 +116,8 @@ function renderDestinations(container, destinations) {
   const html = destinations.map(dest => `
     <a href="destination-detail.html?id=${dest.id}" class="destination-card">
       <div class="destination-image">
-        ${dest.cover_image ? 
-          `<img src="${dest.cover_image}" alt="${escapeHtml(dest.name)}" style="width: 100%; height: 100%; object-fit: cover;">` :
+        ${dest.cover_image_url || dest.cover_image ? 
+          `<img src="${dest.cover_image_url || dest.cover_image}" alt="${escapeHtml(dest.name)}" style="width: 100%; height: 100%; object-fit: cover;">` :
           `<i class="fas fa-helicopter"></i>`
         }
       </div>
@@ -49,7 +130,7 @@ function renderDestinations(container, destinations) {
         <div class="destination-meta">
           <div class="destination-rating">
             <i class="fas fa-star"></i>
-            <span>${dest.rating.toFixed(1)}</span>
+            <span>${Number(dest.rating || 0).toFixed(1)}</span>
             <span style="color: var(--text-secondary); margin-left: 8px; font-size: 14px;">
               ${dest.views} 人浏览
             </span>

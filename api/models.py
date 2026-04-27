@@ -21,10 +21,17 @@ class User(AbstractUser):
 
 class Destination(models.Model):
     """低空旅游目的地"""
+
+    RECOMMENDATION_CHOICES = [
+        ('nearby', 'IP周边推荐'),
+        ('managed', '管理员推荐'),
+    ]
+
     name = models.CharField(max_length=200, verbose_name='目的地名称')
+    city = models.CharField(max_length=100, db_index=True, verbose_name='所属城市')
     location = models.CharField(max_length=200, verbose_name='地理位置')
     description = models.TextField(verbose_name='详细介绍')
-    cover_image = models.URLField(verbose_name='封面图片')
+    cover_image = models.ImageField(upload_to='media-destination/', verbose_name='封面图片')
     category = models.CharField(max_length=100, verbose_name='类别')
     price_range = models.CharField(max_length=100, verbose_name='价格区间')
     duration = models.CharField(max_length=100, verbose_name='游玩时长')
@@ -33,6 +40,14 @@ class Destination(models.Model):
     rating = models.FloatField(default=5.0, verbose_name='评分')
     views = models.IntegerField(default=0, verbose_name='浏览次数')
     is_hot = models.BooleanField(default=False, verbose_name='是否热门')
+    is_featured = models.BooleanField(default=False, verbose_name='首页推荐')
+    recommendation_type = models.CharField(
+        max_length=20,
+        choices=RECOMMENDATION_CHOICES,
+        default='managed',
+        verbose_name='推荐类型'
+    )
+    sort_order = models.PositiveIntegerField(default=0, verbose_name='排序值')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
 
@@ -40,10 +55,10 @@ class Destination(models.Model):
         db_table = 'destinations'
         verbose_name = '旅游目的地'
         verbose_name_plural = verbose_name
-        ordering = ['-is_hot', '-rating', '-views']
+        ordering = ['sort_order', '-is_hot', '-rating', '-views', '-created_at']
 
     def __str__(self):
-        return self.name
+        return f'{self.city} - {self.name}'
 
 
 class Policy(models.Model):
@@ -156,7 +171,7 @@ class MessageComment(models.Model):
     message = models.ForeignKey(Message, on_delete=models.CASCADE, related_name='comments', verbose_name='留言')
     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='评论用户')
     content = models.TextField(verbose_name='评论内容')
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='评论时间')
 
     class Meta:
         db_table = 'message_comments'

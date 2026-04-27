@@ -131,6 +131,12 @@
         <p>录入和更新统计数据</p>
       </div>
 
+      <div class="feature-card" onclick="showModule('destination')">
+        <span class="feature-icon">🗺️</span>
+        <h3>旅游目的地管理</h3>
+        <p>维护低空旅游目的地与首页推荐内容</p>
+      </div>
+
       <div class="feature-card" onclick="showModule('message')">
         <span class="feature-icon">💬</span>
         <h3>留言管理</h3>
@@ -509,6 +515,121 @@
       <div class="card" style="margin-top: 24px;">
         <h3 class="card-title">已登记隐患（最近）</h3>
         <div id="safety-list-container">
+          <div class="loading"><div class="spinner"></div><div>加载中...</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 旅游目的地管理 -->
+    <div id="destination-module" class="admin-module" style="display:none;">
+      <h2 class="section-title">旅游目的地管理</h2>
+      <div class="card">
+        <h3 class="card-title">新增旅游目的地</h3>
+        <form id="destination-form" enctype="multipart/form-data">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">目的地名称 *</label>
+              <input type="text" id="destination-name" class="form-input" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">所属城市 *</label>
+              <input type="text" id="destination-city" class="form-input" placeholder="如：北京、三亚、桂林" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">地理位置 *</label>
+              <input type="text" id="destination-location" class="form-input" placeholder="如：北京市延庆区八达岭机场" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">类别 *</label>
+              <input type="text" id="destination-category" class="form-input" placeholder="如：直升机观光、热气球、滑翔伞" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">价格区间 *</label>
+              <input type="text" id="destination-price-range" class="form-input" placeholder="如：¥599 - ¥1299 / 人" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">游玩时长 *</label>
+              <input type="text" id="destination-duration" class="form-input" placeholder="如：30分钟 - 2小时" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">最佳季节 *</label>
+              <input type="text" id="destination-best-season" class="form-input" placeholder="如：春秋两季" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">评分 *</label>
+              <input type="number" id="destination-rating" class="form-input" min="0" max="5" step="0.1" value="4.9" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">推荐类型 *</label>
+              <select id="destination-recommendation-type" class="form-select" required>
+                <option value="nearby">基于网络IP的周边低空旅行</option>
+                <option value="managed">管理员推荐目的地</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">排序值</label>
+              <input type="number" id="destination-sort-order" class="form-input" min="0" value="0">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">首页推荐</label>
+              <select id="destination-is-featured" class="form-select">
+                <option value="true">是</option>
+                <option value="false">否</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">热门目的地</label>
+              <select id="destination-is-hot" class="form-select">
+                <option value="true">是</option>
+                <option value="false">否</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">封面图片 *</label>
+            <input type="file" id="destination-cover-image" class="form-input" accept="image/*">
+            <div id="destination-cover-preview" style="margin-top: 12px; display:none;">
+              <img id="destination-cover-preview-img" src="" alt="封面预览" style="width: 220px; height: 140px; object-fit: cover; border-radius: 12px; border: 1px solid var(--border-color);">
+            </div>
+            <input type="hidden" id="destination-existing-cover-image">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">详细介绍 *</label>
+            <textarea id="destination-description" class="form-textarea" rows="6" required></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">特色亮点（每行一条） *</label>
+            <textarea id="destination-features" class="form-textarea" rows="5" placeholder="如：\n俯瞰城市天际线\n专业飞行教练讲解\n适合情侣与亲子家庭" required></textarea>
+          </div>
+
+          <div style="margin-top: 8px;">
+            <button type="submit" class="btn btn-primary">提交</button>
+            <button type="button" id="destination-delete-btn" class="btn btn-danger" style="display:none; margin-left: 12px;">删除</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card" style="margin-top: 24px;">
+        <h3 class="card-title">已创建目的地</h3>
+        <div id="destination-list-container">
           <div class="loading"><div class="spinner"></div><div>加载中...</div></div>
         </div>
       </div>

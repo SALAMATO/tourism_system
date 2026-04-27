@@ -11,8 +11,9 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('api.urls')),
-    # 首页直接返回模板
     path('', TemplateView.as_view(template_name='index.html'), name='home'),
+    path('destinations/', TemplateView.as_view(template_name='destinations.html'), name='destinations'),
+    path('destination-detail.html', TemplateView.as_view(template_name='destination-detail.html'), name='destination-detail'),
     path('policies/', TemplateView.as_view(template_name='policies.html'), name='policies'),
     path('policies/policy-detail.html', TemplateView.as_view(template_name='policy-detail.html'), name='policy-detail'),
     path('policy-detail.html', TemplateView.as_view(template_name='policy-detail.html'), name='policy-detail'),
@@ -23,19 +24,16 @@ urlpatterns = [
     path('news-detail.html/', TemplateView.as_view(template_name='news-detail.html'), name='news-detail'),
     path('community/', TemplateView.as_view(template_name='community.html'), name='community'),
 
-    # 用户登录/注册页面（前端）
     path('auth/', TemplateView.as_view(template_name='auth.html'), name='auth_page'),
-    # 个人主页
     path('profile/', TemplateView.as_view(template_name='profile.html'), name='profile_page'),
-    # 管理后台（前端单页，由前端基于 Token 和 is_staff 进行权限控制）
     path(
         'admin-page/',
         TemplateView.as_view(template_name='admin.html'),
         name='admin_page'
-    ),  # 避免与 admin 冲突
-
-
-    # 兼容旧的 messages 路由
+    ),
     path('messages/', TemplateView.as_view(template_name='community.html'), name='community'),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

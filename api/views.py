@@ -190,15 +190,89 @@ class DestinationViewSet(PublicModelViewSet):
     queryset = Destination.objects.all()
     serializer_class = DestinationSerializer
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['name', 'location', 'description']
-    ordering_fields = ['rating', 'views', 'created_at']
+    search_fields = ['name', 'city', 'location', 'description']
+    ordering_fields = ['sort_order', 'rating', 'views', 'created_at']
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        recommendation_type = self.request.query_params.get('recommendation_type')
+        city = self.request.query_params.get('city')
+        is_featured = self.request.query_params.get('is_featured')
+        is_hot = self.request.query_params.get('is_hot')
+
+        if recommendation_type:
+            queryset = queryset.filter(recommendation_type=recommendation_type)
+        if city:
+            queryset = queryset.filter(city=city)
+        if is_featured is not None:
+            queryset = queryset.filter(is_featured=is_featured.lower() == 'true')
+        if is_hot is not None:
+            queryset = queryset.filter(is_hot=is_hot.lower() == 'true')
+
+        return queryset
+
+    def get_parser_classes(self):
+        from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
+        return [MultiPartParser, FormParser, JSONParser]
 
     @action(detail=False, methods=['get'])
     def hot(self, request):
         """获取热门目的地"""
-        hot_destinations = self.queryset.filter(is_hot=True)[:6]
+        hot_destinations = self.get_queryset().filter(is_hot=True)[:8]
         serializer = self.get_serializer(hot_destinations, many=True)
         return Response(serializer.data)
+
+    @action(detail=False, methods=['get'])
+    def cities(self, request):
+        """获取目的地城市列表"""
+        cities = list(
+            self.get_queryset()
+            .values_list('city', flat=True)
+            .distinct()
+        )
+        return Response(cities)
+
+    @action(detail=False, methods=['get'])
+    def homepage_modules(self, request):
+        """获取首页目的地模块数据"""
+        nearby_city = request.query_params.get('nearby_city') or '北京'
+        managed_city = request.query_params.get('managed_city')
+
+        nearby_items = list(
+            Destination.objects.filter(recommendation_type='nearby', is_featured=True)
+            .order_by('sort_order', '-rating', '-views')
+        )
+        managed_items = list(
+            Destination.objects.filter(recommendation_type='managed', is_featured=True)
+            .order_by('sort_order', '-rating', '-views')
+        )
+
+        nearby_cities = sorted({item.city for item in nearby_items})
+        managed_cities = sorted({item.city for item in managed_items})
+
+        if nearby_city not in nearby_cities and nearby_cities:
+            nearby_city = nearby_cities[0]
+        if managed_city not in managed_cities and managed_cities:
+            managed_city = managed_cities[0]
+
+        nearby_selected = [item for item in nearby_items if item.city == nearby_city][:4]
+        managed_selected = [item for item in managed_items if item.city == managed_city][:4]
+
+        serializer_context = self.get_serializer_context()
+        return Response({
+            'nearby': {
+                'title': '基于网络IP的周边低空旅行',
+                'current_city': nearby_city,
+                'cities': nearby_cities,
+                'items': DestinationSerializer(nearby_selected, many=True, context=serializer_context).data,
+            },
+            'managed': {
+                'title': '探索更多低空旅行目的地',
+                'current_city': managed_city,
+                'cities': managed_cities,
+                'items': DestinationSerializer(managed_selected, many=True, context=serializer_context).data,
+            }
+        })
 
     @action(detail=True, methods=['post'])
     def increment_views(self, request, pk=None):

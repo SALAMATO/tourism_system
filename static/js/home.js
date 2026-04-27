@@ -1,9 +1,12 @@
 // 首页逻辑
 
 document.addEventListener('DOMContentLoaded', () => {
-  loadHotDestinations();
-  loadLatestNews();
-  loadStatistics();
+  const destinationContainer = document.getElementById('destinations-container');
+  if (destinationContainer) {
+    loadHotDestinations();
+    loadLatestNews();
+    loadStatistics();
+  }
 });
 
 //检测 hero 是否在屏幕中
@@ -23,16 +26,16 @@ document.addEventListener('DOMContentLoaded', () => {
     },
     {
       root: null,
-      threshold: 0.1   // hero 还有 10% 在视口就算“在 hero 区域”
+      threshold: 0.1
     }
   );
 
   observer.observe(hero);
 });
 
-// 加载热门目的地
 async function loadHotDestinations() {
   const container = document.getElementById('destinations-container');
+  if (!container) return;
 
   try {
     showLoading(container);
@@ -50,7 +53,6 @@ async function loadHotDestinations() {
   }
 }
 
-// 渲染目的地列表
 function renderDestinations(container, destinations) {
   if (!destinations || destinations.length === 0) {
     container.innerHTML = '<div class="loading"><div>暂无热门目的地</div></div>';
@@ -60,8 +62,8 @@ function renderDestinations(container, destinations) {
   const html = destinations.map(dest => `
     <a href="destination-detail.html?id=${dest.id}" class="destination-card">
       <div class="destination-image">
-        ${dest.cover_image ? 
-          `<img src="${dest.cover_image}" alt="${escapeHtml(dest.name)}" style="width: 100%; height: 100%; object-fit: cover;">` :
+        ${dest.cover_image_url || dest.cover_image ?
+          `<img src="${dest.cover_image_url || dest.cover_image}" alt="${escapeHtml(dest.name)}" style="width: 100%; height: 100%; object-fit: cover;">` :
           `<i class="fas fa-helicopter"></i>`
         }
       </div>
@@ -74,7 +76,7 @@ function renderDestinations(container, destinations) {
         <div class="destination-meta">
           <div class="destination-rating">
             <i class="fas fa-star"></i>
-            <span>${dest.rating.toFixed(1)}</span>
+            <span>${Number(dest.rating || 0).toFixed(1)}</span>
             <span style="color: var(--text-secondary); margin-left: 8px; font-size: 14px;">
               ${dest.views} 人浏览
             </span>
@@ -90,9 +92,9 @@ function renderDestinations(container, destinations) {
   container.innerHTML = html;
 }
 
-// 加载最新新闻
 async function loadLatestNews() {
   const container = document.getElementById('latest-news-container');
+  if (!container) return;
 
   try {
     showLoading(container);
@@ -109,7 +111,6 @@ async function loadLatestNews() {
   }
 }
 
-// 渲染新闻列表
 function renderNewsList(container, newsItems) {
   const html = newsItems.map(item => `
     <div class="list-item" onclick="location.href='news-detail.html?id=${item.id}'">
@@ -134,7 +135,6 @@ function renderNewsList(container, newsItems) {
   container.innerHTML = html;
 }
 
-// 去除HTML标签
 function stripHtml(html) {
   if (!html) return '';
   const tmp = document.createElement('div');
@@ -142,13 +142,11 @@ function stripHtml(html) {
   return tmp.textContent || tmp.innerText || '';
 }
 
-// 加载统计数据
 async function loadStatistics() {
   try {
     const response = await api.getStatistics({ limit: 100 });
 
     if (response.data && response.data.length > 0) {
-      // 计算总数
       let totalTourists = 0;
       let totalRevenue = 0;
       let totalFlights = 0;
@@ -162,9 +160,8 @@ async function loadStatistics() {
       });
 
       avgGrowth = response.data.length > 0 ? (avgGrowth / response.data.length).toFixed(1) : 0;
-      totalRevenue = (totalRevenue / 10000).toFixed(2); // 转换为亿元
+      totalRevenue = (totalRevenue / 10000).toFixed(2);
 
-      // 更新显示
       document.getElementById('stat-tourists').textContent = totalTourists.toLocaleString();
       document.getElementById('stat-revenue').textContent = totalRevenue;
       document.getElementById('stat-flights').textContent = totalFlights.toLocaleString();
@@ -174,12 +171,3 @@ async function loadStatistics() {
     console.error('加载统计数据失败:', error);
   }
 }
-
-
-// 页面加载完成后执行
-document.addEventListener('DOMContentLoaded', () => {
-  loadLatestNews();
-  loadStatistics();
-});
-
-

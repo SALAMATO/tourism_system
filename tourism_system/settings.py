@@ -5,6 +5,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # 静态文件 URL 前缀（必须）
 STATIC_URL = '/static/'
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 # 本地开发静态文件目录
 STATICFILES_DIRS = [BASE_DIR / 'static']

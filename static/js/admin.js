@@ -2,13 +2,14 @@
 let currentReplyMessageId = null;
 const replyModal = new Modal('reply-modal');
 
-// 各模块当前正在编辑的记录ID
 let currentPolicyEditingId = null;
 let currentNewsEditingId = null;
 let currentNewsEditingData = null;
 let currentSafetyEditingId = null;
 let currentSafetyEditingData = null;
 let currentStatisticEditingId = null;
+let currentDestinationEditingId = null;
+let currentDestinationEditingData = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
   // 管理后台权限校验：必须登录且为管理员
@@ -98,6 +99,8 @@ function showModule(moduleName) {
       loadSafetyAlertsForAdmin();
     } else if (moduleName === 'statistics') {
       loadStatisticsForAdmin();
+    } else if (moduleName === 'destination') {
+      loadDestinationsForAdmin();
     } else if (moduleName === 'message') {
       loadMessagesForAdmin();
     } else if (moduleName === 'user') {
@@ -140,12 +143,25 @@ function initForms() {
     e.preventDefault();
     await submitStatistics();
   });
+
+  const destinationForm = document.getElementById('destination-form');
+  if (destinationForm) {
+    destinationForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      await submitDestination();
+    });
+  }
+
+  const destinationCoverInput = document.getElementById('destination-cover-image');
+  if (destinationCoverInput) {
+    destinationCoverInput.addEventListener('change', previewDestinationCover);
+  }
 }
 
 // 使用事件委托：在 document 上监听点击，避免按钮在隐藏模块内时绑定失效
 function initDeleteButtons() {
   document.addEventListener('click', function(e) {
-    const btn = e.target.closest('#policy-delete-btn, #news-delete-btn, #safety-delete-btn, #statistics-delete-btn, #reply-delete-btn');
+    const btn = e.target.closest('#policy-delete-btn, #news-delete-btn, #safety-delete-btn, #statistics-delete-btn, #destination-delete-btn, #reply-delete-btn');
     if (!btn) return;
     e.preventDefault();
     e.stopPropagation();
@@ -153,6 +169,7 @@ function initDeleteButtons() {
     else if (btn.id === 'news-delete-btn') deleteCurrentNews();
     else if (btn.id === 'safety-delete-btn') deleteCurrentSafetyAlert();
     else if (btn.id === 'statistics-delete-btn') deleteCurrentStatistic();
+    else if (btn.id === 'destination-delete-btn') deleteCurrentDestination();
     else if (btn.id === 'reply-delete-btn') deleteCurrentReply();
   });
 }
@@ -875,6 +892,233 @@ async function deleteStatistic(id) {
     loadStatisticsForAdmin();
   } catch (error) {
     console.error('删除统计记录失败:', error);
+    showNotification('删除失败：' + error.message, 'error');
+  }
+}
+
+function buildDestinationFormData() {
+  const formData = new FormData();
+  const coverInput = document.getElementById('destination-cover-image');
+  const coverFile = coverInput.files && coverInput.files[0];
+
+  formData.append('name', document.getElementById('destination-name').value.trim());
+  formData.append('city', document.getElementById('destination-city').value.trim());
+  formData.append('location', document.getElementById('destination-location').value.trim());
+  formData.append('category', document.getElementById('destination-category').value.trim());
+  formData.append('price_range', document.getElementById('destination-price-range').value.trim());
+  formData.append('duration', document.getElementById('destination-duration').value.trim());
+  formData.append('best_season', document.getElementById('destination-best-season').value.trim());
+  formData.append('rating', document.getElementById('destination-rating').value || '4.9');
+  formData.append('recommendation_type', document.getElementById('destination-recommendation-type').value);
+  formData.append('sort_order', document.getElementById('destination-sort-order').value || '0');
+  formData.append('is_featured', document.getElementById('destination-is-featured').value);
+  formData.append('is_hot', document.getElementById('destination-is-hot').value);
+  formData.append('description', document.getElementById('destination-description').value.trim());
+  formData.append('features_display', document.getElementById('destination-features').value.trim());
+  formData.append('views', currentDestinationEditingData?.views || 0);
+
+  if (coverFile) {
+    formData.append('cover_image', coverFile);
+  } else if (currentDestinationEditingData && currentDestinationEditingData.cover_image) {
+    formData.append('cover_image', currentDestinationEditingData.cover_image);
+  }
+
+  return formData;
+}
+
+function previewDestinationCover() {
+  const input = document.getElementById('destination-cover-image');
+  const preview = document.getElementById('destination-cover-preview');
+  const previewImage = document.getElementById('destination-cover-preview-img');
+  const file = input.files && input.files[0];
+
+  if (!file) {
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = event => {
+    previewImage.src = event.target.result;
+    preview.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+async function submitDestination() {
+  try {
+    const coverInput = document.getElementById('destination-cover-image');
+    if (!currentDestinationEditingId && (!coverInput.files || !coverInput.files[0])) {
+      showNotification('请上传目的地封面图片', 'error');
+      return;
+    }
+
+    const data = buildDestinationFormData();
+
+    if (currentDestinationEditingId) {
+      await api.updateDestination(currentDestinationEditingId, data);
+      showNotification('旅游目的地修改成功', 'success');
+    } else {
+      await api.createDestination(data);
+      showNotification('旅游目的地添加成功', 'success');
+    }
+
+    resetDestinationFormState();
+    loadDestinationsForAdmin();
+  } catch (error) {
+    console.error('提交旅游目的地失败:', error);
+    showNotification('提交失败：' + error.message, 'error');
+  }
+}
+
+function resetDestinationFormState() {
+  const form = document.getElementById('destination-form');
+  if (form) form.reset();
+  currentDestinationEditingId = null;
+  currentDestinationEditingData = null;
+  const titleEl = document.querySelector('#destination-module .card-title');
+  if (titleEl) titleEl.textContent = '新增旅游目的地';
+  const submitBtn = document.querySelector('#destination-form button[type="submit"]');
+  if (submitBtn) submitBtn.textContent = '提交';
+  const deleteBtn = document.getElementById('destination-delete-btn');
+  if (deleteBtn) deleteBtn.style.display = 'none';
+  const preview = document.getElementById('destination-cover-preview');
+  const previewImage = document.getElementById('destination-cover-preview-img');
+  if (preview) preview.style.display = 'none';
+  if (previewImage) previewImage.src = '';
+}
+
+async function editDestination(id) {
+  try {
+    const destination = await api.getDestination(id);
+    currentDestinationEditingId = id;
+    currentDestinationEditingData = destination;
+
+    document.getElementById('destination-name').value = destination.name || '';
+    document.getElementById('destination-city').value = destination.city || '';
+    document.getElementById('destination-location').value = destination.location || '';
+    document.getElementById('destination-category').value = destination.category || '';
+    document.getElementById('destination-price-range').value = destination.price_range || '';
+    document.getElementById('destination-duration').value = destination.duration || '';
+    document.getElementById('destination-best-season').value = destination.best_season || '';
+    document.getElementById('destination-rating').value = destination.rating || 4.9;
+    document.getElementById('destination-recommendation-type').value = destination.recommendation_type || 'managed';
+    document.getElementById('destination-sort-order').value = destination.sort_order || 0;
+    document.getElementById('destination-is-featured').value = String(Boolean(destination.is_featured));
+    document.getElementById('destination-is-hot').value = String(Boolean(destination.is_hot));
+    document.getElementById('destination-description').value = destination.description || '';
+    document.getElementById('destination-features').value = destination.features_display || (destination.features || []).join('\n');
+
+    const preview = document.getElementById('destination-cover-preview');
+    const previewImage = document.getElementById('destination-cover-preview-img');
+    previewImage.src = destination.cover_image_url || destination.cover_image || '';
+    preview.style.display = previewImage.src ? 'block' : 'none';
+
+    const titleEl = document.querySelector('#destination-module .card-title');
+    if (titleEl) titleEl.textContent = '编辑旅游目的地';
+    const submitBtn = document.querySelector('#destination-form button[type="submit"]');
+    if (submitBtn) submitBtn.textContent = '保存修改';
+    const deleteBtn = document.getElementById('destination-delete-btn');
+    if (deleteBtn) deleteBtn.style.display = 'inline-block';
+
+    document.getElementById('destination-module').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch (error) {
+    console.error('加载目的地详情失败:', error);
+    showNotification('加载目的地详情失败', 'error');
+  }
+}
+
+async function deleteCurrentDestination() {
+  if (!currentDestinationEditingId) {
+    showNotification('请先选择要编辑的目的地', 'error');
+    return;
+  }
+
+  const confirmed = await showConfirm({
+    title: '删除旅游目的地',
+    message: '确定要删除当前这条旅游目的地吗？删除后将无法恢复。',
+    confirmText: '删除',
+    cancelText: '取消',
+    type: 'danger'
+  });
+
+  if (!confirmed) return;
+
+  try {
+    await api.deleteDestination(currentDestinationEditingId);
+    showNotification('删除成功', 'success');
+    resetDestinationFormState();
+    loadDestinationsForAdmin();
+  } catch (error) {
+    console.error('删除当前目的地失败:', error);
+    showNotification('删除失败：' + error.message, 'error');
+  }
+}
+
+async function loadDestinationsForAdmin() {
+  const container = document.getElementById('destination-list-container');
+  if (!container) return;
+
+  try {
+    showLoading(container);
+    const response = await api.getDestinations({ limit: 100, sort: 'sort_order' });
+    if (response.data && response.data.length > 0) {
+      renderDestinationsForAdmin(container, response.data);
+    } else {
+      container.innerHTML = '<div class="loading"><div>暂无旅游目的地</div></div>';
+    }
+  } catch (error) {
+    console.error('加载旅游目的地失败:', error);
+    showError(container);
+  }
+}
+
+function renderDestinationsForAdmin(container, destinations) {
+  const html = destinations.map(item => `
+    <div class="list-item" style="display:flex; justify-content:space-between; align-items:center; gap:16px;">
+      <div style="display:flex; gap:16px; align-items:center; flex:1;">
+        <img src="${escapeHtml(item.cover_image_url || item.cover_image || '')}" alt="${escapeHtml(item.name)}" style="width:96px; height:72px; object-fit:cover; border-radius:12px; border:1px solid var(--border-color);">
+        <div style="flex:1;">
+          <div style="font-weight:500;">${escapeHtml(item.name)}</div>
+          <div class="list-item-meta">
+            <span><i class="fas fa-location-dot"></i> ${escapeHtml(item.city)} / ${escapeHtml(item.location || '')}</span>
+            <span><i class="fas fa-tag"></i> ${escapeHtml(item.category || '未分类')}</span>
+            <span><i class="fas fa-star"></i> ${item.rating || 0}</span>
+            <span><i class="fas fa-eye"></i> ${item.views || 0}</span>
+            <span><i class="fas fa-layer-group"></i> ${item.recommendation_type === 'nearby' ? 'IP周边' : '管理员推荐'}</span>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-primary" onclick="editDestination('${item.id}')">
+          <i class="fas fa-edit"></i> 修改
+        </button>
+        <button class="btn btn-secondary" onclick="deleteDestination('${item.id}')">
+          <i class="fas fa-trash"></i> 删除
+        </button>
+      </div>
+    </div>
+  `).join('');
+
+  container.innerHTML = html;
+}
+
+async function deleteDestination(id) {
+  const confirmed = await showConfirm({
+    title: '删除旅游目的地',
+    message: '确定要删除该旅游目的地吗？删除后将无法恢复。',
+    confirmText: '删除',
+    cancelText: '取消',
+    type: 'danger'
+  });
+
+  if (!confirmed) return;
+
+  try {
+    await api.deleteDestination(id);
+    showNotification('删除成功', 'success');
+    loadDestinationsForAdmin();
+  } catch (error) {
+    console.error('删除旅游目的地失败:', error);
     showNotification('删除失败：' + error.message, 'error');
   }
 }

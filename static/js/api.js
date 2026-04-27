@@ -1,31 +1,30 @@
 // API管理模块 - RESTful Table API调用
 
-// js/api.js
-
 class API {
   constructor() {
-    // 开发环境：Django后端地址
     this.baseURL = 'http://127.0.0.1:8000/api/';
-
-    // 生产环境配置
-    // this.baseURL = window.location.origin + '/api/';
   }
 
-  // 通用请求方法
   async request(url, options = {}) {
     try {
-      // 基础头部（JSON）
+      const isFormData = options.body instanceof FormData;
       let headers = {
-        'Content-Type': 'application/json',
         ...(options.headers || {})
       };
 
-      // 如全局存在 getAuthHeaders，则自动附加认证头（例如 Token）
+      if (!isFormData) {
+        headers['Content-Type'] = 'application/json';
+      }
+
       if (typeof getAuthHeaders === 'function') {
         headers = {
           ...headers,
           ...getAuthHeaders()
         };
+      }
+
+      if (isFormData && headers['Content-Type']) {
+        delete headers['Content-Type'];
       }
 
       const response = await fetch(url, {
@@ -37,7 +36,6 @@ class API {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      // DELETE请求返回204无内容
       if (response.status === 204) {
         return { success: true };
       }
@@ -49,18 +47,20 @@ class API {
     }
   }
 
-  // Django REST Framework的列表接口格式
   async getTableData(tableName, params = {}) {
     const queryParams = new URLSearchParams({
       page: params.page || 1,
       page_size: params.limit || 100,
       ...(params.search && { search: params.search }),
-      ...(params.sort && { ordering: params.sort })
+      ...(params.sort && { ordering: params.sort }),
+      ...(params.city && { city: params.city }),
+      ...(params.recommendation_type && { recommendation_type: params.recommendation_type }),
+      ...(params.is_featured !== undefined && { is_featured: params.is_featured }),
+      ...(params.is_hot !== undefined && { is_hot: params.is_hot })
     });
 
     const response = await this.request(`${this.baseURL}${tableName}/?${queryParams}`);
 
-    // 转换Django分页格式到前端格式
     return {
       data: response.results || response,
       total: response.count || response.length,
@@ -69,48 +69,42 @@ class API {
     };
   }
 
-  // 获取单条记录
   async getRecord(tableName, recordId) {
     return await this.request(`${this.baseURL}${tableName}/${recordId}/`);
   }
 
-  // 创建记录
   async createRecord(tableName, data) {
-    // 移除前端生成的id，让后端自动生成
     const { id, ...submitData } = data;
+    const isFormData = submitData instanceof FormData;
 
     return await this.request(`${this.baseURL}${tableName}/`, {
       method: 'POST',
-      body: JSON.stringify(submitData)
+      body: isFormData ? submitData : JSON.stringify(submitData)
     });
   }
 
-  // 更新记录（完整更新）
   async updateRecord(tableName, recordId, data) {
+    const isFormData = data instanceof FormData;
     return await this.request(`${this.baseURL}${tableName}/${recordId}/`, {
       method: 'PUT',
-      body: JSON.stringify(data)
+      body: isFormData ? data : JSON.stringify(data)
     });
   }
 
-  // 部分更新记录
   async patchRecord(tableName, recordId, data) {
+    const isFormData = data instanceof FormData;
     return await this.request(`${this.baseURL}${tableName}/${recordId}/`, {
       method: 'PATCH',
-      body: JSON.stringify(data)
+      body: isFormData ? data : JSON.stringify(data)
     });
   }
 
-  // 删除记录
   async deleteRecord(tableName, recordId) {
     return await this.request(`${this.baseURL}${tableName}/${recordId}/`, {
       method: 'DELETE'
     });
   }
 
-  // === 具体业务API方法 ===
-
-  // 政策法规相关
   async getPolicies(params = {}) {
     return await this.getTableData('policies', params);
   }
@@ -131,7 +125,6 @@ class API {
     return await this.deleteRecord('policies', id);
   }
 
-  // 新闻资讯相关
   async getNews(params = {}) {
     return await this.getTableData('news', params);
   }
@@ -152,14 +145,53 @@ class API {
     return await this.deleteRecord('news', id);
   }
 
-  // 增加浏览次数（使用Django的自定义action）
-  async incrementNewsViews(id, currentViews) {
+  async incrementNewsViews(id) {
     return await this.request(`${this.baseURL}news/${id}/increment_views/`, {
       method: 'POST'
     });
   }
 
-  // 安全隐患相关
+  async getDestinations(params = {}) {
+    return await this.getTableData('destinations', params);
+  }
+
+  async getDestination(id) {
+    return await this.getRecord('destinations', id);
+  }
+
+  async createDestination(data) {
+    return await this.createRecord('destinations', data);
+  }
+
+  async updateDestination(id, data) {
+    return await this.updateRecord('destinations', id, data);
+  }
+
+  async deleteDestination(id) {
+    return await this.deleteRecord('destinations', id);
+  }
+
+  async incrementDestinationViews(id) {
+    return await this.request(`${this.baseURL}destinations/${id}/increment_views/`, {
+      method: 'POST'
+    });
+  }
+
+  async getDestinationCities(params = {}) {
+    const query = new URLSearchParams({
+      ...(params.recommendation_type && { recommendation_type: params.recommendation_type })
+    });
+    return await this.request(`${this.baseURL}destinations/cities/?${query}`);
+  }
+
+  async getHomepageDestinationModules(params = {}) {
+    const query = new URLSearchParams({
+      ...(params.nearby_city && { nearby_city: params.nearby_city }),
+      ...(params.managed_city && { managed_city: params.managed_city })
+    });
+    return await this.request(`${this.baseURL}destinations/homepage_modules/?${query}`);
+  }
+
   async getSafetyAlerts(params = {}) {
     return await this.getTableData('safety-alerts', params);
   }
@@ -180,7 +212,6 @@ class API {
     return await this.deleteRecord('safety-alerts', id);
   }
 
-  // 留言反馈相关
   async getMessages(params = {}) {
     return await this.getTableData('messages', params);
   }
@@ -208,21 +239,18 @@ class API {
     return await this.patchRecord('messages', id, data);
   }
 
-  // 点赞留言
   async likeMessage(id) {
     return await this.request(`${this.baseURL}messages/${id}/like/`, {
       method: 'POST'
     });
   }
 
-  // 取消点赞
   async unlikeMessage(id) {
     return await this.request(`${this.baseURL}messages/${id}/unlike/`, {
       method: 'POST'
     });
   }
 
-  // 添加评论
   async addComment(messageId, content) {
     return await this.request(`${this.baseURL}messages/${messageId}/add_comment/`, {
       method: 'POST',
@@ -230,17 +258,14 @@ class API {
     });
   }
 
-  // 获取留言的评论
   async getMessageComments(messageId) {
     return await this.request(`${this.baseURL}messages/${messageId}/comments/`);
   }
 
-  // 删除评论
   async deleteComment(commentId) {
     return await this.deleteRecord('message-comments', commentId);
   }
 
-  // 统计数据相关
   async getStatistics(params = {}) {
     return await this.getTableData('statistics', params);
   }
@@ -261,7 +286,6 @@ class API {
     return await this.deleteRecord('statistics', id);
   }
 
-  // 用户管理相关
   async getUsers(params = {}) {
     return await this.getTableData('user', params);
   }
@@ -278,7 +302,6 @@ class API {
     return await this.deleteRecord('user', id);
   }
 
-  // 重置用户密码
   async resetUserPassword(id, newPassword) {
     return await this.request(`${this.baseURL}user/${id}/reset_password/`, {
       method: 'POST',
@@ -286,7 +309,6 @@ class API {
     });
   }
 
-  // 获取用户的留言
   async getUserMessages(userId, params = {}) {
     const queryParams = new URLSearchParams({
       user_id: userId,
@@ -297,7 +319,6 @@ class API {
     return await this.getTableData('messages', { ...params, search: queryParams.get('user_id') });
   }
 
-  // 从URL提取政策内容
   async fetchPolicyFromUrl(url) {
     return await this.request(`${this.baseURL}policies/fetch_from_url/`, {
       method: 'POST',
@@ -305,7 +326,6 @@ class API {
     });
   }
 
-  // 从URL提取新闻内容
   async fetchNewsFromUrl(url) {
     return await this.request(`${this.baseURL}news/fetch_from_url/`, {
       method: 'POST',
@@ -314,7 +334,6 @@ class API {
   }
 }
 
-// 创建全局API实例
 const api = new API();
 
 

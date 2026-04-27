@@ -605,6 +605,162 @@
       opacity: 1;
     }
 
+    .homepage-destination-section {
+      background: #fff;
+      padding: 24px 0 100px;
+    }
+
+    .homepage-destination-shell {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 32px;
+    }
+
+    .homepage-destination-module {
+      margin-top: 56px;
+    }
+
+    .homepage-destination-heading {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 24px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+
+    .homepage-destination-heading h2 {
+      font-size: 32px;
+      color: #111827;
+      margin: 0 0 10px;
+    }
+
+    .homepage-destination-heading p {
+      margin: 0;
+      color: #6b7280;
+      font-size: 15px;
+      line-height: 1.8;
+      max-width: 760px;
+    }
+
+    .destination-explore-panel {
+      background: #fff;
+      border-radius: 28px;
+      box-shadow: 0 18px 48px rgba(17, 24, 39, 0.08);
+      padding: 28px;
+      border: 1px solid #edf0f3;
+    }
+
+    .destination-explore-toolbar {
+      display: flex;
+      gap: 20px;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+
+    .destination-switch-group {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .destination-switch-btn {
+      border: 1px solid #e5e7eb;
+      background: #fff;
+      border-radius: 999px;
+      padding: 10px 18px;
+      font-size: 14px;
+      color: #374151;
+      cursor: pointer;
+      transition: all .25s ease;
+    }
+
+    .destination-switch-btn:hover,
+    .destination-switch-btn.active {
+      background: #111827;
+      color: #fff;
+      border-color: #111827;
+    }
+
+    .destination-more-btn {
+      white-space: nowrap;
+    }
+
+    .destination-explore-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 20px;
+    }
+
+    .destination-explore-card {
+      display: block;
+      text-decoration: none;
+      color: inherit;
+      border-radius: 22px;
+      overflow: hidden;
+      background: #fff;
+      box-shadow: 0 12px 34px rgba(17, 24, 39, 0.07);
+      transition: transform .3s ease, box-shadow .3s ease;
+    }
+
+    .destination-explore-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 20px 38px rgba(17, 24, 39, 0.11);
+    }
+
+    .destination-explore-image-wrap {
+      height: 220px;
+      overflow: hidden;
+      background: #f3f4f6;
+    }
+
+    .destination-explore-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .destination-explore-body {
+      padding: 20px;
+    }
+
+    .destination-explore-title-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: flex-start;
+      margin-bottom: 10px;
+    }
+
+    .destination-explore-title-row h3 {
+      font-size: 20px;
+      color: #111827;
+      margin: 0;
+    }
+
+    .destination-explore-location,
+    .destination-explore-desc,
+    .destination-explore-meta {
+      color: #6b7280;
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .destination-explore-desc {
+      margin: 12px 0 14px;
+    }
+
+    .destination-explore-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: #111827;
+      font-weight: 600;
+    }
+
     .video-modal {
       position: relative;
       width: 90%;
@@ -724,6 +880,7 @@
     <div class="navbar-container">
       <a href="{% url 'home' %}" class="navbar-brand"><i class="fas fa-plane-departure"></i> 低空旅游信息管理系统</a>
       <ul class="navbar-menu">
+        <li><a href="{% url 'destinations' %}">旅游目的地</a></li>
         <li><a href="{% url 'policies' %}">政策法规</a></li>
         <li><a href="{% url 'statistics' %}">发展现状</a></li>
         <li><a href="{% url 'safety' %}">安全预警</a></li>
@@ -742,6 +899,7 @@
   <!-- 移动端菜单覆盖层 -->
   <div class="mobile-menu-overlay" id="mobile-menu-overlay">
     <div class="mobile-menu">
+      <a href="{% url 'destinations' %}" class="mobile-menu-item">旅游目的地</a>
       <a href="{% url 'policies' %}" class="mobile-menu-item">政策法规</a>
       <a href="{% url 'statistics' %}" class="mobile-menu-item">发展现状</a>
       <a href="{% url 'safety' %}" class="mobile-menu-item">安全预警</a>
@@ -958,6 +1116,36 @@
     </div>
 </div>
 
+<section class="homepage-destination-section">
+  <div class="homepage-destination-shell">
+    <div class="homepage-destination-module">
+      <div class="homepage-destination-heading">
+        <div>
+          <div class="recommend-tag">AROUND YOU</div>
+          <h2>基于网络 IP 的周边低空旅行</h2>
+          <p>结合城市维度展示更贴近当前浏览者的低空旅行灵感，支持在不同城市之间快速切换项目。</p>
+        </div>
+      </div>
+      <div id="nearby-destination-content">
+        <div class="loading"><div class="spinner"></div><div>正在加载周边低空旅行...</div></div>
+      </div>
+    </div>
+
+    <div class="homepage-destination-module">
+      <div class="homepage-destination-heading">
+        <div>
+          <div class="recommend-tag">EDITOR'S PICK</div>
+          <h2>其他低空旅行目的地推荐</h2>
+          <p>由管理员统一维护推荐内容，集中呈现更值得关注的空中观光、热气球与飞行体验目的地。</p>
+        </div>
+      </div>
+      <div id="managed-destination-content">
+        <div class="loading"><div class="spinner"></div><div>正在加载推荐目的地...</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
       
     <!-- 低空旅游介绍 -->
     <section class="intro-section" id="intro">
@@ -1053,6 +1241,7 @@
   <!-- 底部 -->
   <footer class="footer">
     <div class="footer-links">
+      <a href="{% url 'destinations' %}">旅游目的地</a>
       <a href="{% url 'policies' %}">政策法规</a>
       <a href="{% url 'statistics' %}">发展现状</a>
       <a href="{% url 'safety' %}">安全预警</a>
@@ -1282,5 +1471,6 @@
 <script src="{% static 'js/auth-modal.js' %}"></script>
 <script src="{% static 'js/ai-chat.js' %}?v=20260310?v=20260310"></script>
 <script src="{% static 'js/home.js' %}"></script>
+<script src="{% static 'js/home-new.js' %}?v=20260427"></script>
 </body>
 </html>

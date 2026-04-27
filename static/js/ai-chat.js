@@ -83,13 +83,13 @@ class LowSkyAIChat {
                     <div class="ai-tool-menu-title">数据库查询</div>
                     <div class="ai-tool-menu-desc">查询系统数据库信息</div>
                   </div>
-                </div>
-                <div class="ai-tool-menu-item" data-mode="web_only">
-                  <i class="fas fa-globe"></i>
-                  <div>
-                    <div class="ai-tool-menu-title">联网搜索</div>
-                    <div class="ai-tool-menu-desc">搜索互联网最新信息</div>
-                  </div>
+<!--                </div>-->
+<!--                <div class="ai-tool-menu-item" data-mode="web_only">-->
+<!--                  <i class="fas fa-globe"></i>-->
+<!--                  <div>-->
+<!--                    <div class="ai-tool-menu-title">联网搜索</div>-->
+<!--                    <div class="ai-tool-menu-desc">搜索互联网最新信息</div>-->
+<!--                  </div>-->
                 </div>
               </div>
             </div>

@@ -1,0 +1,198 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>低空旅游目的地</title>
+  <link rel="icon" href="{% static 'images/favicon.ico' %}" type="image/x-icon">
+  <link rel="icon" type="image/png" sizes="16x16" href="{% static 'images/favicon-16x16.png' %}">
+  <link rel="icon" type="image/png" sizes="32x32" href="{% static 'images/favicon-32x32.png' %}">
+  <link rel="apple-touch-icon" sizes="180x180" href="{% static 'images/apple-touch-icon.png' %}">
+  <link rel="icon" type="image/png" sizes="192x192" href="{% static 'images/android-chrome-192x192.png' %}">
+  <link rel="icon" type="image/png" sizes="512x512" href="{% static 'images/android-chrome-512x512.png' %}">
+  <link rel="manifest" href="{% static 'images/site.webmanifest' %}">
+  <link rel="stylesheet" href="{% static 'css/style.css' %}?v=20260427">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+  <style>
+    .destination-page {
+      background: #faf7f2;
+      min-height: 100vh;
+      padding: 48px 0 80px;
+    }
+    .destination-shell {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+    .destination-hero {
+      background: linear-gradient(135deg, #ffffff 0%, #fff5f7 100%);
+      border-radius: 32px;
+      padding: 40px;
+      box-shadow: 0 18px 48px rgba(15, 23, 42, 0.08);
+      margin-bottom: 32px;
+    }
+    .destination-hero h1 {
+      font-size: 42px;
+      margin-bottom: 16px;
+      color: #1f2937;
+    }
+    .destination-hero p {
+      font-size: 16px;
+      color: #6b7280;
+      max-width: 760px;
+      line-height: 1.8;
+    }
+    .destination-toolbar {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 28px;
+    }
+    .chip-group {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .city-chip {
+      padding: 10px 18px;
+      border-radius: 999px;
+      border: 1px solid #e5e7eb;
+      background: #fff;
+      cursor: pointer;
+      transition: all .25s ease;
+      color: #374151;
+      font-size: 14px;
+    }
+    .city-chip.active,
+    .city-chip:hover {
+      background: #111827;
+      color: #fff;
+      border-color: #111827;
+    }
+    .destination-grid-page {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+      gap: 24px;
+    }
+    .destination-page-card {
+      background: #fff;
+      border-radius: 24px;
+      overflow: hidden;
+      text-decoration: none;
+      color: inherit;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+      transition: transform .3s ease, box-shadow .3s ease;
+    }
+    .destination-page-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 18px 42px rgba(15, 23, 42, 0.12);
+    }
+    .destination-page-card img {
+      width: 100%;
+      height: 220px;
+      object-fit: cover;
+      display: block;
+    }
+    .destination-page-card-body {
+      padding: 20px;
+    }
+    .destination-page-card-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: flex-start;
+      margin-bottom: 8px;
+    }
+    .destination-page-card h3 {
+      font-size: 20px;
+      margin: 0;
+      color: #111827;
+    }
+    .destination-page-location,
+    .destination-page-desc,
+    .destination-page-meta {
+      color: #6b7280;
+      font-size: 14px;
+      line-height: 1.7;
+    }
+    .destination-page-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 16px;
+      color: #111827;
+      font-weight: 600;
+    }
+    .destination-page-empty {
+      text-align: center;
+      background: #fff;
+      border-radius: 24px;
+      padding: 80px 24px;
+      color: #6b7280;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="navbar-container">
+      <a href="{% url 'home' %}" class="navbar-brand"><i class="fas fa-plane-departure"></i> 低空旅游信息管理系统</a>
+      <ul class="navbar-menu">
+        <li><a href="{% url 'policies' %}">政策法规</a></li>
+        <li><a href="{% url 'statistics' %}">发展现状</a></li>
+        <li><a href="{% url 'safety' %}">安全预警</a></li>
+        <li><a href="{% url 'news' %}">新闻资讯</a></li>
+        <li><a href="{% url 'community' %}">互动交流</a></li>
+      </ul>
+      <button class="navbar-toggle" id="navbar-toggle">
+        <i class="fas fa-bars"></i>
+      </button>
+      <div id="user-menu"></div>
+    </div>
+  </nav>
+
+  <main class="destination-page">
+    <div class="destination-shell">
+      <section class="destination-hero">
+        <div>
+          <div class="recommend-tag">DESTINATIONS</div>
+          <h1>低空旅游目的地</h1>
+          <p>按城市探索低空观光、热气球、滑翔伞与空中巡航项目，快速发现更契合出行季节、预算与风景偏好的旅行目的地。</p>
+        </div>
+        <div class="destination-toolbar">
+          <div class="chip-group" id="destination-city-filter"></div>
+          <div class="chip-group">
+            <button class="city-chip active" data-type="all">全部目的地</button>
+            <button class="city-chip" data-type="nearby">周边推荐</button>
+            <button class="city-chip" data-type="managed">管理员推荐</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="destination-page-list" class="destination-grid-page">
+        <div class="destination-page-empty">正在加载目的地内容...</div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-links">
+      <a href="{% url 'policies' %}">政策法规</a>
+      <a href="{% url 'statistics' %}">发展现状</a>
+      <a href="{% url 'safety' %}">安全预警</a>
+      <a href="{% url 'news' %}">新闻资讯</a>
+      <a href="{% url 'community' %}">互动交流</a>
+    </div>
+    <p>&copy; 2024 低空旅游信息管理系统. All rights reserved.</p>
+  </footer>
+
+  <script src="{% static 'js/utils.js' %}"></script>
+  <script src="{% static 'js/api.js' %}"></script>
+  <script src="{% static 'js/auth.js' %}"></script>
+  <script src="{% static 'js/main.js' %}"></script>
+  <script src="{% static 'js/destinations.js' %}?v=20260427"></script>
+</body>
+</html>
