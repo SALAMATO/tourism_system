@@ -57,6 +57,13 @@ class DestinationSerializer(serializers.ModelSerializer):
     gallery_image_3_url = serializers.SerializerMethodField(read_only=True)
     gallery_image_4_url = serializers.SerializerMethodField(read_only=True)
     features_display = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    features_rich_text = serializers.SerializerMethodField(read_only=True)
+    def get_features_rich_text(self, obj):
+        features = obj.features or []
+        if not features:
+            return ''
+        return '\n'.join(features) if len(features) > 1 else features[0]
+    
 
     class Meta:
         model = Destination
@@ -103,7 +110,7 @@ class DestinationSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        data['features_display'] = '\n'.join(instance.features or []) if len(instance.features or []) > 1 else ((instance.features or [''])[0] if (instance.features or []) else '')
+        data['features_display'] = self.get_features_rich_text(instance)
         return data
 
     def create(self, validated_data):

@@ -38,7 +38,9 @@ function renderHomepageDestinationModule(type, moduleData, container) {
     <button class="destination-switch-btn ${city === moduleData.current_city ? 'active' : ''}" data-module-type="${type}" data-city="${escapeHtml(city)}">${escapeHtml(city)}</button>
   `).join('');
 
-  const itemsHtml = (moduleData.items || []).map(item => `
+  const itemsHtml = (moduleData.items || []).map(item => {
+    const richContent = item.features_rich_text || item.features_display || item.description || '';
+    return `
     <a href="/destination-detail.html?id=${item.id}" class="destination-explore-card">
       <div class="destination-explore-image-wrap">
         <img src="${escapeHtml(item.cover_image_url || item.cover_image || '')}" alt="${escapeHtml(item.name)}" class="destination-explore-image">
@@ -49,14 +51,14 @@ function renderHomepageDestinationModule(type, moduleData, container) {
           <span><i class="fas fa-star" style="color:#ef4444;"></i> ${Number(item.rating || 0).toFixed(1)}</span>
         </div>
         <div class="destination-explore-location"><i class="fas fa-location-dot"></i> ${escapeHtml(item.city)} · ${escapeHtml(item.location || '')}</div>
-        <p class="destination-explore-desc">${truncateText(escapeHtml(item.description || ''), 88)}</p>
+        <div class="destination-explore-desc rich-text-content rich-text-clamp">${richContent}</div>
         <div class="destination-explore-meta">
           <span>${escapeHtml(item.duration || '')}</span>
           <strong>${escapeHtml(item.price_range || '')}</strong>
         </div>
       </div>
     </a>
-  `).join('');
+  `}).join('');
 
   container.innerHTML = `
     <div class="destination-explore-panel">
