@@ -200,24 +200,25 @@
           <h1>低空旅游目的地</h1>
           <p>按城市探索低空观光、热气球、滑翔伞与空中巡航项目，快速发现更契合出行季节、预算与风景偏好的旅行目的地。</p>
           
-          <!-- 一级按钮：范围切换 -->
-          <div class="destination-level-switch">
-            <button class="level-btn active" data-domestic="true">国内低空目的地</button>
-            <button class="level-btn" data-domestic="false">海外飞行目的地</button>
+          <!-- 一级和三级按钮：范围切换和推荐方式 -->
+          <div style="display: flex; gap: 16px; flex-wrap: wrap; align-items: center; justify-content: space-between; margin-bottom: 28px;">
+            <div class="destination-level-switch" style="margin-bottom: 0;">
+              <button class="level-btn active" data-domestic="true">国内低空目的地</button>
+              <button class="level-btn" data-domestic="false">海外飞行目的地</button>
+            </div>
+            <div class="chip-group">
+              <button class="city-chip active" data-type="all">智能推荐</button>
+              <button class="city-chip" data-type="latest">最新发布</button>
+              <button class="city-chip" data-type="nearby">周边推荐</button>
+              <button class="city-chip" data-type="managed">热门推荐</button>
+              <button class="city-chip" data-type="selected">出行推荐</button>
+            </div>
           </div>
         </div>
         
         <div class="destination-toolbar">
           <!-- 二级按钮：城市筛选 -->
           <div class="chip-group" id="destination-city-filter"></div>
-          <!-- 三级按钮：推荐方式筛选 -->
-          <div class="chip-group">
-            <button class="city-chip active" data-type="all">智能推荐</button>
-            <button class="city-chip" data-type="latest">最新发布</button>
-            <button class="city-chip" data-type="nearby">周边推荐</button>
-            <button class="city-chip" data-type="managed">热门推荐</button>
-            <button class="city-chip" data-type="selected">出行推荐</button>
-          </div>
         </div>
       </section>
 
