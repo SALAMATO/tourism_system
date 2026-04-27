@@ -911,6 +911,8 @@ function buildDestinationFormData() {
   formData.append('name', document.getElementById('destination-name').value.trim());
   formData.append('city', document.getElementById('destination-city').value.trim());
   formData.append('location', document.getElementById('destination-location').value.trim());
+  formData.append('country', document.getElementById('destination-country').value.trim() || '中国');
+  formData.append('state', document.getElementById('destination-state').value.trim());
   formData.append('category', document.getElementById('destination-category').value.trim());
   formData.append('price_range', document.getElementById('destination-price-range').value.trim());
   formData.append('duration', document.getElementById('destination-duration').value.trim());
@@ -1024,6 +1026,8 @@ async function editDestination(id) {
     document.getElementById('destination-name').value = destination.name || '';
     document.getElementById('destination-city').value = destination.city || '';
     document.getElementById('destination-location').value = destination.location || '';
+    document.getElementById('destination-country').value = destination.country || '中国';
+    document.getElementById('destination-state').value = destination.state || '';
     document.getElementById('destination-category').value = destination.category || '';
     document.getElementById('destination-price-range').value = destination.price_range || '';
     document.getElementById('destination-duration').value = destination.duration || '';
@@ -1123,7 +1127,7 @@ function renderDestinationsForAdmin(container, destinations) {
         <div style="flex:1;">
           <div style="font-weight:500;">${escapeHtml(item.name)}</div>
           <div class="list-item-meta">
-            <span><i class="fas fa-location-dot"></i> ${escapeHtml(item.city)} / ${escapeHtml(item.location || '')}</span>
+            <span><i class="fas fa-location-dot"></i> ${escapeHtml(item.city)} · ${escapeHtml(item.location || '')}</span>
             <span><i class="fas fa-tag"></i> ${escapeHtml(item.category || '未分类')}</span>
             <span><i class="fas fa-star"></i> ${item.rating || 0}</span>
             <span><i class="fas fa-eye"></i> ${item.views || 0}</span>

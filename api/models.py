@@ -30,6 +30,8 @@ class Destination(models.Model):
     name = models.CharField(max_length=200, verbose_name='目的地名称')
     city = models.CharField(max_length=100, db_index=True, verbose_name='所属城市')
     location = models.CharField(max_length=200, verbose_name='地理位置')
+    state = models.CharField(max_length=100, blank=True, null=True, verbose_name='省份/州')
+    country = models.CharField(max_length=100, blank=True, null=True, default='中国', verbose_name='国家')
     description = models.TextField(verbose_name='详细介绍')
     cover_image = models.ImageField(upload_to='media-destination/', blank=True, null=True, verbose_name='封面图片')
     gallery_image_1 = models.ImageField(upload_to='media-destination/', blank=True, null=True, verbose_name='展示图片1')

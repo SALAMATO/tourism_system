@@ -126,7 +126,7 @@ function renderDestinations(container, destinations) {
       <div class="destination-content">
         <h3 class="destination-title">${escapeHtml(dest.name)}</h3>
         <div class="destination-location">
-          <i class="fas fa-map-marker-alt"></i> ${escapeHtml(dest.location)}
+          <i class="fas fa-map-marker-alt"></i> ${escapeHtml(dest.city)} · ${escapeHtml(dest.location)}
         </div>
         <p class="destination-desc">${truncateText(escapeHtml(dest.description), 80)}</p>
         <div class="destination-meta">
