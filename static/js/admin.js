@@ -920,6 +920,10 @@ function buildDestinationFormData() {
   formData.append('rating', document.getElementById('destination-rating').value || '4.9');
   // recommendation_type现在是多选，从checkbox获取
   const checkedTypes = Array.from(document.querySelectorAll('input[name="recommendation_type"]:checked')).map(cb => cb.value);
+  // 确保始终包含default
+  if (!checkedTypes.includes('default')) {
+    checkedTypes.push('default');
+  }
   formData.append('recommendation_type', JSON.stringify(checkedTypes));
   formData.append('sort_order', document.getElementById('destination-sort-order').value || '0');
   formData.append('is_featured', document.getElementById('destination-is-featured').value);
@@ -993,10 +997,15 @@ async function submitDestination() {
 function resetDestinationFormState() {
   const form = document.getElementById('destination-form');
   if (form) form.reset();
-  // 重置推荐类型复选框
+  // 重置推荐类型复选框 - 默认推荐始终选中但隐藏
   document.querySelectorAll('input[name="recommendation_type"]').forEach(cb => {
     cb.checked = cb.value === 'default'; // 默认只选中default
   });
+  // 确保默认推荐的checkbox状态正确（虽然它被隐藏）
+  const defaultCheckbox = document.querySelector('input[name="recommendation_type"][value="default"]');
+  if (defaultCheckbox) {
+    defaultCheckbox.checked = true;
+  }
   currentDestinationEditingId = null;
   currentDestinationEditingData = null;
   const titleEl = document.querySelector('#destination-module .card-title');
@@ -1039,11 +1048,16 @@ async function editDestination(id) {
     document.getElementById('destination-duration').value = destination.duration || '';
     document.getElementById('destination-best-season').value = destination.best_season || '';
     document.getElementById('destination-rating').value = destination.rating || 4.9;
-    // 处理多选推荐类型
+    // 处理多选推荐类型 - 确保default始终被选中
     const recTypes = Array.isArray(destination.recommendation_type) ? destination.recommendation_type : [destination.recommendation_type];
     document.querySelectorAll('input[name="recommendation_type"]').forEach(cb => {
       cb.checked = recTypes.includes(cb.value);
     });
+    // 确保默认推荐始终选中（即使数据中没有）
+    const defaultCheckbox = document.querySelector('input[name="recommendation_type"][value="default"]');
+    if (defaultCheckbox && !defaultCheckbox.checked) {
+      defaultCheckbox.checked = true;
+    }
     document.getElementById('destination-sort-order').value = destination.sort_order || 0;
     document.getElementById('destination-is-featured').value = String(Boolean(destination.is_featured));
     document.getElementById('destination-is-hot').value = String(Boolean(destination.is_hot));
