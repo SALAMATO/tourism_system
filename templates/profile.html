@@ -60,6 +60,7 @@
     <div class="navbar-container">
       <a href="{% url 'home' %}" class="navbar-brand"><i class="fas fa-plane-departure"></i> 低空旅游信息管理系统</a>
       <ul class="navbar-menu">
+        <li><a href="{% url 'destinations' %}">旅游目的地</a></li>
         <li><a href="{% url 'policies' %}">政策法规</a></li>
         <li><a href="{% url 'statistics' %}">发展现状</a></li>
         <li><a href="{% url 'safety' %}">安全预警</a></li>
@@ -78,6 +79,7 @@
   <!-- 移动端菜单覆盖层 -->
   <div class="mobile-menu-overlay" id="mobile-menu-overlay">
     <div class="mobile-menu">
+      <a href="{% url 'destinations' %}" class="mobile-menu-item">旅游目的地</a>
       <a href="{% url 'policies' %}" class="mobile-menu-item">政策法规</a>
       <a href="{% url 'statistics' %}" class="mobile-menu-item">发展现状</a>
       <a href="{% url 'safety' %}" class="mobile-menu-item">安全预警</a>
@@ -158,6 +160,7 @@
 
   <footer class="footer">
     <div class="footer-links">
+      <a href="{% url 'destinations' %}">旅游目的地</a>
       <a href="{% url 'policies' %}">政策法规</a>
       <a href="{% url 'statistics' %}">发展现状</a>
       <a href="{% url 'safety' %}">安全预警</a>
