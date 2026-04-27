@@ -13,22 +13,24 @@ document.addEventListener('DOMContentLoaded', async () => {
   // 更新城市列表
   function updateCities() {
     const filteredCache = cache.filter(item => item.is_domestic === (currentDomestic === 'true'));
-    const cities = [...new Set(filteredCache.map(item => item.city).filter(Boolean))];
-    renderCities(cities);
+    // 国内显示城市，海外显示国家
+    const locationField = currentDomestic === 'true' ? 'city' : 'country';
+    const locations = [...new Set(filteredCache.map(item => item[locationField]).filter(Boolean))];
+    renderCities(locations);
   }
 
-  function renderCities(cities) {
-    if (!cities.length) {
-      cityFilter.innerHTML = '<span class="city-chip active">暂无城市</span>';
+  function renderCities(locations) {
+    if (!locations.length) {
+      cityFilter.innerHTML = '<span class="city-chip active">暂无地区</span>';
       currentCity = '';
       return;
     }
 
-    cityFilter.innerHTML = cities.map((city, index) => `
-      <button class="city-chip ${index === 0 ? 'active' : ''}" data-city="${escapeHtml(city)}">${escapeHtml(city)}</button>
+    cityFilter.innerHTML = locations.map((location, index) => `
+      <button class="city-chip ${index === 0 ? 'active' : ''}" data-city="${escapeHtml(location)}">${escapeHtml(location)}</button>
     `).join('');
 
-    currentCity = cities[0];
+    currentCity = locations[0];
 
     cityFilter.querySelectorAll('[data-city]').forEach(button => {
       button.addEventListener('click', () => {
@@ -50,9 +52,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       // 一级过滤：国内/海外
       filtered = filtered.filter(item => item.is_domestic === (currentDomestic === 'true'));
 
-      // 二级过滤：城市
+      // 二级过滤：城市/国家
       if (currentCity) {
-        filtered = filtered.filter(item => item.city === currentCity);
+        const locationField = currentDomestic === 'true' ? 'city' : 'country';
+        filtered = filtered.filter(item => item[locationField] === currentCity);
       }
     }
     // 最新发布模式
@@ -62,9 +65,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       // 一级过滤：国内/海外
       filtered = filtered.filter(item => item.is_domestic === (currentDomestic === 'true'));
 
-      // 二级过滤：城市
+      // 二级过滤：城市/国家
       if (currentCity) {
-        filtered = filtered.filter(item => item.city === currentCity);
+        const locationField = currentDomestic === 'true' ? 'city' : 'country';
+        filtered = filtered.filter(item => item[locationField] === currentCity);
       }
       
       // 按创建时间降序排序（最新发布）
@@ -77,9 +81,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       // 一级过滤：国内/海外
       filtered = filtered.filter(item => item.is_domestic === (currentDomestic === 'true'));
 
-      // 二级过滤：城市
+      // 二级过滤：城市/国家
       if (currentCity) {
-        filtered = filtered.filter(item => item.city === currentCity);
+        const locationField = currentDomestic === 'true' ? 'city' : 'country';
+        filtered = filtered.filter(item => item[locationField] === currentCity);
       }
 
       // 三级过滤：推荐类型
@@ -103,7 +108,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             <h3>${escapeHtml(item.name)}</h3>
             <div><i class="fas fa-star" style="color:#ef4444;"></i> ${Number(item.rating || 0).toFixed(1)}</div>
           </div>
-          <div class="destination-page-location"><i class="fas fa-location-dot"></i> ${escapeHtml(item.city)} · ${escapeHtml(item.location || '')}</div>
+          <div class="destination-page-location"><i class="fas fa-location-dot"></i> ${escapeHtml(currentDomestic === 'true' ? item.city : item.country)} · ${escapeHtml(item.location || '')}</div>
           <p class="destination-page-desc">${truncateText(stripHtmlTags(item.description || ''), 96)}</p>
           <div class="destination-page-meta">
             <span>${escapeHtml(item.duration || '')}</span>
