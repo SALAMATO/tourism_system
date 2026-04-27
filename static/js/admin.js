@@ -1128,6 +1128,7 @@ function renderDestinationsForAdmin(container, destinations) {
           <div style="font-weight:500;">${escapeHtml(item.name)}</div>
           <div class="list-item-meta">
             <span><i class="fas fa-location-dot"></i> ${escapeHtml(item.city)} · ${escapeHtml(item.location || '')}</span>
+            <span><i class="fas fa-globe"></i> ${item.is_domestic ? '国内' : '国际'}</span>
             <span><i class="fas fa-tag"></i> ${escapeHtml(item.category || '未分类')}</span>
             <span><i class="fas fa-star"></i> ${item.rating || 0}</span>
             <span><i class="fas fa-eye"></i> ${item.views || 0}</span>

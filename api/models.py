@@ -32,6 +32,7 @@ class Destination(models.Model):
     location = models.CharField(max_length=200, verbose_name='地理位置')
     state = models.CharField(max_length=100, blank=True, null=True, verbose_name='省份/州')
     country = models.CharField(max_length=100, blank=True, null=True, default='中国', verbose_name='国家')
+    is_domestic = models.BooleanField(default=True, verbose_name='是否国内')
     description = models.TextField(verbose_name='详细介绍')
     cover_image = models.ImageField(upload_to='media-destination/', blank=True, null=True, verbose_name='封面图片')
     gallery_image_1 = models.ImageField(upload_to='media-destination/', blank=True, null=True, verbose_name='展示图片1')
@@ -65,6 +66,31 @@ class Destination(models.Model):
 
     def __str__(self):
         return f'{self.city} - {self.name}'
+
+    def save(self, *args, **kwargs):
+        """保存时自动判断是否国内"""
+        self.is_domestic = self._check_is_domestic()
+        super().save(*args, **kwargs)
+
+    def _check_is_domestic(self):
+        """根据国家字段判断是否国内"""
+        if not self.country:
+            return True  # 默认视为国内
+        
+        # 国内标识关键词列表（不区分大小写）
+        domestic_keywords = [
+            '中国', 'china', '中华人民共和国', "people's republic of china", 
+            'prc', '国内', ' mainland', '大陆', 'cn'
+        ]
+        
+        country_lower = self.country.strip().lower()
+        
+        # 检查是否包含任何国内关键词
+        for keyword in domestic_keywords:
+            if keyword in country_lower:
+                return True
+        
+        return False
 
 
 class Policy(models.Model):
