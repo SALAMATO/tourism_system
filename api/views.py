@@ -202,7 +202,8 @@ class DestinationViewSet(PublicModelViewSet):
         is_domestic = self.request.query_params.get('is_domestic')
 
         if recommendation_type:
-            queryset = queryset.filter(recommendation_type=recommendation_type)
+            # recommendation_type现在是JSONField，使用contains查询
+            queryset = queryset.filter(recommendation_type__contains=[recommendation_type])
         if city:
             queryset = queryset.filter(city=city)
         if is_featured is not None:
@@ -264,7 +265,7 @@ class DestinationViewSet(PublicModelViewSet):
             # 获取所有国内目的地
             domestic_destinations = Destination.objects.filter(
                 is_domestic=True,
-                recommendation_type='nearby'
+                recommendation_type__contains=['nearby']
             ).order_by('sort_order', '-rating', '-views')
             
             # 计算每个目的地与用户城市的匹配度
@@ -305,7 +306,7 @@ class DestinationViewSet(PublicModelViewSet):
             # 失败时返回默认推荐
             default_destinations = Destination.objects.filter(
                 is_domestic=True,
-                recommendation_type='nearby'
+                recommendation_type__contains=['nearby']
             ).order_by('sort_order', '-rating', '-views')[:20]
             
             serializer = self.get_serializer(default_destinations, many=True)
@@ -334,11 +335,11 @@ class DestinationViewSet(PublicModelViewSet):
         managed_city = request.query_params.get('managed_city')
 
         nearby_items = list(
-            Destination.objects.filter(recommendation_type='nearby', is_featured=True)
+            Destination.objects.filter(recommendation_type__contains=['nearby'], is_featured=True)
             .order_by('sort_order', '-rating', '-views')
         )
         managed_items = list(
-            Destination.objects.filter(recommendation_type='managed', is_featured=True)
+            Destination.objects.filter(recommendation_type__contains=['managed'], is_featured=True)
             .order_by('sort_order', '-rating', '-views')
         )
 

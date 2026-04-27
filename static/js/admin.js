@@ -918,7 +918,9 @@ function buildDestinationFormData() {
   formData.append('duration', document.getElementById('destination-duration').value.trim());
   formData.append('best_season', document.getElementById('destination-best-season').value.trim());
   formData.append('rating', document.getElementById('destination-rating').value || '4.9');
-  formData.append('recommendation_type', document.getElementById('destination-recommendation-type').value);
+  // recommendation_type现在是多选，从checkbox获取
+  const checkedTypes = Array.from(document.querySelectorAll('input[name="recommendation_type"]:checked')).map(cb => cb.value);
+  formData.append('recommendation_type', JSON.stringify(checkedTypes));
   formData.append('sort_order', document.getElementById('destination-sort-order').value || '0');
   formData.append('is_featured', document.getElementById('destination-is-featured').value);
   formData.append('is_hot', document.getElementById('destination-is-hot').value);
@@ -991,6 +993,10 @@ async function submitDestination() {
 function resetDestinationFormState() {
   const form = document.getElementById('destination-form');
   if (form) form.reset();
+  // 重置推荐类型复选框
+  document.querySelectorAll('input[name="recommendation_type"]').forEach(cb => {
+    cb.checked = cb.value === 'default'; // 默认只选中default
+  });
   currentDestinationEditingId = null;
   currentDestinationEditingData = null;
   const titleEl = document.querySelector('#destination-module .card-title');
@@ -1033,7 +1039,11 @@ async function editDestination(id) {
     document.getElementById('destination-duration').value = destination.duration || '';
     document.getElementById('destination-best-season').value = destination.best_season || '';
     document.getElementById('destination-rating').value = destination.rating || 4.9;
-    document.getElementById('destination-recommendation-type').value = destination.recommendation_type || 'managed';
+    // 处理多选推荐类型
+    const recTypes = Array.isArray(destination.recommendation_type) ? destination.recommendation_type : [destination.recommendation_type];
+    document.querySelectorAll('input[name="recommendation_type"]').forEach(cb => {
+      cb.checked = recTypes.includes(cb.value);
+    });
     document.getElementById('destination-sort-order').value = destination.sort_order || 0;
     document.getElementById('destination-is-featured').value = String(Boolean(destination.is_featured));
     document.getElementById('destination-is-hot').value = String(Boolean(destination.is_hot));
@@ -1119,6 +1129,18 @@ async function loadDestinationsForAdmin() {
   }
 }
 
+function formatRecommendationTypes(types) {
+  if (!types) return '未设置';
+  const typeArray = Array.isArray(types) ? types : [types];
+  const typeMap = {
+    'default': '默认推荐',
+    'nearby': 'IP周边',
+    'managed': '管理员精选',
+    'selected': '出行推荐'
+  };
+  return typeArray.map(t => typeMap[t] || t).join(', ');
+}
+
 function renderDestinationsForAdmin(container, destinations) {
   const html = destinations.map(item => `
     <div class="list-item" style="display:flex; justify-content:space-between; align-items:center; gap:16px;">
@@ -1132,7 +1154,7 @@ function renderDestinationsForAdmin(container, destinations) {
             <span><i class="fas fa-tag"></i> ${escapeHtml(item.category || '未分类')}</span>
             <span><i class="fas fa-star"></i> ${item.rating || 0}</span>
             <span><i class="fas fa-eye"></i> ${item.views || 0}</span>
-            <span><i class="fas fa-layer-group"></i> ${item.recommendation_type === 'nearby' ? 'IP周边' : '管理员推荐'}</span>
+            <span><i class="fas fa-layer-group"></i> ${formatRecommendationTypes(item.recommendation_type)}</span>
           </div>
         </div>
       </div>

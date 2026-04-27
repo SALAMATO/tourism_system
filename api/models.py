@@ -23,6 +23,7 @@ class Destination(models.Model):
     """低空旅游目的地"""
 
     RECOMMENDATION_CHOICES = [
+        ('default', '默认推荐'),
         ('nearby', 'IP周边推荐'),
         ('managed', '管理员精选'),
         ('selected', '出行推荐'),
@@ -49,12 +50,10 @@ class Destination(models.Model):
     views = models.IntegerField(default=0, verbose_name='浏览次数')
     is_hot = models.BooleanField(default=False, verbose_name='是否热门')
     is_featured = models.BooleanField(default=False, verbose_name='首页推荐')
-    recommendation_type = models.CharField(
-        max_length=20,
-        choices=RECOMMENDATION_CHOICES,
-        default='managed',
-        verbose_name='推荐类型',
-        db_index=True
+    recommendation_type = models.JSONField(
+        default=list,
+        verbose_name='推荐类型（多选）',
+        help_text='支持多选：default(默认推荐), nearby(IP周边推荐), managed(管理员精选), selected(出行推荐)'
     )
     sort_order = models.PositiveIntegerField(default=0, verbose_name='排序值')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
@@ -70,8 +69,17 @@ class Destination(models.Model):
         return f'{self.city} - {self.name}'
 
     def save(self, *args, **kwargs):
-        """保存时自动判断是否国内"""
+        """保存时自动判断是否国内，并确保recommendation_type包含default"""
         self.is_domestic = self._check_is_domestic()
+        
+        # 确保recommendation_type是列表
+        if not isinstance(self.recommendation_type, list):
+            self.recommendation_type = [self.recommendation_type] if self.recommendation_type else []
+        
+        # 确保包含default
+        if 'default' not in self.recommendation_type:
+            self.recommendation_type.append('default')
+        
         super().save(*args, **kwargs)
 
     def _check_is_domestic(self):

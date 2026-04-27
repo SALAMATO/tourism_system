@@ -52,14 +52,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 三级过滤：推荐类型
     if (currentType !== 'all') {
-      if (currentType === 'nearby') {
-        // 基于IP的周边推荐需要特殊处理
-        filtered = filtered.filter(item => item.recommendation_type === 'nearby');
-      } else if (currentType === 'managed') {
-        filtered = filtered.filter(item => item.recommendation_type === 'managed');
-      } else if (currentType === 'selected') {
-        filtered = filtered.filter(item => item.recommendation_type === 'selected');
-      }
+      filtered = filtered.filter(item => {
+        // recommendation_type现在是数组
+        const types = item.recommendation_type || [];
+        return Array.isArray(types) && types.includes(currentType);
+      });
     }
 
     if (!filtered.length) {
@@ -121,8 +118,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             const ipDestinations = nearbyResponse.destinations;
             const ipIds = new Set(ipDestinations.map(d => d.id));
             
-            // 移除原有的nearby类型，添加IP推荐的
-            cache = cache.filter(item => !(item.recommendation_type === 'nearby' && ipIds.has(item.id)));
+            // 移除原有的包含nearby的目的地，添加IP推荐的
+            cache = cache.filter(item => {
+              const types = item.recommendation_type || [];
+              return !(Array.isArray(types) && types.includes('nearby') && ipIds.has(item.id));
+            });
             cache = cache.concat(ipDestinations);
             
             console.log(`周边推荐：基于IP ${nearbyResponse.ip}，定位到 ${nearbyResponse.user_province} ${nearbyResponse.user_city}`);
@@ -151,8 +151,11 @@ document.addEventListener('DOMContentLoaded', async () => {
           const ipDestinations = nearbyResponse.destinations;
           const ipIds = new Set(ipDestinations.map(d => d.id));
           
-          // 移除原有的nearby类型，添加IP推荐的
-          cache = cache.filter(item => !(item.recommendation_type === 'nearby' && ipIds.has(item.id)));
+          // 移除原有的包含nearby的目的地，添加IP推荐的
+          cache = cache.filter(item => {
+            const types = item.recommendation_type || [];
+            return !(Array.isArray(types) && types.includes('nearby') && ipIds.has(item.id));
+          });
           cache = cache.concat(ipDestinations);
           
           // 显示IP城市信息
