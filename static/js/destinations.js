@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   let currentCity = '';
   let currentType = 'all';
   let cache = [];
+  let smartRecommendCache = []; // 智能推荐缓存
 
   // 更新城市列表
   function updateCities() {
@@ -40,20 +41,49 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function renderList() {
-    let filtered = [...cache];
+    let filtered = [];
 
-    // 一级过滤：国内/海外
-    filtered = filtered.filter(item => item.is_domestic === (currentDomestic === 'true'));
+    // 智能推荐模式
+    if (currentType === 'all') {
+      filtered = [...smartRecommendCache];
+      
+      // 一级过滤：国内/海外
+      filtered = filtered.filter(item => item.is_domestic === (currentDomestic === 'true'));
 
-    // 二级过滤：城市
-    if (currentCity) {
-      filtered = filtered.filter(item => item.city === currentCity);
+      // 二级过滤：城市
+      if (currentCity) {
+        filtered = filtered.filter(item => item.city === currentCity);
+      }
     }
+    // 最新发布模式
+    else if (currentType === 'latest') {
+      filtered = [...cache];
+      
+      // 一级过滤：国内/海外
+      filtered = filtered.filter(item => item.is_domestic === (currentDomestic === 'true'));
 
-    // 三级过滤：推荐类型
-    if (currentType !== 'all') {
+      // 二级过滤：城市
+      if (currentCity) {
+        filtered = filtered.filter(item => item.city === currentCity);
+      }
+      
+      // 按创建时间降序排序（最新发布）
+      filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    }
+    // 其他推荐类型模式
+    else {
+      filtered = [...cache];
+
+      // 一级过滤：国内/海外
+      filtered = filtered.filter(item => item.is_domestic === (currentDomestic === 'true'));
+
+      // 二级过滤：城市
+      if (currentCity) {
+        filtered = filtered.filter(item => item.city === currentCity);
+      }
+
+      // 三级过滤：推荐类型
       filtered = filtered.filter(item => {
-        // recommendation_type现在是数组
         const types = item.recommendation_type || [];
         return Array.isArray(types) && types.includes(currentType);
       });
@@ -84,9 +114,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     `).join('');
   }
 
+  // 加载智能推荐数据
+  async function loadSmartRecommend() {
+    try {
+      const params = {
+        is_domestic: currentDomestic
+      };
+      if (currentCity) {
+        params.city = currentCity;
+      }
+      
+      const query = new URLSearchParams(params).toString();
+      const response = await api.request(`/api/destinations/smart_recommend/?${query}`);
+      smartRecommendCache = response || [];
+    } catch (error) {
+      console.error('加载智能推荐失败:', error);
+      smartRecommendCache = [];
+    }
+  }
+
   // 一级按钮事件：范围切换
   levelButtons.forEach(button => {
-    button.addEventListener('click', () => {
+    button.addEventListener('click', async () => {
       levelButtons.forEach(item => item.classList.remove('active'));
       button.classList.add('active');
       currentDomestic = button.dataset.domestic;
@@ -96,6 +145,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       // 重置三级按钮
       typeButtons.forEach(item => item.classList.remove('active'));
       typeButtons[0].classList.add('active');
+      
+      // 重新加载智能推荐
+      listContainer.innerHTML = '<div class="destination-page-empty">正在加载智能推荐...</div>';
+      await loadSmartRecommend();
       
       updateCities();
       renderList();
@@ -109,8 +162,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       button.classList.add('active');
       currentType = button.dataset.type;
       
-      // 如果是周边推荐，需要重新加载IP定位数据
-      if (currentType === 'nearby' && currentDomestic === 'true') {
+      // 智能推荐模式
+      if (currentType === 'all') {
+        listContainer.innerHTML = '<div class="destination-page-empty">正在计算智能推荐...</div>';
+        await loadSmartRecommend();
+      }
+      // 周边推荐模式
+      else if (currentType === 'nearby' && currentDomestic === 'true') {
         try {
           listContainer.innerHTML = '<div class="destination-page-empty">正在获取周边推荐...</div>';
           const nearbyResponse = await api.request('/api/destinations/nearby_by_ip/');
@@ -138,33 +196,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   try {
-    // 先加载所有目的地
+    // 加载所有目的地到缓存
     const response = await api.getDestinations({ limit: 500, sort: 'sort_order' });
     cache = response.data || [];
     
-    // 如果是周边推荐模式，使用IP定位
-    if (currentType === 'nearby') {
-      try {
-        const nearbyResponse = await api.request('/api/destinations/nearby_by_ip/');
-        if (nearbyResponse && nearbyResponse.destinations) {
-          // 将IP定位的目的地合并到缓存中，并标记优先级
-          const ipDestinations = nearbyResponse.destinations;
-          const ipIds = new Set(ipDestinations.map(d => d.id));
-          
-          // 移除原有的包含nearby的目的地，添加IP推荐的
-          cache = cache.filter(item => {
-            const types = item.recommendation_type || [];
-            return !(Array.isArray(types) && types.includes('nearby') && ipIds.has(item.id));
-          });
-          cache = cache.concat(ipDestinations);
-          
-          // 显示IP城市信息
-          console.log(`周边推荐：基于IP ${nearbyResponse.ip}，定位到 ${nearbyResponse.user_province} ${nearbyResponse.user_city}`);
-        }
-      } catch (ipError) {
-        console.error('IP定位失败，使用默认推荐:', ipError);
-      }
-    }
+    // 加载智能推荐
+    await loadSmartRecommend();
     
     updateCities();
     renderList();

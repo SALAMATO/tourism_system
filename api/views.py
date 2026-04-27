@@ -370,6 +370,106 @@ class DestinationViewSet(PublicModelViewSet):
             }
         })
 
+    @action(detail=False, methods=['get'])
+    def smart_recommend(self, request):
+        """智能推荐：基于综合评分+时间衰减算法"""
+        import math
+        from datetime import datetime, timezone
+        
+        # 获取查询参数
+        is_domestic = request.query_params.get('is_domestic', 'true')
+        city = request.query_params.get('city')
+        recommendation_type = request.query_params.get('recommendation_type')
+        
+        # 构建查询
+        queryset = Destination.objects.all()
+        
+        # 应用过滤
+        if is_domestic is not None:
+            queryset = queryset.filter(is_domestic=is_domestic.lower() == 'true')
+        if city:
+            queryset = queryset.filter(city=city)
+        if recommendation_type:
+            queryset = queryset.filter(recommendation_type__contains=[recommendation_type])
+        
+        # 获取所有目的地
+        destinations = list(queryset)
+        
+        if not destinations:
+            return Response([])
+        
+        # 计算max_views用于标准化
+        max_views = max([d.views for d in destinations] + [0])
+        
+        def get_days_since_created(created_time):
+            """计算发布时间距今天数"""
+            now = datetime.now(timezone.utc)
+            if created_time.tzinfo is None:
+                created_time = created_time.replace(tzinfo=timezone.utc)
+            delta = now - created_time
+            return max(delta.days, 0)
+        
+        def normalize_rating(rating):
+            """rating标准化到0~1"""
+            if not rating:
+                return 0
+            return min(rating / 5, 1)
+        
+        def normalize_views(views, max_views):
+            """浏览量标准化"""
+            if not views or not max_views:
+                return 0
+            return min(views / max_views, 1)
+        
+        def normalize_hot(is_hot):
+            """热门标记"""
+            return 1 if is_hot else 0
+        
+        def calculate_base_score(item, max_views):
+            """计算基础评分"""
+            rating_score = normalize_rating(item.rating)
+            views_score = normalize_views(item.views, max_views)
+            hot_score = normalize_hot(item.is_hot)
+            
+            base_score = (
+                0.40 * rating_score +
+                0.35 * views_score +
+                0.25 * hot_score
+            )
+            return round(base_score, 4)
+        
+        def apply_time_decay(base_score, created_time, decay_lambda=0.03):
+            """应用时间衰减"""
+            days = get_days_since_created(created_time)
+            final_score = base_score * math.exp(-decay_lambda * days)
+            return round(final_score, 4)
+        
+        # 为每个目的地计算分数
+        scored_destinations = []
+        for dest in destinations:
+            base_score = calculate_base_score(dest, max_views)
+            final_score = apply_time_decay(base_score, dest.created_at, decay_lambda=0.03)
+            scored_destinations.append({
+                'destination': dest,
+                'sort_order': dest.sort_order,
+                'base_score': base_score,
+                'final_score': final_score
+            })
+        
+        # 排序：先按sort_order（升序），再按final_score（降序）
+        scored_destinations.sort(key=lambda x: (x['sort_order'], -x['final_score']))
+        
+        # 序列化结果
+        serializer_context = self.get_serializer_context()
+        result = []
+        for item in scored_destinations:
+            dest_data = DestinationSerializer(item['destination'], context=serializer_context).data
+            dest_data['recommend_score'] = item['final_score']
+            dest_data['base_score'] = item['base_score']
+            result.append(dest_data)
+        
+        return Response(result)
+
     @action(detail=True, methods=['post'])
     def increment_views(self, request, pk=None):
         """增加浏览次数"""
