@@ -246,18 +246,27 @@ class DestinationViewSet(PublicModelViewSet):
             ip = x_forwarded_for.split(',')[0].strip()
         else:
             ip = request.META.get('REMOTE_ADDR', '127.0.0.1')
-            
-        # 如果是本地IP，使用默认城市
-        if ip in ['127.0.0.1', 'localhost', '::1']:
-            ip = '114.114.114.114'  # 使用南京作为示例
-            
-        print(f'IP地址: {ip}')
-            
+        
+        print(f'原始IP地址: {ip}')
+        
+        # 如果是本地IP，不传ip参数给高德API，让它自动识别请求来源IP
+        is_local_ip = ip in ['127.0.0.1', 'localhost', '::1', '0.0.0.0']
+        
+        print(f'原始IP地址: {ip}')
+        if is_local_ip:
+            print('检测到本地IP，将使用高德API自动识别功能')
+        else:
+            print(f'使用公网IP: {ip}')
+        
         # 高德地图IP定位API
         amap_key = '8fe3ebb5ad6cfbb67e7394f20668e0c7'
         try:
-            amap_url = f'https://restapi.amap.com/v3/ip?key={amap_key}&ip={ip}'
-            print(f'请求高德地图API...')
+            if is_local_ip:
+                amap_url = f'https://restapi.amap.com/v3/ip?key={amap_key}'
+            else:
+                amap_url = f'https://restapi.amap.com/v3/ip?key={amap_key}&ip={ip}'
+            
+            print(f'请求高德地图API: {amap_url}')
             amap_resp = requests.get(amap_url, timeout=3)
             print(f'高德地图API响应状态码: {amap_resp.status_code}')
             amap_data = amap_resp.json()
