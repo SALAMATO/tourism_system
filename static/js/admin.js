@@ -11,7 +11,20 @@ let currentStatisticEditingId = null;
 let currentDestinationEditingId = null;
 let currentDestinationEditingData = null;
 
+// ✨ 缓存管理常量
+const CACHE_PREFIX = 'admin_cache_';
+const CACHE_TIMESTAMP_KEY = 'admin_cache_timestamp';
+const FORCE_REFRESH_FLAG = 'force_refresh';
+
 document.addEventListener('DOMContentLoaded', async () => {
+  // ✨ 检测是否为强制刷新（Ctrl+F5）
+  const isForceRefresh = checkForceRefresh();
+  
+  if (isForceRefresh) {
+    console.log('检测到强制刷新，清除所有缓存');
+    clearAllCache();
+  }
+  
   // 管理后台权限校验：必须登录且为管理员
   try {
     // 未登录则跳转到统一登录页
@@ -42,6 +55,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     initForms();
     initDeleteButtons();
     initEditorToggleButtons(); // 初始化编辑器懒加载按钮
+    initAutoSave(); // ✨ 初始化自动保存
+    
+    // ✨ 在初始化完成后才恢复缓存（避免阻塞）
+    if (!isForceRefresh) {
+      console.log('普通刷新，尝试恢复缓存数据');
+      // 延迟执行，确保所有事件监听器已绑定
+      setTimeout(() => {
+        restoreCache();
+      }, 100);
+    }
     
     // 不再自动初始化编辑器，采用懒加载模式
     console.log('管理后台初始化完成，编辑器采用懒加载模式');
@@ -290,6 +313,7 @@ async function submitPolicy() {
       showNotification('政策法规添加成功', 'success');
     }
     resetPolicyFormState();
+    clearFormCache('policy'); // ✨ 清除缓存
     // 重新加载列表
     loadPoliciesForAdmin();
   } catch (error) {
@@ -338,6 +362,17 @@ async function editPolicy(id) {
     // 滚动到政策法规管理区域
     document.getElementById('policy-module').scrollIntoView({ behavior: 'smooth', block: 'start' });
     
+    // ✨ 缓存所有表单数据（F5刷新后自动恢复）
+    saveToCache('policy-title', policy.title || '');
+    saveToCache('policy-level', policy.level || '');
+    saveToCache('policy-category', policy.category || '');
+    saveToCache('policy-department', policy.department || '');
+    saveToCache('policy-date', formatDate(policy.publish_date));
+    saveToCache('policy-content', policy.content || '');
+    saveToCache('policy-url', policy.file_url || '');
+    saveToCache('policy-tags', (policy.tags || []).join(','));
+    console.log('✨ 已缓存政策编辑数据');
+    
     // 自动初始化富文本编辑器
     setTimeout(async () => {
       try {
@@ -385,6 +420,7 @@ async function deleteCurrentPolicy() {
     await api.deletePolicy(currentPolicyEditingId);
     showNotification('删除成功', 'success');
     resetPolicyFormState();
+    clearFormCache('policy'); // ✨ 清除缓存
     loadPoliciesForAdmin();
   } catch (error) {
     console.error('删除当前政策失败:', error);
@@ -428,6 +464,7 @@ async function submitNews() {
       showNotification('新闻发布成功', 'success');
     }
     resetNewsFormState();
+    clearFormCache('news'); // ✨ 清除缓存
     loadNewsForAdmin();
   } catch (error) {
     console.error('发布新闻失败:', error);
@@ -473,6 +510,15 @@ async function editNews(id) {
 
     // 滚动到新闻资讯管理区域
     document.getElementById('news-module').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    
+    // ✨ 缓存所有表单数据（F5刷新后自动恢复）
+    saveToCache('news-title', news.title || '');
+    saveToCache('news-category', news.category || '');
+    saveToCache('news-author', news.author || '');
+    saveToCache('news-cover', news.cover_image || '');
+    saveToCache('news-content', news.content || '');
+    saveToCache('news-tags', (news.tags || []).join(','));
+    console.log('✨ 已缓存新闻编辑数据');
     
     // 自动初始化富文本编辑器
     setTimeout(async () => {
@@ -521,6 +567,7 @@ async function deleteCurrentNews() {
     await api.deleteNews(currentNewsEditingId);
     showNotification('删除成功', 'success');
     resetNewsFormState();
+    clearFormCache('news'); // ✨ 清除缓存
     loadNewsForAdmin();
   } catch (error) {
     console.error('删除当前新闻失败:', error);
@@ -558,6 +605,7 @@ async function submitSafety() {
       showNotification('安全隐患添加成功', 'success');
     }
     resetSafetyFormState();
+    clearFormCache('safety'); // ✨ 清除缓存
     loadSafetyAlertsForAdmin();
   } catch (error) {
     console.error('添加安全隐患失败:', error);
@@ -604,6 +652,16 @@ async function editSafetyAlert(id) {
 
     // 滚动到安全隐患管理区域
     document.getElementById('safety-module').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    
+    // ✨ 缓存所有表单数据（F5刷新后自动恢复）
+    saveToCache('safety-title', alert.title || '');
+    saveToCache('safety-risk', alert.risk_level || '中');
+    saveToCache('safety-category', alert.category || '');
+    saveToCache('safety-description', alert.description || '');
+    saveToCache('safety-prevention', alert.prevention || '');
+    saveToCache('safety-plan', alert.emergency_plan || '');
+    saveToCache('safety-status', alert.status || '待处理');
+    console.log('✨ 已缓存安全隐患编辑数据');
     
     // 自动初始化富文本编辑器（三个字段）
     setTimeout(async () => {
@@ -660,6 +718,7 @@ async function deleteCurrentSafetyAlert() {
     await api.deleteSafetyAlert(currentSafetyEditingId);
     showNotification('删除成功', 'success');
     resetSafetyFormState();
+    clearFormCache('safety'); // ✨ 清除缓存
     loadSafetyAlertsForAdmin();
   } catch (error) {
     console.error('删除当前安全隐患失败:', error);
@@ -689,6 +748,7 @@ async function submitStatistics() {
       showNotification('统计数据添加成功', 'success');
     }
     resetStatisticFormState();
+    clearFormCache('stat'); // ✨ 清除缓存
     loadStatisticsForAdmin();
   } catch (error) {
     console.error('添加统计数据失败:', error);
@@ -730,6 +790,16 @@ async function editStatistic(id) {
 
     // 滚动到统计数据管理区域
     document.getElementById('statistics-module').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    
+    // ✨ 缓存所有表单数据（F5刷新后自动恢复）
+    saveToCache('stat-region', stat.region || '');
+    saveToCache('stat-year', stat.year || '');
+    saveToCache('stat-tourists', stat.tourist_count || '');
+    saveToCache('stat-revenue', stat.revenue || '');
+    saveToCache('stat-flights', stat.flight_count || '');
+    saveToCache('stat-aircraft', stat.aircraft_count || '');
+    saveToCache('stat-growth', stat.growth_rate || '');
+    console.log('✨ 已缓存统计数据编辑数据');
   } catch (error) {
     console.error('加载统计数据详情用于编辑失败:', error);
     showNotification('加载统计数据详情失败', 'error');
@@ -756,6 +826,7 @@ async function deleteCurrentStatistic() {
     await api.deleteStatistic(currentStatisticEditingId);
     showNotification('删除成功', 'success');
     resetStatisticFormState();
+    clearFormCache('stat'); // ✨ 清除缓存
     loadStatisticsForAdmin();
   } catch (error) {
     console.error('删除当前统计记录失败:', error);
@@ -1207,6 +1278,7 @@ async function submitDestination() {
     }
 
     resetDestinationFormState();
+    clearFormCache('destination'); // ✨ 清除缓存
     loadDestinationsForAdmin();
   } catch (error) {
     console.error('提交旅游目的地失败:', error);
@@ -1348,6 +1420,44 @@ async function editDestination(id) {
 
     document.getElementById('destination-module').scrollIntoView({ behavior: 'smooth', block: 'start' });
     
+    // ✨ 缓存所有表单数据（F5刷新后自动恢复）
+    saveToCache('destination-name', destination.name || '');
+    saveToCache('destination-city', destination.city || '');
+    saveToCache('destination-location', destination.location || '');
+    saveToCache('destination-country', destination.country || '中国');
+    saveToCache('destination-state', destination.state || '');
+    saveToCache('destination-category', destination.category || '');
+    saveToCache('destination-price-range', destination.price_range || '');
+    saveToCache('destination-duration', destination.duration || '');
+    saveToCache('destination-best-season', destination.best_season || '');
+    saveToCache('destination-rating', destination.rating || 4.9);
+    saveToCache('destination-sort-order', destination.sort_order || 0);
+    saveToCache('destination-is-featured', String(Boolean(destination.is_featured)));
+    saveToCache('destination-is-hot', String(Boolean(destination.is_hot)));
+    saveToCache('destination-description', destination.description || '');
+    saveToCache('destination-features', destination.features_display || (destination.features || []).join('\n'));
+    
+    // 缓存推荐类型（使用之前已定义的 recTypes）
+    saveToCache('recommendation_types', recTypes);
+    
+    // ✨ 缓存图片状态（只标记有图片，不缓存Base64 URL）
+    if (coverUrl) {
+      saveToCache('destination-cover-has-image', true);
+      const fileName = coverUrl.split('/').pop();
+      saveToCache('destination-cover-file-name', fileName || '已上传图片');
+    }
+    
+    [1, 2, 3, 4].forEach(index => {
+      const imageUrl = destination[`gallery_image_${index}_url`] || destination[`gallery_image_${index}`] || '';
+      if (imageUrl) {
+        saveToCache(`destination-gallery-image-${index}-has-image`, true);
+        const fileName = imageUrl.split('/').pop();
+        saveToCache(`destination-gallery-image-${index}-name`, fileName || '已上传图片');
+      }
+    });
+    
+    console.log('✨ 已缓存旅游目的地编辑数据（图片仅保存标记，不保存Base64）');
+    
     // 自动初始化富文本编辑器（两个字段）
     setTimeout(async () => {
       try {
@@ -1402,6 +1512,7 @@ async function deleteCurrentDestination() {
     await api.deleteDestination(currentDestinationEditingId);
     showNotification('删除成功', 'success');
     resetDestinationFormState();
+    clearFormCache('destination'); // ✨ 清除缓存
     loadDestinationsForAdmin();
   } catch (error) {
     console.error('删除当前目的地失败:', error);
@@ -2594,3 +2705,489 @@ document.addEventListener('keydown', function(e) {
     closeImageZoom();
   }
 });
+
+// ===== ✨ 缓存管理功能 =====
+
+/**
+ * 检测是否为强制刷新（Ctrl+F5）
+ */
+function checkForceRefresh() {
+  // 检查URL中是否有强制刷新标记
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get(FORCE_REFRESH_FLAG) === 'true') {
+    // 清除URL中的标记
+    const newUrl = window.location.pathname;
+    window.history.replaceState({}, document.title, newUrl);
+    return true;
+  }
+  
+  // 检查sessionStorage中的标记
+  const forceFlag = sessionStorage.getItem(FORCE_REFRESH_FLAG);
+  if (forceFlag === 'true') {
+    sessionStorage.removeItem(FORCE_REFRESH_FLAG);
+    return true;
+  }
+  
+  return false;
+}
+
+/**
+ * 设置强制刷新标记（供外部调用）
+ */
+function setForceRefreshFlag() {
+  sessionStorage.setItem(FORCE_REFRESH_FLAG, 'true');
+}
+
+/**
+ * 保存数据到缓存
+ */
+function saveToCache(key, data) {
+  try {
+    const cacheKey = CACHE_PREFIX + key;
+    sessionStorage.setItem(cacheKey, JSON.stringify(data));
+    sessionStorage.setItem(CACHE_TIMESTAMP_KEY, Date.now().toString());
+    console.log(`缓存已保存: ${key}`);
+  } catch (error) {
+    console.error('保存缓存失败:', error);
+  }
+}
+
+/**
+ * 从缓存读取数据
+ */
+function loadFromCache(key) {
+  try {
+    const cacheKey = CACHE_PREFIX + key;
+    const data = sessionStorage.getItem(cacheKey);
+    return data ? JSON.parse(data) : null;
+  } catch (error) {
+    console.error('读取缓存失败:', error);
+    return null;
+  }
+}
+
+/**
+ * 清除指定缓存
+ */
+function clearCache(key) {
+  try {
+    const cacheKey = CACHE_PREFIX + key;
+    sessionStorage.removeItem(cacheKey);
+    console.log(`缓存已清除: ${key}`);
+  } catch (error) {
+    console.error('清除缓存失败:', error);
+  }
+}
+
+/**
+ * 清除所有缓存
+ */
+function clearAllCache() {
+  try {
+    Object.keys(sessionStorage).forEach(key => {
+      if (key.startsWith(CACHE_PREFIX)) {
+        sessionStorage.removeItem(key);
+      }
+    });
+    sessionStorage.removeItem(CACHE_TIMESTAMP_KEY);
+    console.log('所有缓存已清除');
+  } catch (error) {
+    console.error('清除所有缓存失败:', error);
+  }
+}
+
+/**
+ * 恢复缓存数据
+ */
+function restoreCache() {
+  try {
+    // 1. 恢复表单数据（先恢复数据，不影响按钮点击）
+    restoreFormData();
+    
+    // 2. 恢复编辑器内容
+    restoreEditorContent();
+    
+    // 3. 最后恢复模块状态（避免阻塞）
+    const currentModule = loadFromCache('current_module');
+    if (currentModule) {
+      console.log('恢复模块状态:', currentModule);
+      // 使用 setTimeout 确保不会阻塞其他操作
+      setTimeout(() => {
+        showModule(currentModule);
+      }, 50);
+    }
+    
+    console.log('✨ 缓存数据恢复完成');
+  } catch (error) {
+    console.error('恢复缓存失败:', error);
+  }
+}
+
+/**
+ * 恢复表单数据
+ */
+function restoreFormData() {
+  const formFields = [
+    // 政策法规
+    { id: 'policy-title', type: 'input' },
+    { id: 'policy-department', type: 'input' },
+    { id: 'policy-level', type: 'select' },
+    { id: 'policy-date', type: 'input' },
+    { id: 'policy-category', type: 'input' },
+    { id: 'policy-tags', type: 'input' },
+    { id: 'policy-url', type: 'input' },
+    
+    // 新闻资讯
+    { id: 'news-title', type: 'input' },
+    { id: 'news-author', type: 'input' },
+    { id: 'news-category', type: 'select' },
+    { id: 'news-date', type: 'input' },
+    { id: 'news-tags', type: 'input' },
+    { id: 'news-cover', type: 'input' },
+    
+    // 安全隐患
+    { id: 'safety-title', type: 'input' },
+    { id: 'safety-category', type: 'input' },
+    { id: 'safety-risk', type: 'select' },
+    { id: 'safety-status', type: 'select' },
+    
+    // 统计数据
+    { id: 'stat-region', type: 'input' },
+    { id: 'stat-year', type: 'input' },
+    { id: 'stat-tourists', type: 'input' },
+    { id: 'stat-revenue', type: 'input' },
+    { id: 'stat-flights', type: 'input' },
+    { id: 'stat-aircraft', type: 'input' },
+    { id: 'stat-growth', type: 'input' },
+    
+    // 旅游目的地
+    { id: 'destination-name', type: 'input' },
+    { id: 'destination-city', type: 'input' },
+    { id: 'destination-country', type: 'input' },
+    { id: 'destination-state', type: 'input' },
+    { id: 'destination-location', type: 'input' },
+    { id: 'destination-category', type: 'input' },
+    { id: 'destination-price-range', type: 'input' },
+    { id: 'destination-duration', type: 'input' },
+    { id: 'destination-best-season', type: 'input' },
+    { id: 'destination-rating', type: 'input' },
+    { id: 'destination-is-featured', type: 'select' },
+    { id: 'destination-is-hot', type: 'select' },
+    { id: 'destination-sort-order', type: 'input' },
+  ];
+  
+  formFields.forEach(field => {
+    const cachedValue = loadFromCache(field.id);
+    if (cachedValue !== null) {
+      const element = document.getElementById(field.id);
+      if (element) {
+        if (field.type === 'select') {
+          element.value = cachedValue;
+        } else {
+          element.value = cachedValue;
+        }
+        console.log(`恢复字段 ${field.id}: ${cachedValue}`);
+      }
+    }
+  });
+  
+  // 恢复推荐类型多选框
+  const recommendationTypes = loadFromCache('recommendation_types');
+  if (recommendationTypes && Array.isArray(recommendationTypes)) {
+    document.querySelectorAll('input[name="recommendation_type"]').forEach(checkbox => {
+      checkbox.checked = recommendationTypes.includes(checkbox.value);
+    });
+  }
+  
+  // ✨ 恢复图片上传状态
+  restoreImageUploadState();
+}
+
+/**
+ * 恢复编辑器内容
+ */
+function restoreEditorContent() {
+  const editorIds = [
+    'policy-content',
+    'news-content',
+    'safety-description',
+    'safety-prevention',
+    'safety-plan',
+    'destination-description',
+    'destination-features',
+    'reply-content'
+  ];
+  
+  editorIds.forEach(editorId => {
+    const cachedContent = loadFromCache(editorId);
+    if (cachedContent) {
+      const textarea = document.getElementById(editorId);
+      if (textarea) {
+        textarea.value = cachedContent;
+        console.log(`✨ F5刷新后恢复编辑器内容到 textarea: ${editorId}（不初始化CKEditor，节省加载次数）`);
+        // ✨ 重要：只恢复 textarea 文字内容，不初始化 CKEditor，避免消耗加载次数
+      }
+    }
+  });
+  
+  // ✨ 已移除：不再自动恢复编辑器初始化状态
+  // F5刷新后只显示 textarea 文字内容，用户需要点击“编辑文本”按钮才会初始化CKEditor
+  // 这样可以最大程度减少编辑器的加载次数
+}
+
+/**
+ * 恢复图片上传状态
+ */
+function restoreImageUploadState() {
+  // ✨ F5刷新后，由于无法从缓存中恢复Base64图片数据（已不再缓存）
+  // 只能恢复文件名标记，用户需要重新选择文件才能看到预览
+  
+  const coverHasImage = loadFromCache('destination-cover-has-image');
+  const coverFileName = loadFromCache('destination-cover-file-name');
+  if (coverHasImage && coverFileName) {
+    console.log(`检测到封面图已上传: ${coverFileName}（F5后需重新选择文件以查看预览）`);
+    // 注意：这里不恢复预览，因为 Base64 数据没有被缓存
+    // 用户可以通过文件输入框看到之前选择的文件名（如果浏览器支持）
+  }
+  
+  // 检查展示图片
+  [1, 2, 3, 4].forEach(index => {
+    const galleryHasImage = loadFromCache(`destination-gallery-image-${index}-has-image`);
+    const galleryFileName = loadFromCache(`destination-gallery-image-${index}-name`);
+    
+    if (galleryHasImage && galleryFileName) {
+      console.log(`检测到展示图片${index}已上传: ${galleryFileName}（F5后需重新选择文件以查看预览）`);
+      // 同样不恢复预览
+    }
+  });
+}
+
+/**
+ * 初始化自动保存功能
+ */
+function initAutoSave() {
+  console.log('初始化自动保存功能');
+  
+  // 1. 监听所有输入框的变化
+  const inputFields = document.querySelectorAll('input[type="text"], input[type="number"], input[type="date"], input[type="url"], select, textarea');
+  inputFields.forEach(field => {
+    field.addEventListener('input', debounce(() => {
+      if (field.id) {
+        saveToCache(field.id, field.value);
+      }
+    }, 500));
+    
+    field.addEventListener('change', () => {
+      if (field.id) {
+        saveToCache(field.id, field.value);
+      }
+    });
+  });
+  
+  // 2. 监听推荐类型多选框
+  document.querySelectorAll('input[name="recommendation_type"]').forEach(checkbox => {
+    checkbox.addEventListener('change', () => {
+      const selectedTypes = Array.from(document.querySelectorAll('input[name="recommendation_type"]:checked'))
+        .map(cb => cb.value);
+      saveToCache('recommendation_types', selectedTypes);
+    });
+  });
+  
+  // 3. 监听模块切换
+  const originalShowModule = window.showModule;
+  window.showModule = function(moduleName) {
+    saveToCache('current_module', moduleName);
+    originalShowModule(moduleName);
+  };
+  
+  // ✨ 4. 监听图片上传（封面图和展示图片）
+  initImageUploadAutoSave();
+  
+  // 5. 监听编辑器内容变化（延迟执行，等待编辑器初始化）
+  setTimeout(() => {
+    if (window.CKEditorSuperHelper) {
+      const editorIds = [
+        'policy-content',
+        'news-content',
+        'safety-description',
+        'safety-prevention',
+        'safety-plan',
+        'destination-description',
+        'destination-features',
+        'reply-content'
+      ];
+      
+      editorIds.forEach(editorId => {
+        const editor = window.CKEditorSuperHelper.editorInstances[editorId];
+        if (editor && editor.model && editor.model.document) {
+          editor.model.document.on('change:data', debounce(() => {
+            const content = window.CKEditorSuperHelper.getContent(editorId);
+            if (content) {
+              saveToCache(editorId, content);
+            }
+          }, 1000));
+        }
+      });
+    }
+  }, 2000);
+  
+  console.log('自动保存功能已启用');
+}
+
+/**
+ * 初始化图片上传的自动保存
+ */
+function initImageUploadAutoSave() {
+  // 监听封面图上传
+  const coverInput = document.getElementById('destination-cover-image');
+  if (coverInput) {
+    coverInput.addEventListener('change', function() {
+      if (this.files && this.files[0]) {
+        const file = this.files[0];
+        
+        // ✨ 只保存文件名和标记，不保存Base64数据（避免超出sessionStorage限制）
+        saveToCache('destination-cover-file-name', file.name);
+        saveToCache('destination-cover-has-image', true); // 标记有图片
+        console.log('保存封面图状态到缓存（仅文件名）');
+        
+        // 实时预览（但不缓存Base64）
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const preview = document.getElementById('destination-cover-preview');
+          const previewImg = document.getElementById('destination-cover-preview-img');
+          const fileNameEl = document.getElementById('destination-cover-file-name');
+          const uploadBox = document.getElementById('destination-cover-upload-box');
+          
+          if (preview && previewImg && uploadBox) {
+            previewImg.src = e.target.result;
+            if (fileNameEl) {
+              fileNameEl.textContent = file.name;
+            }
+            uploadBox.style.display = 'none';
+            preview.style.display = 'block';
+          }
+        };
+        reader.readAsDataURL(file);
+      } else {
+        // 用户取消了选择，清除缓存
+        clearCache('destination-cover-file-name');
+        clearCache('destination-cover-has-image');
+      }
+    });
+  }
+  
+  // 监听4张展示图片上传
+  [1, 2, 3, 4].forEach(index => {
+    const galleryInput = document.getElementById(`destination-gallery-image-${index}`);
+    if (galleryInput) {
+      galleryInput.addEventListener('change', function() {
+        if (this.files && this.files[0]) {
+          const file = this.files[0];
+          
+          // ✨ 只保存文件名和标记，不保存Base64数据
+          saveToCache(`destination-gallery-image-${index}-name`, file.name);
+          saveToCache(`destination-gallery-image-${index}-has-image`, true);
+          console.log(`保存展示图片${index}状态到缓存（仅文件名）`);
+          
+          // 实时预览（但不缓存Base64）
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            const preview = document.getElementById(`destination-gallery-preview-${index}`);
+            const previewImg = document.getElementById(`destination-gallery-preview-img-${index}`);
+            const fileNameEl = document.getElementById(`destination-gallery-file-name-${index}`);
+            const uploadBox = document.getElementById(`destination-gallery-upload-box-${index}`);
+            
+            if (preview && previewImg && uploadBox) {
+              previewImg.src = e.target.result;
+              if (fileNameEl) {
+                fileNameEl.textContent = file.name;
+              }
+              uploadBox.style.display = 'none';
+              preview.style.display = 'block';
+            }
+          };
+          reader.readAsDataURL(file);
+        } else {
+          // 用户取消了选择，清除缓存
+          clearCache(`destination-gallery-image-${index}-name`);
+          clearCache(`destination-gallery-image-${index}-has-image`);
+        }
+      });
+    }
+  });
+}
+
+/**
+ * 防抖函数
+ */
+function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
+
+/**
+ * 提交成功后清除相关缓存
+ */
+function clearFormCache(formPrefix) {
+  const fields = [
+    `${formPrefix}-title`,
+    `${formPrefix}-content`,
+    `${formPrefix}-description`,
+    `${formPrefix}-prevention`,
+    `${formPrefix}-plan`,
+    `${formPrefix}-category`,
+    `${formPrefix}-tags`,
+    `${formPrefix}-author`,
+    `${formPrefix}-date`,
+    `${formPrefix}-url`,
+    `${formPrefix}-cover`,
+    `${formPrefix}-department`,
+    `${formPrefix}-level`,
+    `${formPrefix}-risk`,
+    `${formPrefix}-status`,
+    `${formPrefix}-region`,
+    `${formPrefix}-year`,
+    `${formPrefix}-tourists`,
+    `${formPrefix}-revenue`,
+    `${formPrefix}-flights`,
+    `${formPrefix}-aircraft`,
+    `${formPrefix}-growth`,
+    `${formPrefix}-name`,
+    `${formPrefix}-city`,
+    `${formPrefix}-country`,
+    `${formPrefix}-state`,
+    `${formPrefix}-location`,
+    `${formPrefix}-price-range`,
+    `${formPrefix}-duration`,
+    `${formPrefix}-best-season`,
+    `${formPrefix}-rating`,
+    `${formPrefix}-is-featured`,
+    `${formPrefix}-is-hot`,
+    `${formPrefix}-sort-order`,
+    `${formPrefix}-features`,
+  ];
+  
+  fields.forEach(field => {
+    clearCache(field);
+  });
+  
+  // 清除推荐类型
+  if (formPrefix === 'destination') {
+    clearCache('recommendation_types');
+    
+    // ✨ 清除图片上传状态（包括标记和文件名）
+    clearCache('destination-cover-has-image');
+    clearCache('destination-cover-file-name');
+    [1, 2, 3, 4].forEach(index => {
+      clearCache(`destination-gallery-image-${index}-has-image`);
+      clearCache(`destination-gallery-image-${index}-name`);
+    });
+  }
+}
