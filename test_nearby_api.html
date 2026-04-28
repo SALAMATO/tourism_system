@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试周边推荐API</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+        }
+        .error {
+            border-left-color: #dc3545;
+            background: #fff5f5;
+            color: #dc3545;
+        }
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        .info-box {
+            background: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .city-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .city-tag {
+            background: #007bff;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 14px;
+        }
+        .dest-card {
+            background: white;
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .dest-card h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+        .dest-info {
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 周边推荐API测试工具</h1>
+        
+        <div class="info-box">
+            <strong>说明：</strong>这个页面用于测试周边推荐API是否正常工作。点击按钮后会调用API并显示返回的数据。
+        </div>
+
+        <button onclick="testAPI()">测试 nearby_by_ip API</button>
+        <button onclick="clearResults()">清空结果</button>
+
+        <div id="results"></div>
+    </div>
+
+    <script>
+        async function testAPI() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<div class="result"><p>正在请求API...</p></div>';
+
+            try {
+                const response = await fetch('http://127.0.0.1:8000/api/destinations/nearby_by_ip/');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP错误: ${response.status} ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                
+                let html = `
+                    <div class="result">
+                        <h2>✅ API调用成功</h2>
+                        
+                        <div class="info-box">
+                            <h3>基本信息</h3>
+                            <p><strong>IP地址:</strong> ${data.ip}</p>
+                            <p><strong>定位城市:</strong> ${data.user_province} ${data.user_city}</p>
+                            <p><strong>目的地数量:</strong> ${data.destinations ? data.destinations.length : 0}</p>
+                            ${data.error ? `<p style="color: red;"><strong>错误信息:</strong> ${data.error}</p>` : ''}
+                        </div>
+                `;
+
+                if (data.destinations && data.destinations.length > 0) {
+                    // 提取唯一城市列表
+                    const cities = [...new Set(data.destinations.map(d => d.city).filter(Boolean))];
+                    
+                    html += `
+                        <div class="info-box">
+                            <h3>城市列表（共${cities.length}个）</h3>
+                            <div class="city-list">
+                                ${cities.map(city => `<span class="city-tag">${city}</span>`).join('')}
+                            </div>
+                        </div>
+
+                        <h3>目的地详情（前5个）</h3>
+                    `;
+
+                    data.destinations.slice(0, 5).forEach((dest, index) => {
+                        html += `
+                            <div class="dest-card">
+                                <h3>${index + 1}. ${dest.name}</h3>
+                                <div class="dest-info">
+                                    <p><strong>城市:</strong> ${dest.city || '未设置'}</p>
+                                    <p><strong>省份:</strong> ${dest.state || '未设置'}</p>
+                                    <p><strong>国家:</strong> ${dest.country || '未设置'}</p>
+                                    <p><strong>位置:</strong> ${dest.location || '未设置'}</p>
+                                    <p><strong>评分:</strong> ${dest.rating}</p>
+                                    <p><strong>推荐类型:</strong> ${JSON.stringify(dest.recommendation_type)}</p>
+                                    <p><strong>是否国内:</strong> ${dest.is_domestic ? '是' : '否'}</p>
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    html += `
+                        <h3>完整JSON数据</h3>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    html += `
+                        <div class="result error">
+                            <h3>❌ 警告：没有获取到任何目的地数据</h3>
+                            <p>可能的原因：</p>
+                            <ul>
+                                <li>数据库中没有标记为"nearby"推荐类型的目的地</li>
+                                <li>所有目的地的is_domestic字段都为false</li>
+                                <li>destination表中没有数据</li>
+                            </ul>
+                            <p>请检查数据库中的destinations表。</p>
+                        </div>
+                        <h3>完整JSON数据</h3>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+
+                html += '</div>';
+                resultsDiv.innerHTML = html;
+
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <div class="result error">
+                        <h2>❌ API调用失败</h2>
+                        <p><strong>错误信息:</strong> ${error.message}</p>
+                        <p>请确保：</p>
+                        <ul>
+                            <li>Django服务器正在运行（http://127.0.0.1:8000）</li>
+                            <li>API路径正确</li>
+                            <li>网络连接正常</li>
+                        </ul>
+                    </div>
+                `;
+                console.error('API调用失败:', error);
+            }
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+
+        // 页面加载时自动测试
+        window.onload = () => {
+            console.log('页面加载完成，可以点击按钮测试API');
+        };
+    </script>
+</body>
+</html>

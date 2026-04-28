@@ -267,22 +267,26 @@ class DestinationViewSet(PublicModelViewSet):
             user_city = amap_data.get('city', '')
             user_province = amap_data.get('province', '')
             
+            print(f'原始API返回数据 - city类型: {type(user_city)}, 值: {user_city}')
+            print(f'原始API返回数据 - province类型: {type(user_province)}, 值: {user_province}')
+            
             # 处理API返回可能是列表的情况
             if isinstance(user_city, list):
                 user_city = user_city[0] if user_city else ''
             if isinstance(user_province, list):
                 user_province = user_province[0] if user_province else ''
             
-            user_city = str(user_city).strip()
-            user_province = str(user_province).strip()
+            # 确保是字符串
+            user_city = str(user_city).strip() if user_city else ''
+            user_province = str(user_province).strip() if user_province else ''
             
-            print(f'原始城市数据: city={user_city}, province={user_province}')
+            print(f'处理后的城市数据: city="{user_city}", province="{user_province}"')
             
             # 如果API返回城市为空，使用默认城市
-            if not user_city:
+            if not user_city or user_city == '[]':
                 print('高德地图API未返回城市信息，使用默认值')
-                user_city = '北京'
-                user_province = '北京'
+                user_city = '南京'  # 114.114.114.114是南京DNS
+                user_province = '江苏'
                 
             # 去除城市后缀（如“市”）
             user_city = user_city.replace('市', '').strip()

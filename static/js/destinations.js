@@ -42,29 +42,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // 周边模式：按距离排序城市
     if (currentDomestic === 'nearby' && locations.length > 0) {
-      // 计算每个城市的平均分数（分数越高表示距离越近）
-      const cityScores = {};
-      filteredCache.forEach(item => {
+      // API返回的nearbyDestinations已经按距离排序（近的在前）
+      // 我们根据每个城市第一次出现的顺序来确定距离远近
+      const cityOrder = {};
+      filteredCache.forEach((item, index) => {
         const city = item.city;
-        if (!cityScores[city]) {
-          cityScores[city] = [];
+        // 只记录第一次出现的位置（最近的）
+        if (!(city in cityOrder)) {
+          cityOrder[city] = index;
         }
-        // 从scored_destinations中获取分数（如果有的话）
-        // 这里我们根据目的地的顺序来推断距离，前面的更近
-        const index = filteredCache.indexOf(item);
-        cityScores[city].push(filteredCache.length - index); // 越靠前分数越高
       });
       
-      // 计算每个城市的平均分数
-      const cityAvgScores = {};
-      Object.keys(cityScores).forEach(city => {
-        const scores = cityScores[city];
-        cityAvgScores[city] = scores.reduce((a, b) => a + b, 0) / scores.length;
-      });
-      
-      // 按平均分数降序排序（分数高的在前，表示距离近）
-      locations.sort((a, b) => (cityAvgScores[b] || 0) - (cityAvgScores[a] || 0));
+      // 按首次出现的顺序排序（索引小的在前，表示距离近）
+      locations.sort((a, b) => (cityOrder[a] || 999) - (cityOrder[b] || 999));
       console.log('周边城市按距离排序后:', locations);
+      console.log('城市顺序映射:', cityOrder);
     }
     
     renderCities(locations);
