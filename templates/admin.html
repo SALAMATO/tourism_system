@@ -704,44 +704,172 @@
 
           <div class="form-group">
             <label class="form-label">封面图片（选填）</label>
-            <input type="file" id="destination-cover-image" class="form-input" accept="image/*">
-            <div style="margin-top: 8px; font-size: 13px; color: var(--text-secondary);">不上传图片时，前端将使用统一的默认占位风格。</div>
-            <div id="destination-cover-preview" style="margin-top: 12px; display:none;">
-              <img id="destination-cover-preview-img" src="" alt="封面预览" style="width: 220px; height: 140px; object-fit: cover; border-radius: 12px; border: 1px solid var(--border-color);">
+            <div class="image-upload-wrapper" id="destination-cover-upload-wrapper">
+              <!-- 上传框 -->
+              <div class="image-upload-box" id="destination-cover-upload-box" onclick="document.getElementById('destination-cover-image').click()">
+                <i class="fas fa-cloud-upload-alt image-upload-icon"></i>
+                <div class="image-upload-title">点击上传封面图片</div>
+                <div class="image-upload-desc">支持 JPG、PNG 格式，建议尺寸 1200x800</div>
+                <input type="file" id="destination-cover-image" class="image-upload-input" accept="image/*">
+              </div>
+              
+              <!-- 预览卡片（上传后显示，覆盖上传框） -->
+              <div id="destination-cover-preview" style="display:none; position: relative;">
+                <div class="image-preview-item" style="cursor: zoom-in;" onclick="openImageZoom('destination-cover-preview-img')">
+                  <!-- 右上角操作按钮 -->
+                  <div class="image-top-actions" onclick="event.stopPropagation()">
+                    <button type="button" class="image-edit-btn" onclick="editDestinationCover()" title="修改图片">
+                      <i class="fas fa-edit"></i>
+                    </button>
+                    <button type="button" class="image-remove-btn" onclick="removeDestinationCover()" title="删除图片">
+                      <i class="fas fa-trash-alt"></i>
+                    </button>
+                  </div>
+                  <div class="image-preview-image-wrapper">
+                    <img id="destination-cover-preview-img" src="" alt="封面预览">
+                  </div>
+                </div>
+                <div class="image-preview-footer">
+                  <div class="image-file-name" id="destination-cover-file-name"></div>
+                </div>
+              </div>
+              
+              <div style="margin-top: 8px; font-size: 13px; color: var(--text-secondary);">不上传图片时，前端将使用统一的默认占位风格。</div>
             </div>
             <input type="hidden" id="destination-existing-cover-image">
           </div>
 
-          <div class="form-row">
+          <div class="form-row" style="grid-template-columns: repeat(4, 1fr);">
             <div class="form-group">
               <label class="form-label">展示图片 1（选填）</label>
-              <input type="file" id="destination-gallery-image-1" class="form-input" accept="image/*">
-              <div id="destination-gallery-preview-1" style="margin-top: 12px; display:none;">
-                <img id="destination-gallery-preview-img-1" src="" alt="展示图片1预览" style="width: 220px; height: 140px; object-fit: cover; border-radius: 12px; border: 1px solid var(--border-color);">
+              <div class="image-upload-wrapper" id="destination-gallery-upload-wrapper-1">
+                <!-- 上传框 -->
+                <div class="image-upload-box" id="destination-gallery-upload-box-1" onclick="document.getElementById('destination-gallery-image-1').click()">
+                  <i class="fas fa-cloud-upload-alt image-upload-icon"></i>
+                  <div class="image-upload-title">点击上传图片 1</div>
+                  <div class="image-upload-desc">支持 JPG、PNG 格式</div>
+                  <input type="file" id="destination-gallery-image-1" class="image-upload-input" accept="image/*">
+                </div>
+                
+                <!-- 预览卡片（上传后显示，覆盖上传框） -->
+                <div id="destination-gallery-preview-1" style="display:none; position: relative;">
+                  <div class="image-preview-item" style="cursor: zoom-in;" onclick="openImageZoom('destination-gallery-preview-img-1')">
+                    <!-- 右上角操作按钮 -->
+                    <div class="image-top-actions" onclick="event.stopPropagation()">
+                      <button type="button" class="image-edit-btn" onclick="editDestinationGalleryImage(1)" title="修改图片">
+                        <i class="fas fa-edit"></i>
+                      </button>
+                      <button type="button" class="image-remove-btn" onclick="removeDestinationGalleryImage(1)" title="删除图片">
+                        <i class="fas fa-trash-alt"></i>
+                      </button>
+                    </div>
+                    <div class="image-preview-image-wrapper">
+                      <img id="destination-gallery-preview-img-1" src="" alt="展示图片1预览">
+                    </div>
+                  </div>
+                  <div class="image-preview-footer">
+                    <div class="image-file-name" id="destination-gallery-file-name-1"></div>
+                  </div>
+                </div>
               </div>
             </div>
             <div class="form-group">
               <label class="form-label">展示图片 2（选填）</label>
-              <input type="file" id="destination-gallery-image-2" class="form-input" accept="image/*">
-              <div id="destination-gallery-preview-2" style="margin-top: 12px; display:none;">
-                <img id="destination-gallery-preview-img-2" src="" alt="展示图片2预览" style="width: 220px; height: 140px; object-fit: cover; border-radius: 12px; border: 1px solid var(--border-color);">
+              <div class="image-upload-wrapper" id="destination-gallery-upload-wrapper-2">
+                <!-- 上传框 -->
+                <div class="image-upload-box" id="destination-gallery-upload-box-2" onclick="document.getElementById('destination-gallery-image-2').click()">
+                  <i class="fas fa-cloud-upload-alt image-upload-icon"></i>
+                  <div class="image-upload-title">点击上传图片 2</div>
+                  <div class="image-upload-desc">支持 JPG、PNG 格式</div>
+                  <input type="file" id="destination-gallery-image-2" class="image-upload-input" accept="image/*">
+                </div>
+                
+                <!-- 预览卡片（上传后显示，覆盖上传框） -->
+                <div id="destination-gallery-preview-2" style="display:none; position: relative;">
+                  <div class="image-preview-item" style="cursor: zoom-in;" onclick="openImageZoom('destination-gallery-preview-img-2')">
+                    <!-- 右上角操作按钮 -->
+                    <div class="image-top-actions" onclick="event.stopPropagation()">
+                      <button type="button" class="image-edit-btn" onclick="editDestinationGalleryImage(2)" title="修改图片">
+                        <i class="fas fa-edit"></i>
+                      </button>
+                      <button type="button" class="image-remove-btn" onclick="removeDestinationGalleryImage(2)" title="删除图片">
+                        <i class="fas fa-trash-alt"></i>
+                      </button>
+                    </div>
+                    <div class="image-preview-image-wrapper">
+                      <img id="destination-gallery-preview-img-2" src="" alt="展示图片2预览">
+                    </div>
+                  </div>
+                  <div class="image-preview-footer">
+                    <div class="image-file-name" id="destination-gallery-file-name-2"></div>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-
-          <div class="form-row">
             <div class="form-group">
               <label class="form-label">展示图片 3（选填）</label>
-              <input type="file" id="destination-gallery-image-3" class="form-input" accept="image/*">
-              <div id="destination-gallery-preview-3" style="margin-top: 12px; display:none;">
-                <img id="destination-gallery-preview-img-3" src="" alt="展示图片3预览" style="width: 220px; height: 140px; object-fit: cover; border-radius: 12px; border: 1px solid var(--border-color);">
+              <div class="image-upload-wrapper" id="destination-gallery-upload-wrapper-3">
+                <!-- 上传框 -->
+                <div class="image-upload-box" id="destination-gallery-upload-box-3" onclick="document.getElementById('destination-gallery-image-3').click()">
+                  <i class="fas fa-cloud-upload-alt image-upload-icon"></i>
+                  <div class="image-upload-title">点击上传图片 3</div>
+                  <div class="image-upload-desc">支持 JPG、PNG 格式</div>
+                  <input type="file" id="destination-gallery-image-3" class="image-upload-input" accept="image/*">
+                </div>
+                
+                <!-- 预览卡片（上传后显示，覆盖上传框） -->
+                <div id="destination-gallery-preview-3" style="display:none; position: relative;">
+                  <div class="image-preview-item" style="cursor: zoom-in;" onclick="openImageZoom('destination-gallery-preview-img-3')">
+                    <!-- 右上角操作按钮 -->
+                    <div class="image-top-actions" onclick="event.stopPropagation()">
+                      <button type="button" class="image-edit-btn" onclick="editDestinationGalleryImage(3)" title="修改图片">
+                        <i class="fas fa-edit"></i>
+                      </button>
+                      <button type="button" class="image-remove-btn" onclick="removeDestinationGalleryImage(3)" title="删除图片">
+                        <i class="fas fa-trash-alt"></i>
+                      </button>
+                    </div>
+                    <div class="image-preview-image-wrapper">
+                      <img id="destination-gallery-preview-img-3" src="" alt="展示图片3预览">
+                    </div>
+                  </div>
+                  <div class="image-preview-footer">
+                    <div class="image-file-name" id="destination-gallery-file-name-3"></div>
+                  </div>
+                </div>
               </div>
             </div>
             <div class="form-group">
               <label class="form-label">展示图片 4（选填）</label>
-              <input type="file" id="destination-gallery-image-4" class="form-input" accept="image/*">
-              <div id="destination-gallery-preview-4" style="margin-top: 12px; display:none;">
-                <img id="destination-gallery-preview-img-4" src="" alt="展示图片4预览" style="width: 220px; height: 140px; object-fit: cover; border-radius: 12px; border: 1px solid var(--border-color);">
+              <div class="image-upload-wrapper" id="destination-gallery-upload-wrapper-4">
+                <!-- 上传框 -->
+                <div class="image-upload-box" id="destination-gallery-upload-box-4" onclick="document.getElementById('destination-gallery-image-4').click()">
+                  <i class="fas fa-cloud-upload-alt image-upload-icon"></i>
+                  <div class="image-upload-title">点击上传图片 4</div>
+                  <div class="image-upload-desc">支持 JPG、PNG 格式</div>
+                  <input type="file" id="destination-gallery-image-4" class="image-upload-input" accept="image/*">
+                </div>
+                
+                <!-- 预览卡片（上传后显示，覆盖上传框） -->
+                <div id="destination-gallery-preview-4" style="display:none; position: relative;">
+                  <div class="image-preview-item" style="cursor: zoom-in;" onclick="openImageZoom('destination-gallery-preview-img-4')">
+                    <!-- 右上角操作按钮 -->
+                    <div class="image-top-actions" onclick="event.stopPropagation()">
+                      <button type="button" class="image-edit-btn" onclick="editDestinationGalleryImage(4)" title="修改图片">
+                        <i class="fas fa-edit"></i>
+                      </button>
+                      <button type="button" class="image-remove-btn" onclick="removeDestinationGalleryImage(4)" title="删除图片">
+                        <i class="fas fa-trash-alt"></i>
+                      </button>
+                    </div>
+                    <div class="image-preview-image-wrapper">
+                      <img id="destination-gallery-preview-img-4" src="" alt="展示图片4预览">
+                    </div>
+                  </div>
+                  <div class="image-preview-footer">
+                    <div class="image-file-name" id="destination-gallery-file-name-4"></div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -905,6 +1033,16 @@
       <div class="modal-body">
         <div id="user-manage-info"></div>
       </div>
+    </div>
+  </div>
+
+  <!-- 图片放大查看模态框 -->
+  <div id="image-zoom-modal" class="image-zoom-modal" onclick="closeImageZoom()">
+    <div class="image-zoom-content" onclick="event.stopPropagation()">
+      <button class="image-zoom-close" onclick="closeImageZoom()">
+        <i class="fas fa-times"></i>
+      </button>
+      <img id="image-zoom-img" src="" alt="放大查看">
     </div>
   </div>
 

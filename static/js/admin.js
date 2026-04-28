@@ -175,6 +175,14 @@ function initForms() {
   if (destinationCoverInput) {
     destinationCoverInput.addEventListener('change', previewDestinationCover);
   }
+
+  // 为4张展示图片添加change事件监听器
+  [1, 2, 3, 4].forEach(index => {
+    const galleryInput = document.getElementById(`destination-gallery-image-${index}`);
+    if (galleryInput) {
+      galleryInput.addEventListener('change', () => previewDestinationGalleryImage(index));
+    }
+  });
 }
 
 // 使用事件委托：在 document 上监听点击，避免按钮在隐藏模块内时绑定失效
@@ -1077,8 +1085,10 @@ function buildDestinationFormData() {
 
 function previewDestinationCover() {
   const input = document.getElementById('destination-cover-image');
+  const uploadBox = document.getElementById('destination-cover-upload-box');
   const preview = document.getElementById('destination-cover-preview');
   const previewImage = document.getElementById('destination-cover-preview-img');
+  const fileNameEl = document.getElementById('destination-cover-file-name');
   const file = input.files && input.files[0];
 
   if (!file) {
@@ -1088,9 +1098,100 @@ function previewDestinationCover() {
   const reader = new FileReader();
   reader.onload = event => {
     previewImage.src = event.target.result;
-    preview.style.display = 'block';
+    if (fileNameEl) {
+      fileNameEl.textContent = file.name;
+    }
+    // 隐藏上传框，显示预览
+    if (uploadBox) uploadBox.style.display = 'none';
+    if (preview) preview.style.display = 'block';
   };
   reader.readAsDataURL(file);
+}
+
+// 修改封面图片
+function editDestinationCover() {
+  const input = document.getElementById('destination-cover-image');
+  if (input) {
+    input.click();
+  }
+}
+
+// 删除封面图片
+function removeDestinationCover() {
+  const input = document.getElementById('destination-cover-image');
+  const uploadBox = document.getElementById('destination-cover-upload-box');
+  const preview = document.getElementById('destination-cover-preview');
+  const previewImage = document.getElementById('destination-cover-preview-img');
+  const fileNameEl = document.getElementById('destination-cover-file-name');
+  
+  if (input) {
+    input.value = '';
+  }
+  if (previewImage) {
+    previewImage.src = '';
+  }
+  if (fileNameEl) {
+    fileNameEl.textContent = '';
+  }
+  // 显示上传框，隐藏预览
+  if (uploadBox) uploadBox.style.display = 'block';
+  if (preview) preview.style.display = 'none';
+}
+
+// 预览展示图片
+function previewDestinationGalleryImage(index) {
+  const input = document.getElementById(`destination-gallery-image-${index}`);
+  const uploadBox = document.getElementById(`destination-gallery-upload-box-${index}`);
+  const preview = document.getElementById(`destination-gallery-preview-${index}`);
+  const previewImage = document.getElementById(`destination-gallery-preview-img-${index}`);
+  const fileNameEl = document.getElementById(`destination-gallery-file-name-${index}`);
+  const file = input.files && input.files[0];
+
+  if (!file) {
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = event => {
+    previewImage.src = event.target.result;
+    if (fileNameEl) {
+      fileNameEl.textContent = file.name;
+    }
+    // 隐藏上传框，显示预览
+    if (uploadBox) uploadBox.style.display = 'none';
+    if (preview) preview.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+// 修改展示图片
+function editDestinationGalleryImage(index) {
+  const input = document.getElementById(`destination-gallery-image-${index}`);
+  if (input) {
+    input.click();
+  }
+}
+
+// 删除展示图片
+function removeDestinationGalleryImage(index) {
+  const input = document.getElementById(`destination-gallery-image-${index}`);
+  const uploadBox = document.getElementById(`destination-gallery-upload-box-${index}`);
+  const preview = document.getElementById(`destination-gallery-preview-${index}`);
+  const previewImage = document.getElementById(`destination-gallery-preview-img-${index}`);
+  const fileNameEl = document.getElementById(`destination-gallery-file-name-${index}`);
+  
+  if (input) {
+    input.value = '';
+  }
+  if (previewImage) {
+    previewImage.src = '';
+  }
+  if (fileNameEl) {
+    fileNameEl.textContent = '';
+  }
+  // 显示上传框，隐藏预览
+  if (uploadBox) uploadBox.style.display = 'block';
+  if (preview) preview.style.display = 'none';
 }
 
 async function submitDestination() {
@@ -1135,14 +1236,22 @@ function resetDestinationFormState() {
   if (deleteBtn) deleteBtn.style.display = 'none';
   const preview = document.getElementById('destination-cover-preview');
   const previewImage = document.getElementById('destination-cover-preview-img');
+  const fileNameEl = document.getElementById('destination-cover-file-name');
+  const uploadBox = document.getElementById('destination-cover-upload-box');
   if (preview) preview.style.display = 'none';
   if (previewImage) previewImage.src = '';
+  if (fileNameEl) fileNameEl.textContent = '';
+  if (uploadBox) uploadBox.style.display = 'block';
 
   [1, 2, 3, 4].forEach(index => {
     const galleryPreview = document.getElementById(`destination-gallery-preview-${index}`);
     const galleryImage = document.getElementById(`destination-gallery-preview-img-${index}`);
+    const galleryFileName = document.getElementById(`destination-gallery-file-name-${index}`);
+    const galleryUploadBox = document.getElementById(`destination-gallery-upload-box-${index}`);
     if (galleryPreview) galleryPreview.style.display = 'none';
     if (galleryImage) galleryImage.src = '';
+    if (galleryFileName) galleryFileName.textContent = '';
+    if (galleryUploadBox) galleryUploadBox.style.display = 'block';
   });
 
   // 优化：使用批量设置内容清空编辑器
@@ -1190,15 +1299,44 @@ async function editDestination(id) {
 
     const preview = document.getElementById('destination-cover-preview');
     const previewImage = document.getElementById('destination-cover-preview-img');
-    previewImage.src = destination.cover_image_url || destination.cover_image || '';
-    preview.style.display = previewImage.src ? 'block' : 'none';
+    const fileNameEl = document.getElementById('destination-cover-file-name');
+    const uploadBox = document.getElementById('destination-cover-upload-box');
+    const coverUrl = destination.cover_image_url || destination.cover_image || '';
+    previewImage.src = coverUrl;
+    if (fileNameEl && coverUrl) {
+      // 从 URL 中提取文件名
+      const fileName = coverUrl.split('/').pop();
+      fileNameEl.textContent = fileName || '已上传图片';
+    }
+    // 如果有图片，隐藏上传框，显示预览；否则显示上传框
+    if (coverUrl) {
+      if (uploadBox) uploadBox.style.display = 'none';
+      if (preview) preview.style.display = 'block';
+    } else {
+      if (uploadBox) uploadBox.style.display = 'block';
+      if (preview) preview.style.display = 'none';
+    }
 
     [1, 2, 3, 4].forEach(index => {
       const galleryPreview = document.getElementById(`destination-gallery-preview-${index}`);
       const galleryImage = document.getElementById(`destination-gallery-preview-img-${index}`);
+      const galleryFileName = document.getElementById(`destination-gallery-file-name-${index}`);
+      const galleryUploadBox = document.getElementById(`destination-gallery-upload-box-${index}`);
       const imageUrl = destination[`gallery_image_${index}_url`] || destination[`gallery_image_${index}`] || '';
       if (galleryImage) galleryImage.src = imageUrl;
-      if (galleryPreview) galleryPreview.style.display = imageUrl ? 'block' : 'none';
+      if (galleryFileName && imageUrl) {
+        // 从 URL 中提取文件名
+        const fileName = imageUrl.split('/').pop();
+        galleryFileName.textContent = fileName || '已上传图片';
+      }
+      // 如果有图片，隐藏上传框，显示预览；否则显示上传框
+      if (imageUrl) {
+        if (galleryUploadBox) galleryUploadBox.style.display = 'none';
+        if (galleryPreview) galleryPreview.style.display = 'block';
+      } else {
+        if (galleryUploadBox) galleryUploadBox.style.display = 'block';
+        if (galleryPreview) galleryPreview.style.display = 'none';
+      }
     });
 
     const titleEl = document.querySelector('#destination-module .card-title');
@@ -2423,4 +2561,36 @@ document.addEventListener('DOMContentLoaded', function () {
     if (e.target.closest('#policy-ai-apply-btn'))   applyAiResult('policy');
     if (e.target.closest('#news-ai-apply-btn'))     applyAiResult('news');
   });
+});
+
+// ===== 图片放大查看功能 =====
+
+// 打开图片放大查看
+function openImageZoom(imgElementId) {
+  const modal = document.getElementById('image-zoom-modal');
+  const zoomImg = document.getElementById('image-zoom-img');
+  const sourceImg = document.getElementById(imgElementId);
+  
+  if (modal && zoomImg && sourceImg) {
+    zoomImg.src = sourceImg.src;
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden'; // 禁止背景滚动
+  }
+}
+
+// 关闭图片放大查看
+function closeImageZoom() {
+  const modal = document.getElementById('image-zoom-modal');
+  
+  if (modal) {
+    modal.classList.remove('active');
+    document.body.style.overflow = ''; // 恢复背景滚动
+  }
+}
+
+// ESC键关闭放大查看
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    closeImageZoom();
+  }
 });
