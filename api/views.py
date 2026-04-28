@@ -300,8 +300,86 @@ class DestinationViewSet(PublicModelViewSet):
             neighbors = neighboring_map.get(province1, [])
             return province2 in neighbors
         
+        def _normalize_province_name(province):
+            """标准化省份名称，将简称转换为全称"""
+            # 省份简称到全称的映射
+            province_map = {
+                '北京': '北京市',
+                '天津': '天津市',
+                '上海': '上海市',
+                '重庆': '重庆市',
+                '河北': '河北省',
+                '山西': '山西省',
+                '辽宁': '辽宁省',
+                '吉林': '吉林省',
+                '黑龙江': '黑龙江省',
+                '江苏': '江苏省',
+                '浙江': '浙江省',
+                '安徽': '安徽省',
+                '福建': '福建省',
+                '江西': '江西省',
+                '山东': '山东省',
+                '河南': '河南省',
+                '湖北': '湖北省',
+                '湖南': '湖南省',
+                '广东': '广东省',
+                '海南': '海南省',
+                '四川': '四川省',
+                '贵州': '贵州省',
+                '云南': '云南省',
+                '陕西': '陕西省',
+                '甘肃': '甘肃省',
+                '青海': '青海省',
+                '台湾': '台湾省',
+                '内蒙古': '内蒙古自治区',
+                '广西': '广西壮族自治区',
+                '西藏': '西藏自治区',
+                '宁夏': '宁夏回族自治区',
+                '新疆': '新疆维吾尔自治区',
+                '香港': '香港特别行政区',
+                '澳门': '澳门特别行政区',
+            }
+            
+            # 如果已经是全称，直接返回
+            if province in province_map.values():
+                return province
+            
+            # 如果是简称，转换为全称
+            return province_map.get(province, province)
+        
+        def _save_to_china_city(city, province, lng, lat):
+            """将获取到的城市经纬度保存到ChinaCity表中"""
+            try:
+                # 标准化省份名称
+                normalized_province = _normalize_province_name(province)
+                
+                # 检查是否已存在
+                existing = ChinaCity.objects.filter(
+                    city__icontains=city.replace('市', ''),
+                    state__icontains=normalized_province
+                ).first()
+                
+                if existing:
+                    print(f'  💾 城市 {normalized_province}-{city} 已存在于数据库中，跳过保存')
+                    return True
+                
+                # 创建新记录
+                ChinaCity.objects.create(
+                    country='中国',
+                    state=normalized_province,
+                    city=city.replace('市', ''),
+                    longitude=lng,
+                    latitude=lat,
+                    is_domestic=True
+                )
+                print(f'  ✅ 已将 {normalized_province}-{city} 的经纬度 ({lng}, {lat}) 保存到 ChinaCity 表')
+                return True
+            except Exception as e:
+                print(f'  ⚠️ 保存到 ChinaCity 表失败: {str(e)}')
+                return False
+        
         def _get_city_coordinates(city, province, api_key):
-            """获取城市的经纬度坐标"""
+            """获取城市的经纬度坐标，并自动保存到数据库"""
             import requests
             try:
                 # 高德地图地理编码API
@@ -328,6 +406,10 @@ class DestinationViewSet(PublicModelViewSet):
                         lng, lat = location_str.split(',')
                         result = {'lng': float(lng), 'lat': float(lat)}
                         print(f'  ✅ 成功: {result}')
+                        
+                        # 自动保存到 ChinaCity 表
+                        _save_to_china_city(city, province, float(lng), float(lat))
+                        
                         return result
                 
                 print(f'  ⚠️ 未找到地址: {address}, 响应: {data}')
@@ -336,8 +418,35 @@ class DestinationViewSet(PublicModelViewSet):
                 print(f'  ❌ 获取经纬度失败: {str(e)}')
                 return None
         
+        def _calculate_distance_haversine(lng1, lat1, lng2, lat2):
+            """使用Haversine公式计算两点之间的距离（公里）- 本地计算"""
+            import math
+            try:
+                # 将角度转换为弧度
+                lat1_rad = math.radians(lat1)
+                lat2_rad = math.radians(lat2)
+                lng1_rad = math.radians(lng1)
+                lng2_rad = math.radians(lng2)
+                
+                # 计算差值
+                dlat = lat2_rad - lat1_rad
+                dlng = lng2_rad - lng1_rad
+                
+                # Haversine公式
+                a = math.sin(dlat / 2) ** 2 + math.cos(lat1_rad) * math.cos(lat2_rad) * math.sin(dlng / 2) ** 2
+                c = 2 * math.asin(math.sqrt(a))
+                
+                # 地球半径（公里）
+                earth_radius = 6371.0
+                distance = earth_radius * c
+                
+                return round(distance, 2)
+            except Exception as e:
+                print(f'  ❌ Haversine距离计算异常: {str(e)}')
+                return None
+        
         def _calculate_distance(lng1, lat1, lng2, lat2, api_key):
-            """使用高德地图API计算两点之间的距离（公里）"""
+            """使用高德地图API计算两点之间的距离（公里）- 备用方案"""
             import requests
             try:
                 # 高德地图距离测量API
@@ -369,6 +478,23 @@ class DestinationViewSet(PublicModelViewSet):
         user_latitude = None
         user_longitude = None
         ip_source = 'cached'  # 标记位置信息来源
+        
+        # 优先从 session 中获取缓存的位置信息（未登录用户）
+        if not request.user.is_authenticated:
+            cached_location = request.session.get('user_location_cache')
+            if cached_location:
+                import time
+                cache_time = cached_location.get('timestamp', 0)
+                current_time = time.time()
+                # 缓存有效期24小时（86400秒）
+                if current_time - cache_time < 86400:
+                    user_city = cached_location.get('city')
+                    user_province = cached_location.get('province')
+                    user_latitude = cached_location.get('latitude')
+                    user_longitude = cached_location.get('longitude')
+                    ip_source = 'session_cached'
+                    print(f'✅ 使用Session缓存的位置信息: {user_province} {user_city}')
+                    print(f'   经纬度: ({user_latitude}, {user_longitude})')
         
         if request.user.is_authenticated:
             # 用户已登录，检查是否有缓存的位置信息
@@ -441,11 +567,32 @@ class DestinationViewSet(PublicModelViewSet):
                     user_city = '南京'  # 114.114.114.114是南京DNS
                     user_province = '江苏'
                     
-                # 去除城市后缀（如“市”）
+                # 去除城市后缀（如"市"）
                 user_city = user_city.replace('市', '').strip()
                 user_province = user_province.replace('省', '').replace('自治区', '').replace('市', '').strip()
-                    
+                                    
                 print(f'定位结果: {user_province} {user_city}')
+                                
+                # 通过地理编码API获取该城市的经纬度，并保存到数据库（只调用一次）
+                if user_city and user_province:
+                    print(f'🔍 正在获取 {user_province}-{user_city} 的经纬度并保存到数据库...')
+                    city_coords = _get_city_coordinates(user_city, user_province, amap_key)
+                    if city_coords:
+                        print(f'✅ 已获取并保存 {user_province}-{user_city} 的经纬度: {city_coords}')
+                        # 更新user_latitude和user_longitude
+                        user_latitude = city_coords['lat']
+                        user_longitude = city_coords['lng']
+                        
+                        # 将位置信息缓存到session（24小时有效期）
+                        import time
+                        request.session['user_location_cache'] = {
+                            'city': user_city,
+                            'province': user_province,
+                            'latitude': user_latitude,
+                            'longitude': user_longitude,
+                            'timestamp': time.time()
+                        }
+                        print(f'💾 已将位置信息缓存到Session')
             except Exception as e:
                 error_traceback = traceback.format_exc()
                 print("\n" + "!"*50)
@@ -551,18 +698,45 @@ class DestinationViewSet(PublicModelViewSet):
                     if dest_location:
                         print(f'🔍 通过高德API获取目的地位置: {dest_location}')
                 
-                # 如果两个位置都有经纬度，计算真实距离
+                # 如果两个位置都有经纬度，优先使用Haversine公式本地计算距离
                 if user_location and dest_location:
-                    distance_km = _calculate_distance(
+                    # 首先尝试使用Haversine公式本地计算
+                    distance_km = _calculate_distance_haversine(
                         user_location['lng'], user_location['lat'],
-                        dest_location['lng'], dest_location['lat'],
-                        amap_key
+                        dest_location['lng'], dest_location['lat']
                     )
-                    print(f'  -> 真实距离: {distance_km}公里')
+                    print(f'  -> 使用Haversine公式计算距离: {distance_km}公里')
                     
-                    # 直接使用负距离作为分数（距离越小，分数越高，排序越靠前）
-                    score = -distance_km
-                    print(f'  -> 排序分数: {score}（负距离）')
+                    # 如果Haversine计算失败，才调用高德API
+                    if distance_km is None:
+                        print(f'  -> Haversine计算失败，尝试调用高德API')
+                        distance_km = _calculate_distance(
+                            user_location['lng'], user_location['lat'],
+                            dest_location['lng'], dest_location['lat'],
+                            amap_key
+                        )
+                        if distance_km:
+                            print(f'  -> 高德API计算距离: {distance_km}公里')
+                    
+                    if distance_km is not None:
+                        # 直接使用负距离作为分数（距离越小，分数越高，排序越靠前）
+                        score = -distance_km
+                        print(f'  -> 排序分数: {score}（负距离）')
+                    else:
+                        # 两种方法都失败，使用降级方案
+                        print('  -> 所有距离计算方法都失败，使用降级方案')
+                        if dest_city and dest_city == user_city:
+                            score = -1  # 同城，距离设为1公里
+                            distance_km = 1
+                            print(f'  -> 同城匹配: 距离约1公里')
+                        elif dest_state and dest_state == user_province:
+                            score = -50  # 同省，距离设为50公里
+                            distance_km = 50
+                            print(f'  -> 同省匹配: 距离约50公里')
+                        else:
+                            score = -9999  # 其他，距离设为9999公里
+                            distance_km = 9999
+                            print(f'  -> 其他城市: 距离很远')
                 else:
                     # 降级方案：使用原来的省份匹配逻辑
                     print('  -> 无法获取经纬度，使用降级方案')
