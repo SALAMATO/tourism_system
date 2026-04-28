@@ -1,5 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
 
 
 class User(AbstractUser):
@@ -128,6 +130,32 @@ class Destination(models.Model):
                 return True
         
         return False
+
+
+# 信号处理器：在删除Destination时释放文件引用
+@receiver(post_delete, sender=Destination)
+def destination_post_delete(sender, instance, **kwargs):
+    """当Destination被删除时，释放所有关联的图片文件引用"""
+    from .media_manager import MediaFileManager
+    
+    # 释放封面图片
+    if instance.cover_image:
+        # 通过文件路径查找MediaFile记录
+        try:
+            media_file = MediaFile.objects.get(file_path=str(instance.cover_image), is_deleted=False)
+            MediaFileManager.release_file_reference(media_file)
+        except MediaFile.DoesNotExist:
+            pass
+    
+    # 释放展示图片1-4
+    for gallery_field in ['gallery_image_1', 'gallery_image_2', 'gallery_image_3', 'gallery_image_4']:
+        gallery_image = getattr(instance, gallery_field, None)
+        if gallery_image:
+            try:
+                media_file = MediaFile.objects.get(file_path=str(gallery_image), is_deleted=False)
+                MediaFileManager.release_file_reference(media_file)
+            except MediaFile.DoesNotExist:
+                pass
 
 
 class Policy(models.Model):
@@ -266,6 +294,28 @@ class MessageLike(models.Model):
 
     def __str__(self):
         return f'{self.user.nickname or self.user.username} 点赞了 {self.message.id}'
+
+
+class MediaFile(models.Model):
+    """媒体文件管理表 - 用于哈希去重和引用计数"""
+    file_hash = models.CharField(max_length=64, unique=True, db_index=True, verbose_name='文件哈希值(SHA256)')
+    file_path = models.CharField(max_length=500, verbose_name='文件存储路径')
+    file_name = models.CharField(max_length=255, verbose_name='原始文件名')
+    file_size = models.IntegerField(verbose_name='文件大小(字节)')
+    mime_type = models.CharField(max_length=100, blank=True, null=True, verbose_name='MIME类型')
+    reference_count = models.IntegerField(default=0, verbose_name='引用次数')
+    is_deleted = models.BooleanField(default=False, verbose_name='是否已删除')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
+
+    class Meta:
+        db_table = 'media_files'
+        verbose_name = '媒体文件'
+        verbose_name_plural = verbose_name
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.file_name} ({self.reference_count}次引用)'
 
 
 class Statistic(models.Model):

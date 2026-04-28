@@ -2,6 +2,7 @@ from rest_framework import serializers
 from django.utils import timezone
 from django.contrib.auth import get_user_model
 from .models import Policy, News, SafetyAlert, Message, MessageComment, MessageLike, Statistic, Destination
+from .media_manager import MediaFileManager
 
 User = get_user_model()
 
@@ -117,11 +118,103 @@ class DestinationSerializer(serializers.ModelSerializer):
         return data
 
     def create(self, validated_data):
+        """创建目的地时使用媒体文件管理器处理图片"""
         validated_data = self._normalize_features(validated_data)
+        
+        # 处理封面图片
+        if 'cover_image' in validated_data and validated_data['cover_image']:
+            uploaded_file = validated_data.pop('cover_image')
+            media_file, _ = MediaFileManager.save_file_with_deduplication(
+                uploaded_file, 
+                upload_to='media-destination/'
+            )
+            validated_data['cover_image'] = media_file.file_path
+        
+        # 处理展示图片1-4
+        for i in range(1, 5):
+            field_name = f'gallery_image_{i}'
+            if field_name in validated_data and validated_data[field_name]:
+                uploaded_file = validated_data.pop(field_name)
+                media_file, _ = MediaFileManager.save_file_with_deduplication(
+                    uploaded_file,
+                    upload_to='media-destination/'
+                )
+                validated_data[field_name] = media_file.file_path
+        
         return super().create(validated_data)
 
     def update(self, instance, validated_data):
+        """更新目的地时处理图片的引用计数"""
+        from django.core.files.uploadedfile import UploadedFile
+        
         validated_data = self._normalize_features(validated_data)
+        
+        # 处理封面图片
+        if 'cover_image' in validated_data:
+            new_cover = validated_data['cover_image']
+            old_cover = instance.cover_image
+            
+            # 如果是新上传的文件
+            if isinstance(new_cover, UploadedFile):
+                # 释放旧文件引用
+                if old_cover:
+                    try:
+                        from .models import MediaFile
+                        media_file = MediaFile.objects.get(file_path=str(old_cover), is_deleted=False)
+                        MediaFileManager.release_file_reference(media_file)
+                    except MediaFile.DoesNotExist:
+                        pass
+                
+                # 保存新文件
+                media_file, _ = MediaFileManager.save_file_with_deduplication(
+                    new_cover,
+                    upload_to='media-destination/'
+                )
+                validated_data['cover_image'] = media_file.file_path
+            elif not new_cover:
+                # 如果清空了图片
+                if old_cover:
+                    try:
+                        from .models import MediaFile
+                        media_file = MediaFile.objects.get(file_path=str(old_cover), is_deleted=False)
+                        MediaFileManager.release_file_reference(media_file)
+                    except MediaFile.DoesNotExist:
+                        pass
+        
+        # 处理展示图片1-4
+        for i in range(1, 5):
+            field_name = f'gallery_image_{i}'
+            if field_name in validated_data:
+                new_image = validated_data[field_name]
+                old_image = getattr(instance, field_name)
+                
+                # 如果是新上传的文件
+                if isinstance(new_image, UploadedFile):
+                    # 释放旧文件引用
+                    if old_image:
+                        try:
+                            from .models import MediaFile
+                            media_file = MediaFile.objects.get(file_path=str(old_image), is_deleted=False)
+                            MediaFileManager.release_file_reference(media_file)
+                        except MediaFile.DoesNotExist:
+                            pass
+                    
+                    # 保存新文件
+                    media_file, _ = MediaFileManager.save_file_with_deduplication(
+                        new_image,
+                        upload_to='media-destination/'
+                    )
+                    validated_data[field_name] = media_file.file_path
+                elif not new_image:
+                    # 如果清空了图片
+                    if old_image:
+                        try:
+                            from .models import MediaFile
+                            media_file = MediaFile.objects.get(file_path=str(old_image), is_deleted=False)
+                            MediaFileManager.release_file_reference(media_file)
+                        except MediaFile.DoesNotExist:
+                            pass
+        
         return super().update(instance, validated_data)
 
 
