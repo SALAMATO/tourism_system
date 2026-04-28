@@ -27,6 +27,25 @@ class User(AbstractUser):
         return self.nickname or self.username
 
 
+class ChinaCity(models.Model):
+    """中国城市经纬度数据表"""
+    country = models.CharField(max_length=50, default='中国', verbose_name='国家')
+    state = models.CharField(max_length=100, db_index=True, verbose_name='省份')
+    city = models.CharField(max_length=100, db_index=True, verbose_name='城市名称')
+    latitude = models.FloatField(verbose_name='纬度')
+    longitude = models.FloatField(verbose_name='经度')
+    is_domestic = models.BooleanField(default=True, verbose_name='是否国内')
+    
+    class Meta:
+        db_table = 'china_cities'
+        managed = False  # 表示这是一个已存在的表，Django不管理其结构
+        verbose_name = '中国城市'
+        verbose_name_plural = verbose_name
+    
+    def __str__(self):
+        return f'{self.state} - {self.city}'
+
+
 class Destination(models.Model):
     """低空旅游目的地"""
 

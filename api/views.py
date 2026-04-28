@@ -8,7 +8,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate, get_user_model
-from .models import Policy, News, SafetyAlert, Message, MessageComment, MessageLike, Statistic, Destination
+from .models import Policy, News, SafetyAlert, Message, MessageComment, MessageLike, Statistic, Destination, ChinaCity
 from .serializers import (
     PolicySerializer, NewsSerializer, SafetyAlertSerializer,
     MessageSerializer, MessageCommentSerializer, MessageLikeSerializer,
@@ -487,14 +487,35 @@ class DestinationViewSet(PublicModelViewSet):
             # 计算每个目的地与用户城市的匹配度
             scored_destinations = []
             
-            # 首先获取用户位置的经纬度
-            # 如果已有缓存的经纬度，直接使用；否则通过城市名查询
-            if user_latitude and user_longitude:
+            # 从 ChinaCity 表获取用户位置的经纬度
+            user_location = None
+            if user_city and user_province:
+                china_city = ChinaCity.objects.filter(
+                    city__icontains=user_city.replace('市', ''),
+                    state__icontains=user_province
+                ).first()
+                
+                if china_city:
+                    user_location = {'lng': china_city.longitude, 'lat': china_city.latitude}
+                    print(f'✅ 从 ChinaCity 表获取用户位置: {user_location}')
+                else:
+                    # 如果找不到精确匹配，尝试只匹配城市
+                    china_city = ChinaCity.objects.filter(
+                        city__icontains=user_city.replace('市', '')
+                    ).first()
+                    if china_city:
+                        user_location = {'lng': china_city.longitude, 'lat': china_city.latitude}
+                        print(f'✅ 从 ChinaCity 表获取用户位置(仅城市): {user_location}')
+            
+            # 如果 ChinaCity 表中没有，使用缓存的经纬度
+            if not user_location and user_latitude and user_longitude:
                 user_location = {'lng': user_longitude, 'lat': user_latitude}
                 print(f'✅ 使用缓存的用户位置经纬度: {user_location}')
-            else:
+            
+            # 如果还是没有，才调用高德地图 API
+            if not user_location:
                 user_location = _get_city_coordinates(user_city, user_province, amap_key)
-                print(f'用户位置经纬度: {user_location}')
+                print(f'🔍 通过高德API获取用户位置经纬度: {user_location}')
             
             for dest in domestic_destinations:
                 score = 0
@@ -505,9 +526,30 @@ class DestinationViewSet(PublicModelViewSet):
                 print(f'检查目的地: {dest.name}, 城市: {dest_city}, 省份: {dest_state}')
                 print(f'用户位置: {user_city}, {user_province}')
                 
-                # 获取目的地的经纬度
-                dest_location = _get_city_coordinates(dest_city, dest_state, amap_key)
-                print(f'目的地经纬度: {dest_location}')
+                # 从 ChinaCity 表获取目的地的经纬度
+                dest_location = None
+                china_city = ChinaCity.objects.filter(
+                    city__icontains=dest_city,
+                    state__icontains=dest_state
+                ).first()
+                
+                if china_city:
+                    dest_location = {'lng': china_city.longitude, 'lat': china_city.latitude}
+                    print(f'✅ 从 ChinaCity 表获取目的地位置: {dest_location}')
+                else:
+                    # 如果找不到精确匹配，尝试只匹配城市
+                    china_city = ChinaCity.objects.filter(
+                        city__icontains=dest_city
+                    ).first()
+                    if china_city:
+                        dest_location = {'lng': china_city.longitude, 'lat': china_city.latitude}
+                        print(f'✅ 从 ChinaCity 表获取目的地位置(仅城市): {dest_location}')
+                
+                # 如果 ChinaCity 表中没有，才调用高德地图 API
+                if not dest_location:
+                    dest_location = _get_city_coordinates(dest_city, dest_state, amap_key)
+                    if dest_location:
+                        print(f'🔍 通过高德API获取目的地位置: {dest_location}')
                 
                 # 如果两个位置都有经纬度，计算真实距离
                 if user_location and dest_location:
