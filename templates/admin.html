@@ -502,17 +502,32 @@
           <!-- 其他单列字段 -->
           <div class="form-group">
             <label class="form-label">详细描述 *</label>
-            <textarea id="safety-description" class="form-textarea" rows="5" required></textarea>
+            <div style="position: relative;">
+              <textarea id="safety-description" class="form-textarea" rows="5" required placeholder="点击下方按钮启用富文本编辑器"></textarea>
+              <button type="button" class="btn btn-secondary editor-toggle-btn" data-editor-id="safety-description" style="position: absolute; top: 8px; right: 8px; font-size: 12px; padding: 4px 12px; z-index: 10;">
+                <i class="fas fa-edit"></i> 编辑文本
+              </button>
+            </div>
           </div>
         
           <div class="form-group">
             <label class="form-label">预防措施 *</label>
-            <textarea id="safety-prevention" class="form-textarea" rows="5" required></textarea>
+            <div style="position: relative;">
+              <textarea id="safety-prevention" class="form-textarea" rows="5" required placeholder="点击下方按钮启用富文本编辑器"></textarea>
+              <button type="button" class="btn btn-secondary editor-toggle-btn" data-editor-id="safety-prevention" style="position: absolute; top: 8px; right: 8px; font-size: 12px; padding: 4px 12px; z-index: 10;">
+                <i class="fas fa-edit"></i> 编辑文本
+              </button>
+            </div>
           </div>
         
           <div class="form-group">
             <label class="form-label">应急预案 *</label>
-            <textarea id="safety-plan" class="form-textarea" rows="5" required></textarea>
+            <div style="position: relative;">
+              <textarea id="safety-plan" class="form-textarea" rows="5" required placeholder="点击下方按钮启用富文本编辑器"></textarea>
+              <button type="button" class="btn btn-secondary editor-toggle-btn" data-editor-id="safety-plan" style="position: absolute; top: 8px; right: 8px; font-size: 12px; padding: 4px 12px; z-index: 10;">
+                <i class="fas fa-edit"></i> 编辑文本
+              </button>
+            </div>
           </div>
             
           <div style="margin-top: 8px;">
@@ -863,7 +878,12 @@
         <div id="reply-message-info"></div>
         <div class="form-group" style="margin-top: 20px;">
           <label class="form-label">回复内容 *</label>
-          <textarea id="reply-content" class="form-textarea" rows="6" required></textarea>
+          <div style="position: relative;">
+            <textarea id="reply-content" class="form-textarea" rows="6" required placeholder="点击下方按钮启用富文本编辑器"></textarea>
+            <button type="button" class="btn btn-secondary editor-toggle-btn" data-editor-id="reply-content" style="position: absolute; top: 8px; right: 8px; font-size: 12px; padding: 4px 12px; z-index: 10;">
+              <i class="fas fa-edit"></i> 编辑文本
+            </button>
+          </div>
         </div>
         <div style="display: flex; justify-content: flex-start; gap: 12px;">
           <button type="button" onclick="submitReply()" class="btn btn-primary" style="padding: 10px 24px;">提交回复</button>

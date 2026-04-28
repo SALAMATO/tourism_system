@@ -200,7 +200,11 @@ function initEditorToggleButtons() {
     'policy-content': '请输入政策法规内容...',
     'news-content': '请输入新闻资讯内容...',
     'destination-description': '请输入旅游目的地的详细介绍...',
-    'destination-features': '请输入旅游目的地特色亮点，可使用富文本排版...'
+    'destination-features': '请输入旅游目的地特色亮点，可使用富文本排版...',
+    'safety-description': '请输入安全隐患的详细描述...',
+    'safety-prevention': '请输入预防措施...',
+    'safety-plan': '请输入应急预案...',
+    'reply-content': '请输入回复内容...'
   };
   
   // 使用事件委托监听所有编辑按钮的点击
@@ -310,14 +314,8 @@ async function editPolicy(id) {
     // 将时间转为 yyyy-MM-dd 形式填到 date 输入框
     document.getElementById('policy-date').value = formatDate(policy.publish_date);
     
-    // 使用CKEditor设置内容
-    if (window.CKEditorSuperHelper && policy.content) {
-      setTimeout(() => {
-        window.CKEditorSuperHelper.setContent('policy-content', policy.content);
-      }, 100);
-    } else {
-      document.getElementById('policy-content').value = policy.content || '';
-    }
+    // 设置内容到textarea（如果编辑器未初始化）
+    document.getElementById('policy-content').value = policy.content || '';
     
     document.getElementById('policy-url').value = policy.file_url || '';
     document.getElementById('policy-tags').value = (policy.tags || []).join(',');
@@ -331,6 +329,28 @@ async function editPolicy(id) {
 
     // 滚动到政策法规管理区域
     document.getElementById('policy-module').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    
+    // 自动初始化富文本编辑器
+    setTimeout(async () => {
+      try {
+        if (!window.CKEditorSuperHelper || 
+            !window.CKEditorSuperHelper.editorInstances['policy-content'] ||
+            window.CKEditorSuperHelper.editorInstances['policy-content']._destroyed) {
+          console.log('正在自动初始化政策编辑器...');
+          await lazyInitEditor('policy-content', '请输入政策法规内容...');
+          
+          // 填充内容
+          if (policy.content) {
+            window.CKEditorSuperHelper.setContent('policy-content', policy.content);
+          }
+        } else {
+          // 编辑器已存在，直接设置内容
+          window.CKEditorSuperHelper.setContent('policy-content', policy.content || '');
+        }
+      } catch (error) {
+        console.error('自动初始化政策编辑器失败:', error);
+      }
+    }, 300);
   } catch (error) {
     console.error('加载政策详情用于编辑失败:', error);
     showNotification('加载政策详情失败', 'error');
@@ -431,14 +451,9 @@ async function editNews(id) {
     document.getElementById('news-author').value = news.author || '';
     document.getElementById('news-cover').value = news.cover_image || '';
     
-    // 使用CKEditor设置内容
-    if (window.CKEditorSuperHelper && news.content) {
-      setTimeout(() => {
-        window.CKEditorSuperHelper.setContent('news-content', news.content);
-      }, 100);
-    } else {
-      document.getElementById('news-content').value = news.content || '';
-    }
+    // 设置内容到textarea（如果编辑器未初始化）
+    document.getElementById('news-content').value = news.content || '';
+    
     document.getElementById('news-tags').value = (news.tags || []).join(',');
 
     const titleEl = document.querySelector('#news-module .card-title');
@@ -450,6 +465,28 @@ async function editNews(id) {
 
     // 滚动到新闻资讯管理区域
     document.getElementById('news-module').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    
+    // 自动初始化富文本编辑器
+    setTimeout(async () => {
+      try {
+        if (!window.CKEditorSuperHelper || 
+            !window.CKEditorSuperHelper.editorInstances['news-content'] ||
+            window.CKEditorSuperHelper.editorInstances['news-content']._destroyed) {
+          console.log('正在自动初始化新闻编辑器...');
+          await lazyInitEditor('news-content', '请输入新闻资讯内容...');
+          
+          // 填充内容
+          if (news.content) {
+            window.CKEditorSuperHelper.setContent('news-content', news.content);
+          }
+        } else {
+          // 编辑器已存在，直接设置内容
+          window.CKEditorSuperHelper.setContent('news-content', news.content || '');
+        }
+      } catch (error) {
+        console.error('自动初始化新闻编辑器失败:', error);
+      }
+    }, 300);
   } catch (error) {
     console.error('加载新闻详情用于编辑失败:', error);
     showNotification('加载新闻详情失败', 'error');
@@ -543,18 +580,10 @@ async function editSafetyAlert(id) {
     document.getElementById('safety-risk').value = alert.risk_level || '中';
     document.getElementById('safety-category').value = alert.category || '';
     
-    // 使用CKEditor设置内容
-    if (window.CKEditorSuperHelper) {
-      setTimeout(() => {
-        window.CKEditorSuperHelper.setContent('safety-description', alert.description || '');
-        window.CKEditorSuperHelper.setContent('safety-prevention', alert.prevention || '');
-        window.CKEditorSuperHelper.setContent('safety-plan', alert.emergency_plan || '');
-      }, 100);
-    } else {
-      document.getElementById('safety-description').value = alert.description || '';
-      document.getElementById('safety-prevention').value = alert.prevention || '';
-      document.getElementById('safety-plan').value = alert.emergency_plan || '';
-    }
+    // 设置内容到textarea（如果编辑器未初始化）
+    document.getElementById('safety-description').value = alert.description || '';
+    document.getElementById('safety-prevention').value = alert.prevention || '';
+    document.getElementById('safety-plan').value = alert.emergency_plan || '';
     
     document.getElementById('safety-status').value = alert.status || '待处理';
 
@@ -567,6 +596,36 @@ async function editSafetyAlert(id) {
 
     // 滚动到安全隐患管理区域
     document.getElementById('safety-module').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    
+    // 自动初始化富文本编辑器（三个字段）
+    setTimeout(async () => {
+      try {
+        const editors = [
+          { id: 'safety-description', placeholder: '请输入安全隐患的详细描述...', content: alert.description },
+          { id: 'safety-prevention', placeholder: '请输入预防措施...', content: alert.prevention },
+          { id: 'safety-plan', placeholder: '请输入应急预案...', content: alert.emergency_plan }
+        ];
+        
+        for (const editor of editors) {
+          if (!window.CKEditorSuperHelper || 
+              !window.CKEditorSuperHelper.editorInstances[editor.id] ||
+              window.CKEditorSuperHelper.editorInstances[editor.id]._destroyed) {
+            console.log(`正在自动初始化安全隐患编辑器: ${editor.id}`);
+            await lazyInitEditor(editor.id, editor.placeholder);
+            
+            // 填充内容
+            if (editor.content) {
+              window.CKEditorSuperHelper.setContent(editor.id, editor.content);
+            }
+          } else {
+            // 编辑器已存在，直接设置内容
+            window.CKEditorSuperHelper.setContent(editor.id, editor.content || '');
+          }
+        }
+      } catch (error) {
+        console.error('自动初始化安全隐患编辑器失败:', error);
+      }
+    }, 300);
   } catch (error) {
     console.error('加载安全隐患详情用于编辑失败:', error);
     showNotification('加载安全隐患详情失败', 'error');
@@ -1124,16 +1183,10 @@ async function editDestination(id) {
     document.getElementById('destination-sort-order').value = destination.sort_order || 0;
     document.getElementById('destination-is-featured').value = String(Boolean(destination.is_featured));
     document.getElementById('destination-is-hot').value = String(Boolean(destination.is_hot));
+    
+    // 设置内容到textarea（如果编辑器未初始化）
     document.getElementById('destination-description').value = destination.description || '';
     document.getElementById('destination-features').value = destination.features_display || (destination.features || []).join('\n');
-
-    // 优化：使用批量设置内容，减少DOM操作次数
-    if (window.CKEditorSuperHelper && window.CKEditorSuperHelper.batchSetContent) {
-      window.CKEditorSuperHelper.batchSetContent({
-        'destination-description': destination.description || '',
-        'destination-features': destination.features_display || ''
-      });
-    }
 
     const preview = document.getElementById('destination-cover-preview');
     const previewImage = document.getElementById('destination-cover-preview-img');
@@ -1156,6 +1209,35 @@ async function editDestination(id) {
     if (deleteBtn) deleteBtn.style.display = 'inline-block';
 
     document.getElementById('destination-module').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    
+    // 自动初始化富文本编辑器（两个字段）
+    setTimeout(async () => {
+      try {
+        const editors = [
+          { id: 'destination-description', placeholder: '请输入旅游目的地的详细介绍...', content: destination.description },
+          { id: 'destination-features', placeholder: '请输入旅游目的地特色亮点，可使用富文本排版...', content: destination.features_display || '' }
+        ];
+        
+        for (const editor of editors) {
+          if (!window.CKEditorSuperHelper || 
+              !window.CKEditorSuperHelper.editorInstances[editor.id] ||
+              window.CKEditorSuperHelper.editorInstances[editor.id]._destroyed) {
+            console.log(`正在自动初始化目的地编辑器: ${editor.id}`);
+            await lazyInitEditor(editor.id, editor.placeholder);
+            
+            // 填充内容
+            if (editor.content) {
+              window.CKEditorSuperHelper.setContent(editor.id, editor.content);
+            }
+          } else {
+            // 编辑器已存在，直接设置内容
+            window.CKEditorSuperHelper.setContent(editor.id, editor.content || '');
+          }
+        }
+      } catch (error) {
+        console.error('自动初始化目的地编辑器失败:', error);
+      }
+    }, 300);
   } catch (error) {
     console.error('加载目的地详情失败:', error);
     showNotification('加载目的地详情失败', 'error');
@@ -1428,7 +1510,28 @@ async function openReplyModal(messageId) {
     const submitBtn = document.getElementById('reply-submit-btn');
     if (submitBtn) submitBtn.textContent = isEditing ? '保存修改' : '提交回复';
     
+    // 打开模态框
     replyModal.open();
+    
+    // 自动初始化回复内容的富文本编辑器（延迟执行，确保模态框已显示）
+    setTimeout(async () => {
+      try {
+        // 检查编辑器是否已经初始化
+        if (!window.CKEditorSuperHelper || 
+            !window.CKEditorSuperHelper.editorInstances['reply-content'] ||
+            window.CKEditorSuperHelper.editorInstances['reply-content']._destroyed) {
+          console.log('正在自动初始化回复编辑器...');
+          await lazyInitEditor('reply-content', '请输入回复内容...');
+          
+          // 如果textarea中有内容，自动填充到编辑器
+          if (replyContent) {
+            window.CKEditorSuperHelper.setContent('reply-content', replyContent);
+          }
+        }
+      } catch (error) {
+        console.error('自动初始化回复编辑器失败:', error);
+      }
+    }, 300);
   } catch (error) {
     console.error('加载留言详情失败:', error);
     showNotification('加载失败', 'error');
