@@ -43,6 +43,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // 周边模式：按距离排序城市
     if (currentDomestic === 'nearby' && locations.length > 0) {
+      console.log('=== 开始处理周边模式城市排序 ===');
+      console.log('排序前的locations:', locations);
+      console.log('filteredCache长度:', filteredCache.length);
+      
       // API返回的nearbyDestinations已经按距离排序（近的在前）
       // 我们根据每个城市第一次出现的顺序来确定距离远近
       const cityOrder = {};
@@ -50,20 +54,27 @@ document.addEventListener('DOMContentLoaded', async () => {
       
       filteredCache.forEach((item, index) => {
         const city = item.city;
+        console.log(`  目的地${index + 1}: ${city}, match_score=${item.match_score}`);
         // 只记录第一次出现的位置（最近的）
         if (!(city in cityOrder)) {
           cityOrder[city] = index;
           // match_score 现在是真实距离（公里），四舍五入后的整数
           cityDistances[city] = item.match_score || 'N/A';
+          console.log(`    -> 首次出现，记录索引: ${index}, 距离: ${item.match_score}公里`);
         }
       });
       
-      // 按首次出现的顺序排序（索引小的在前，表示距离近）
-      locations.sort((a, b) => (cityOrder[a] || 999) - (cityOrder[b] || 999));
-      console.log('周边城市按距离排序后:', locations);
       console.log('城市顺序映射:', cityOrder);
       console.log('城市距离信息（公里）:', cityDistances);
-      console.log('说明：索引越小表示距离越近');
+      
+      // 按距离从小到大排序（距离小的在前）
+      locations.sort((a, b) => {
+        const distA = cityDistances[a] || 99999;
+        const distB = cityDistances[b] || 99999;
+        return distA - distB;  // 升序：距离小的排前面
+      });
+      console.log('排序后的locations:', locations);
+      console.log('说明：距离越小越靠前');
       
       // 调试：打印每个城市的详细信息
       locations.forEach((city, idx) => {
@@ -75,6 +86,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       filteredCache.slice(0, 5).forEach((item, idx) => {
         console.log(`  ${idx + 1}. ${item.city} - 距离: ${item.match_score || 'N/A'}公里, 评分: ${item.rating}, 浏览: ${item.views}`);
       });
+      console.log('=== 城市排序处理完成 ===\n');
     }
     
     renderCities(locations);
