@@ -16,6 +16,7 @@ from .serializers import (
     UserSerializer, UserRegisterSerializer
 )
 from ai import lowsky_ai
+from .utils import get_client_ip, parse_location_by_ip
 
 # 配置日志
 logger = logging.getLogger(__name__)
@@ -39,6 +40,30 @@ class PublicModelViewSet(ModelViewSet):
         return Response({'views': news.views})
 
 User = get_user_model()
+
+
+def update_user_location(user, request):
+    """
+    根据用户IP更新用户位置信息
+    只有当IP地址变更时才更新
+    """
+    ip = get_client_ip(request)
+    
+    # 如果IP没有变化，不更新
+    if user.last_login_ip == ip:
+        return
+    
+    result = parse_location_by_ip(ip)
+    
+    if result:
+        user.country = result.get("country", user.country)
+        user.province = result.get("province", user.province)
+        user.city = result.get("city", user.city)
+        user.latitude = result.get("latitude", user.latitude)
+        user.longitude = result.get("longitude", user.longitude)
+        user.last_login_ip = ip
+        
+        user.save(update_fields=['country', 'province', 'city', 'latitude', 'longitude', 'last_login_ip'])
 class UserViewSet(PublicModelViewSet):
     """用户管理（管理员可管理用户）"""
     queryset = User.objects.all()
@@ -55,6 +80,10 @@ class UserViewSet(PublicModelViewSet):
         serializer = UserRegisterSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
+            
+            # 更新用户位置信息
+            update_user_location(user, request)
+            
             token, _ = Token.objects.get_or_create(user=user)
             return Response({
                 'token': token.key,
@@ -92,6 +121,9 @@ class UserViewSet(PublicModelViewSet):
             # 检查账号是否被冻结
             if not user.is_active:
                 return Response({'error': '账号已被冻结，请联系管理员'}, status=status.HTTP_403_FORBIDDEN)
+            
+            # 更新用户位置信息
+            update_user_location(user, request)
             
             token, _ = Token.objects.get_or_create(user=user)
             return Response({
@@ -198,6 +230,8 @@ class DestinationViewSet(PublicModelViewSet):
     ordering_fields = ['sort_order', 'rating', 'views', 'created_at']
 
     def get_queryset(self):
+        from django.db import connection
+        
         queryset = super().get_queryset()
         recommendation_type = self.request.query_params.get('recommendation_type')
         city = self.request.query_params.get('city')
@@ -205,17 +239,24 @@ class DestinationViewSet(PublicModelViewSet):
         is_hot = self.request.query_params.get('is_hot')
         is_domestic = self.request.query_params.get('is_domestic')
 
+        # SQLite不支持JSONField的__contains查询，需要特殊处理
         if recommendation_type:
-            # recommendation_type现在是JSONField，使用contains查询
-            queryset = queryset.filter(recommendation_type__contains=[recommendation_type])
+            if connection.vendor == 'sqlite':
+                # SQLite: 先获取所有数据，然后在Python中过滤
+                queryset = list(queryset)
+                queryset = [dest for dest in queryset if recommendation_type in (dest.recommendation_type or [])]
+            else:
+                # MySQL/PostgreSQL: 使用JSONField的contains查询
+                queryset = queryset.filter(recommendation_type__contains=[recommendation_type])
+        
         if city:
-            queryset = queryset.filter(city=city)
+            queryset = queryset.filter(city=city) if not isinstance(queryset, list) else [dest for dest in queryset if dest.city == city]
         if is_featured is not None:
-            queryset = queryset.filter(is_featured=is_featured.lower() == 'true')
+            queryset = queryset.filter(is_featured=is_featured.lower() == 'true') if not isinstance(queryset, list) else [dest for dest in queryset if dest.is_featured == (is_featured.lower() == 'true')]
         if is_hot is not None:
-            queryset = queryset.filter(is_hot=is_hot.lower() == 'true')
+            queryset = queryset.filter(is_hot=is_hot.lower() == 'true') if not isinstance(queryset, list) else [dest for dest in queryset if dest.is_hot == (is_hot.lower() == 'true')]
         if is_domestic is not None:
-            queryset = queryset.filter(is_domestic=is_domestic.lower() == 'true')
+            queryset = queryset.filter(is_domestic=is_domestic.lower() == 'true') if not isinstance(queryset, list) else [dest for dest in queryset if dest.is_domestic == (is_domestic.lower() == 'true')]
 
         return queryset
 
@@ -318,69 +359,106 @@ class DestinationViewSet(PublicModelViewSet):
             except Exception as e:
                 print(f'  ❌ 距离计算异常: {str(e)}')
                 return None
-            
-        # 获取用户IP
-        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-        if x_forwarded_for:
-            ip = x_forwarded_for.split(',')[0].strip()
-        else:
-            ip = request.META.get('REMOTE_ADDR', '127.0.0.1')
         
-        print(f'原始IP地址: {ip}')
-        
-        # 如果是本地IP，不传ip参数给高德API，让它自动识别请求来源IP
-        is_local_ip = ip in ['127.0.0.1', 'localhost', '::1', '0.0.0.0']
-        
-        print(f'原始IP地址: {ip}')
-        if is_local_ip:
-            print('检测到本地IP，将使用高德API自动识别功能')
-        else:
-            print(f'使用公网IP: {ip}')
-        
-        # 高德地图IP定位API
+        # 高德地图API密钥
         amap_key = '8fe3ebb5ad6cfbb67e7394f20668e0c7'
-        try:
-            if is_local_ip:
-                amap_url = f'https://restapi.amap.com/v3/ip?key={amap_key}'
+        
+        # 检查用户是否已登录且有缓存的位置信息
+        user_city = None
+        user_province = None
+        user_latitude = None
+        user_longitude = None
+        ip_source = 'cached'  # 标记位置信息来源
+        
+        if request.user.is_authenticated:
+            # 用户已登录，检查是否有缓存的位置信息
+            user = request.user
+            if user.city and user.province and user.latitude and user.longitude:
+                user_city = user.city
+                user_province = user.province
+                user_latitude = user.latitude
+                user_longitude = user.longitude
+                ip_source = 'cached'
+                print(f'✅ 使用用户缓存的位置信息: {user_province} {user_city}')
+                print(f'   经纬度: ({user_latitude}, {user_longitude})')
+        
+        # 如果没有缓存的位置信息，则通过IP获取
+        if not user_city or not user_province:
+            ip_source = 'ip_lookup'
+            
+            # 获取用户IP
+            x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+            if x_forwarded_for:
+                ip = x_forwarded_for.split(',')[0].strip()
             else:
-                amap_url = f'https://restapi.amap.com/v3/ip?key={amap_key}&ip={ip}'
+                ip = request.META.get('REMOTE_ADDR', '127.0.0.1')
             
-            print(f'请求高德地图API: {amap_url}')
-            amap_resp = requests.get(amap_url, timeout=3)
-            print(f'高德地图API响应状态码: {amap_resp.status_code}')
-            amap_data = amap_resp.json()
-            print(f'高德地图API响应数据: {amap_data}')
+            print(f'原始IP地址: {ip}')
+            
+            # 如果是本地IP，不传ip参数给高德API，让它自动识别请求来源IP
+            is_local_ip = ip in ['127.0.0.1', 'localhost', '::1', '0.0.0.0']
+            
+            print(f'原始IP地址: {ip}')
+            if is_local_ip:
+                print('检测到本地IP，将使用高德API自动识别功能')
+            else:
+                print(f'使用公网IP: {ip}')
+            
+            try:
+                if is_local_ip:
+                    amap_url = f'https://restapi.amap.com/v3/ip?key={amap_key}'
+                else:
+                    amap_url = f'https://restapi.amap.com/v3/ip?key={amap_key}&ip={ip}'
                 
-            # 获取城市信息
-            user_city = amap_data.get('city', '')
-            user_province = amap_data.get('province', '')
-            
-            print(f'原始API返回数据 - city类型: {type(user_city)}, 值: {user_city}')
-            print(f'原始API返回数据 - province类型: {type(user_province)}, 值: {user_province}')
-            
-            # 处理API返回可能是列表的情况
-            if isinstance(user_city, list):
-                user_city = user_city[0] if user_city else ''
-            if isinstance(user_province, list):
-                user_province = user_province[0] if user_province else ''
-            
-            # 确保是字符串
-            user_city = str(user_city).strip() if user_city else ''
-            user_province = str(user_province).strip() if user_province else ''
-            
-            print(f'处理后的城市数据: city="{user_city}", province="{user_province}"')
-            
-            # 如果API返回城市为空，使用默认城市
-            if not user_city or user_city == '[]':
-                print('高德地图API未返回城市信息，使用默认值')
-                user_city = '南京'  # 114.114.114.114是南京DNS
-                user_province = '江苏'
+                print(f'请求高德地图API: {amap_url}')
+                amap_resp = requests.get(amap_url, timeout=3)
+                print(f'高德地图API响应状态码: {amap_resp.status_code}')
+                amap_data = amap_resp.json()
+                print(f'高德地图API响应数据: {amap_data}')
+                    
+                # 获取城市信息
+                user_city = amap_data.get('city', '')
+                user_province = amap_data.get('province', '')
                 
-            # 去除城市后缀（如“市”）
-            user_city = user_city.replace('市', '').strip()
-            user_province = user_province.replace('省', '').replace('自治区', '').replace('市', '').strip()
+                print(f'原始API返回数据 - city类型: {type(user_city)}, 值: {user_city}')
+                print(f'原始API返回数据 - province类型: {type(user_province)}, 值: {user_province}')
                 
-            print(f'定位结果: {user_province} {user_city}')
+                # 处理API返回可能是列表的情况
+                if isinstance(user_city, list):
+                    user_city = user_city[0] if user_city else ''
+                if isinstance(user_province, list):
+                    user_province = user_province[0] if user_province else ''
+                
+                # 确保是字符串
+                user_city = str(user_city).strip() if user_city else ''
+                user_province = str(user_province).strip() if user_province else ''
+                
+                print(f'处理后的城市数据: city="{user_city}", province="{user_province}"')
+                
+                # 如果API返回城市为空，使用默认城市
+                if not user_city or user_city == '[]':
+                    print('高德地图API未返回城市信息，使用默认值')
+                    user_city = '南京'  # 114.114.114.114是南京DNS
+                    user_province = '江苏'
+                    
+                # 去除城市后缀（如“市”）
+                user_city = user_city.replace('市', '').strip()
+                user_province = user_province.replace('省', '').replace('自治区', '').replace('市', '').strip()
+                    
+                print(f'定位结果: {user_province} {user_city}')
+            except Exception as e:
+                error_traceback = traceback.format_exc()
+                print("\n" + "!"*50)
+                print(f'IP定位失败: {str(e)}')
+                print("错误堆栈:")
+                print(error_traceback)
+                print("!"*50 + "\n")
+                
+                # IP定位失败，使用默认值
+                user_city = '北京'
+                user_province = '北京'
+        
+        try:
                         
             # 获取所有国内目的地
             # 注意：SQLite不支持JSONField的__contains查询，需要特殊处理
@@ -410,8 +488,13 @@ class DestinationViewSet(PublicModelViewSet):
             scored_destinations = []
             
             # 首先获取用户位置的经纬度
-            user_location = _get_city_coordinates(user_city, user_province, amap_key)
-            print(f'用户位置经纬度: {user_location}')
+            # 如果已有缓存的经纬度，直接使用；否则通过城市名查询
+            if user_latitude and user_longitude:
+                user_location = {'lng': user_longitude, 'lat': user_latitude}
+                print(f'✅ 使用缓存的用户位置经纬度: {user_location}')
+            else:
+                user_location = _get_city_coordinates(user_city, user_province, amap_key)
+                print(f'用户位置经纬度: {user_location}')
             
             for dest in domestic_destinations:
                 score = 0
@@ -481,9 +564,10 @@ class DestinationViewSet(PublicModelViewSet):
             print("="*50)
             print("请求处理成功\n")
             return Response({
-                'ip': ip,
+                'ip': ip if ip_source == 'ip_lookup' else None,
                 'user_city': user_city,
                 'user_province': user_province,
+                'ip_source': ip_source,  # 标记位置信息来源: 'cached' 或 'ip_lookup'
                 'destinations': result_data
             })
                 
@@ -520,18 +604,20 @@ class DestinationViewSet(PublicModelViewSet):
                     
                 serializer = self.get_serializer(default_destinations, many=True)
                 return Response({
-                    'ip': ip,
-                    'user_city': '北京',
-                    'user_province': '北京',
+                    'ip': ip if ip_source == 'ip_lookup' else None,
+                    'user_city': user_city or '北京',
+                    'user_province': user_province or '北京',
+                    'ip_source': ip_source,
                     'error': str(e),
                     'destinations': serializer.data
                 })
             except Exception as e2:
                 print(f' fallback 也失败: {str(e2)}')
                 return Response({
-                    'ip': ip,
-                    'user_city': '北京',
-                    'user_province': '北京',
+                    'ip': None,
+                    'user_city': user_city or '北京',
+                    'user_province': user_province or '北京',
+                    'ip_source': ip_source,
                     'error': str(e2),
                     'destinations': []
                 }, status=500)
@@ -549,17 +635,30 @@ class DestinationViewSet(PublicModelViewSet):
     @action(detail=False, methods=['get'])
     def homepage_modules(self, request):
         """获取首页目的地模块数据"""
+        from django.db import connection
+        
         nearby_city = request.query_params.get('nearby_city') or '北京'
         managed_city = request.query_params.get('managed_city')
 
-        nearby_items = list(
-            Destination.objects.filter(recommendation_type__contains=['nearby'], is_featured=True)
-            .order_by('sort_order', '-rating', '-views')
-        )
-        managed_items = list(
-            Destination.objects.filter(recommendation_type__contains=['managed'], is_featured=True)
-            .order_by('sort_order', '-rating', '-views')
-        )
+        # SQLite不支持JSONField的__contains查询，需要特殊处理
+        if connection.vendor == 'sqlite':
+            # SQLite: 获取所有is_featured=True的目的地，然后在Python中过滤
+            all_featured = list(
+                Destination.objects.filter(is_featured=True)
+                .order_by('sort_order', '-rating', '-views')
+            )
+            nearby_items = [dest for dest in all_featured if 'nearby' in (dest.recommendation_type or [])]
+            managed_items = [dest for dest in all_featured if 'managed' in (dest.recommendation_type or [])]
+        else:
+            # MySQL/PostgreSQL: 使用JSONField的contains查询
+            nearby_items = list(
+                Destination.objects.filter(recommendation_type__contains=['nearby'], is_featured=True)
+                .order_by('sort_order', '-rating', '-views')
+            )
+            managed_items = list(
+                Destination.objects.filter(recommendation_type__contains=['managed'], is_featured=True)
+                .order_by('sort_order', '-rating', '-views')
+            )
 
         nearby_cities = sorted({item.city for item in nearby_items})
         managed_cities = sorted({item.city for item in managed_items})
@@ -593,6 +692,7 @@ class DestinationViewSet(PublicModelViewSet):
         """智能推荐：基于综合评分+时间衰减算法"""
         import math
         from datetime import datetime, timezone
+        from django.db import connection
         
         # 获取查询参数
         is_domestic = request.query_params.get('is_domestic', 'true')
@@ -607,11 +707,13 @@ class DestinationViewSet(PublicModelViewSet):
             queryset = queryset.filter(is_domestic=is_domestic.lower() == 'true')
         if city:
             queryset = queryset.filter(city=city)
-        if recommendation_type:
-            queryset = queryset.filter(recommendation_type__contains=[recommendation_type])
         
         # 获取所有目的地
         destinations = list(queryset)
+        
+        # 如果指定了recommendation_type，在Python中过滤（兼容SQLite）
+        if recommendation_type:
+            destinations = [dest for dest in destinations if recommendation_type in (dest.recommendation_type or [])]
         
         if not destinations:
             return Response([])

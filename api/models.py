@@ -9,6 +9,14 @@ class User(AbstractUser):
     avatar = models.URLField(blank=True, null=True, verbose_name='头像')
     bio = models.TextField(blank=True, null=True, verbose_name='个人简介')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='注册时间')
+    
+    # 位置信息字段
+    country = models.CharField(max_length=100, blank=True, null=True, default='中国', verbose_name='国家')
+    province = models.CharField(max_length=100, blank=True, null=True, verbose_name='省份/州')
+    city = models.CharField(max_length=100, blank=True, null=True, verbose_name='城市')
+    latitude = models.FloatField(blank=True, null=True, verbose_name='纬度')
+    longitude = models.FloatField(blank=True, null=True, verbose_name='经度')
+    last_login_ip = models.CharField(max_length=45, blank=True, null=True, verbose_name='最后登录IP')
 
     class Meta:
         db_table = 'users'
