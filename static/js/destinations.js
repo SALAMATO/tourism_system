@@ -46,34 +46,34 @@ document.addEventListener('DOMContentLoaded', async () => {
       // API返回的nearbyDestinations已经按距离排序（近的在前）
       // 我们根据每个城市第一次出现的顺序来确定距离远近
       const cityOrder = {};
-      const cityScores = {}; // 记录每个城市的最高分数
+      const cityDistances = {}; // 记录每个城市的最近距离（公里）
       
       filteredCache.forEach((item, index) => {
         const city = item.city;
         // 只记录第一次出现的位置（最近的）
         if (!(city in cityOrder)) {
           cityOrder[city] = index;
-          // 使用后端返回的match_score（匹配分数：100/50/10）
-          cityScores[city] = item.match_score || 'N/A';
+          // match_score 现在是真实距离（公里），四舍五入后的整数
+          cityDistances[city] = item.match_score || 'N/A';
         }
       });
       
-      // 按首次出现的顺序排序（索引小的在前，表示距离近/分数高）
+      // 按首次出现的顺序排序（索引小的在前，表示距离近）
       locations.sort((a, b) => (cityOrder[a] || 999) - (cityOrder[b] || 999));
       console.log('周边城市按距离排序后:', locations);
       console.log('城市顺序映射:', cityOrder);
-      console.log('城市分数信息:', cityScores);
-      console.log('说明：索引越小表示距离越近（分数越高）');
+      console.log('城市距离信息（公里）:', cityDistances);
+      console.log('说明：索引越小表示距离越近');
       
       // 调试：打印每个城市的详细信息
       locations.forEach((city, idx) => {
-        console.log(`  ${idx + 1}. ${city} - 索引: ${cityOrder[city]}, 分数: ${cityScores[city]}`);
+        console.log(`  ${idx + 1}. ${city} - 索引: ${cityOrder[city]}, 距离: ${cityDistances[city]}公里`);
       });
       
       // 打印前几个目的地的详细信息
       console.log('前5个目的地详情:');
       filteredCache.slice(0, 5).forEach((item, idx) => {
-        console.log(`  ${idx + 1}. ${item.city} - 匹配分数: ${item.match_score || 'N/A'}, 评分: ${item.rating}, 浏览: ${item.views}`);
+        console.log(`  ${idx + 1}. ${item.city} - 距离: ${item.match_score || 'N/A'}公里, 评分: ${item.rating}, 浏览: ${item.views}`);
       });
     }
     

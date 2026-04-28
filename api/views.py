@@ -415,6 +415,7 @@ class DestinationViewSet(PublicModelViewSet):
             
             for dest in domestic_destinations:
                 score = 0
+                distance_km = 0  # 保存真实距离
                 dest_city = dest.city.replace('市', '').strip() if dest.city else ''
                 dest_state = (dest.state or '').replace('省', '').replace('自治区', '').replace('市', '').strip()
                 
@@ -427,53 +428,44 @@ class DestinationViewSet(PublicModelViewSet):
                 
                 # 如果两个位置都有经纬度，计算真实距离
                 if user_location and dest_location:
-                    distance = _calculate_distance(
+                    distance_km = _calculate_distance(
                         user_location['lng'], user_location['lat'],
                         dest_location['lng'], dest_location['lat'],
                         amap_key
                     )
-                    print(f'  -> 真实距离: {distance}公里')
+                    print(f'  -> 真实距离: {distance_km}公里')
                     
-                    # 根据距离分配分数
-                    if distance <= 50:  # 50公里以内
-                        score = 100
-                        print(f'  -> 超近距离（≤50km）: {score}分')
-                    elif distance <= 200:  # 200公里以内
-                        score = 80
-                        print(f'  -> 近距离（50-200km）: {score}分')
-                    elif distance <= 500:  # 500公里以内
-                        score = 60
-                        print(f'  -> 中距离（200-500km）: {score}分')
-                    elif distance <= 1000:  # 1000公里以内
-                        score = 40
-                        print(f'  -> 远距离（500-1000km）: {score}分')
-                    else:  # 1000公里以上
-                        score = 20
-                        print(f'  -> 超远距离（>1000km）: {score}分')
+                    # 直接使用负距离作为分数（距离越小，分数越高，排序越靠前）
+                    score = -distance_km
+                    print(f'  -> 排序分数: {score}（负距离）')
                 else:
                     # 降级方案：使用原来的省份匹配逻辑
                     print('  -> 无法获取经纬度，使用降级方案')
                     if dest_city and dest_city == user_city:
-                        score = 100
-                        print(f'  -> 同城匹配: {score}分')
+                        score = -1  # 同城，距离设为1公里
+                        distance_km = 1
+                        print(f'  -> 同城匹配: 距离约1公里')
                     elif dest_state and dest_state == user_province:
-                        score = 50
-                        print(f'  -> 同省匹配: {score}分')
+                        score = -50  # 同省，距离设为50公里
+                        distance_km = 50
+                        print(f'  -> 同省匹配: 距离约50公里')
                     else:
-                        score = 10
-                        print(f'  -> 其他城市: {score}分')
+                        score = -9999  # 其他，距离设为9999公里
+                        distance_km = 9999
+                        print(f'  -> 其他城市: 距离很远')
                     
-                scored_destinations.append((score, dest))
+                # 保存 (分数, 目的地, 距离)
+                scored_destinations.append((score, dest, distance_km))
                 
-            # 按分数排序（高到低），分数相同时按 rating和views排序
+            # 按分数排序（高到低，即距离从小到大），分数相同时按 rating和views排序
             scored_destinations.sort(key=lambda x: (-x[0], -x[1].rating, -x[1].views))
             
             print(f'\n排序后的目的地列表:')
-            for idx, (score, dest) in enumerate(scored_destinations[:20]):
-                print(f'  {idx + 1}. {dest.name} ({dest.city}) - 分数: {score}')
+            for idx, (score, dest, distance) in enumerate(scored_destinations[:20]):
+                print(f'  {idx + 1}. {dest.name} ({dest.city}) - 距离: {round(distance)}公里, 分数: {score}')
                 
             # 获取前20个
-            top_destinations = [dest for score, dest in scored_destinations[:20]]
+            top_destinations = [dest for score, dest, distance in scored_destinations[:20]]
                 
             print(f'返回 {len(top_destinations)} 个周边推荐目的地')
             
@@ -481,10 +473,10 @@ class DestinationViewSet(PublicModelViewSet):
             serializer = self.get_serializer(top_destinations, many=True)
             result_data = serializer.data
             
-            # 为每个目的地添加匹配分数
-            score_map = {dest.id: score for score, dest in scored_destinations[:20]}
+            # 为每个目的地添加真实距离（四舍五入到整数）
+            distance_map = {dest.id: round(distance) for score, dest, distance in scored_destinations[:20]}
             for item in result_data:
-                item['match_score'] = score_map.get(item['id'], 0)
+                item['match_score'] = distance_map.get(item['id'], 0)
             
             print("="*50)
             print("请求处理成功\n")
