@@ -64,6 +64,17 @@ async function initSuperEditors() {
       return;
     }
     
+    // 检查目的地编辑器是否已经初始化过
+    const destDescExists = window.CKEditorSuperHelper.editorInstances['destination-description'] && 
+                          !window.CKEditorSuperHelper.editorInstances['destination-description']._destroyed;
+    const destFeatExists = window.CKEditorSuperHelper.editorInstances['destination-features'] && 
+                          !window.CKEditorSuperHelper.editorInstances['destination-features']._destroyed;
+    
+    if (destDescExists && destFeatExists) {
+      console.log('目的地编辑器已存在，跳过初始化');
+      return;
+    }
+    
     // 初始化政策法规和新闻资讯的超级编辑器
     await window.CKEditorSuperHelper.initEditor('policy-content', {
       placeholder: '请输入政策法规内容...'
@@ -71,12 +82,18 @@ async function initSuperEditors() {
     await window.CKEditorSuperHelper.initEditor('news-content', {
       placeholder: '请输入新闻资讯内容...'
     });
-    await window.CKEditorSuperHelper.initEditor('destination-description', {
-      placeholder: '请输入旅游目的地的详细介绍...'
-    });
-    await window.CKEditorSuperHelper.initEditor('destination-features', {
-      placeholder: '请输入旅游目的地特色亮点，可使用富文本排版...'
-    });
+    
+    // 只在未初始化时才初始化目的地编辑器
+    if (!destDescExists) {
+      await window.CKEditorSuperHelper.initEditor('destination-description', {
+        placeholder: '请输入旅游目的地的详细介绍...'
+      });
+    }
+    if (!destFeatExists) {
+      await window.CKEditorSuperHelper.initEditor('destination-features', {
+        placeholder: '请输入旅游目的地特色亮点，可使用富文本排版...'
+      });
+    }
     
     console.log('超级编辑器初始化完成');
   } catch (error) {
@@ -1026,9 +1043,12 @@ function resetDestinationFormState() {
     if (galleryImage) galleryImage.src = '';
   });
 
-  if (window.CKEditorSuperHelper) {
-    window.CKEditorSuperHelper.setContent('destination-description', '');
-    window.CKEditorSuperHelper.setContent('destination-features', '');
+  // 优化：使用批量设置内容清空编辑器
+  if (window.CKEditorSuperHelper && window.CKEditorSuperHelper.batchSetContent) {
+    window.CKEditorSuperHelper.batchSetContent({
+      'destination-description': '',
+      'destination-features': ''
+    });
   }
 }
 
@@ -1064,11 +1084,12 @@ async function editDestination(id) {
     document.getElementById('destination-description').value = destination.description || '';
     document.getElementById('destination-features').value = destination.features_display || (destination.features || []).join('\n');
 
-    if (window.CKEditorSuperHelper) {
-      setTimeout(() => {
-        window.CKEditorSuperHelper.setContent('destination-description', destination.description || '');
-        window.CKEditorSuperHelper.setContent('destination-features', destination.features_display || '');
-      }, 100);
+    // 优化：使用批量设置内容，减少DOM操作次数
+    if (window.CKEditorSuperHelper && window.CKEditorSuperHelper.batchSetContent) {
+      window.CKEditorSuperHelper.batchSetContent({
+        'destination-description': destination.description || '',
+        'destination-features': destination.features_display || ''
+      });
     }
 
     const preview = document.getElementById('destination-cover-preview');

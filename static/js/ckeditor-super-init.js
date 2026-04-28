@@ -1,4 +1,4 @@
-﻿/**
+/**
  * This configuration was generated using the CKEditor 5 Builder. You can modify it anytime using this link:
  * https://ckeditor.com/ckeditor-5/builder/#installation/NoNgNARATAdAjABhgik4HYAsUoFYDM2AnEQBxxn45Ejpya6b6HojMIgL4hnaaoQAXgAtUCMMDhhx4qbIC6kELgAmAQwBGuDRHlA=
  */
@@ -295,9 +295,10 @@ async function initSuperEditor(elementId, customConfig = {}) {
 			return null;
 		}
 
-		// 如果已经初始化过，先销毁
-		if (superEditorInstances[elementId]) {
-			await superEditorInstances[elementId].destroy();
+		// 如果已经初始化过且未被销毁，直接返回现有实例（避免重复初始化）
+		if (superEditorInstances[elementId] && !superEditorInstances[elementId]._destroyed) {
+			console.log(`编辑器 ${elementId} 已存在，复用现有实例`);
+			return superEditorInstances[elementId];
 		}
 
 		// 合并配置
@@ -373,6 +374,7 @@ async function destroySuperEditor(elementId) {
 		const editor = superEditorInstances[elementId];
 		if (editor) {
 			await editor.destroy();
+			editor._destroyed = true; // 标记为已销毁
 			delete superEditorInstances[elementId];
 			console.log(`超级编辑器 ${elementId} 已销毁`);
 		}
@@ -389,7 +391,16 @@ window.CKEditorSuperHelper = {
 	clearContent: clearSuperEditorContent,
 	destroyEditor: destroySuperEditor,
 	editorInstances: superEditorInstances,
-	editorConfig: editorConfig
+	editorConfig: editorConfig,
+	// 新增：批量设置内容，减少DOM操作次数
+	batchSetContent: function(updates) {
+		Object.entries(updates).forEach(([elementId, content]) => {
+			const editor = superEditorInstances[elementId];
+			if (editor && !editor._destroyed) {
+				editor.setData(content || '');
+			}
+		});
+	}
 };
 
 // 如果页面有 #editor 元素，自动初始化（用于测试）
