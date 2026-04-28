@@ -239,6 +239,85 @@ class DestinationViewSet(PublicModelViewSet):
         print("\n" + "="*50)
         print("开始处理 nearby_by_ip 请求")
         print("="*50)
+        
+        def is_neighboring_province(province1, province2):
+            """判断两个省份是否邻近（降级方案使用）"""
+            if not province1 or not province2:
+                return False
+            
+            # 定义中国各省份的邻近关系
+            neighboring_map = {
+                '广东': ['广西', '湖南', '江西', '福建', '海南'],
+                '广西': ['广东', '湖南', '贵州', '云南', '海南'],
+                '北京': ['天津', '河北'],
+                '上海': ['江苏', '浙江'],
+                '江苏': ['上海', '浙江', '安徽', '山东'],
+                '浙江': ['上海', '江苏', '安徽', '江西', '福建'],
+                # 可以继续添加更多省份...
+            }
+            
+            neighbors = neighboring_map.get(province1, [])
+            return province2 in neighbors
+        
+        def _get_city_coordinates(city, province, api_key):
+            """获取城市的经纬度坐标"""
+            import requests
+            try:
+                # 高德地图地理编码API
+                # 优化地址格式，避免重复
+                if not city or not province:
+                    print(f'  ⚠️ 城市或省份为空')
+                    return None
+                
+                # 处理直辖市：如果城市和省份相同，只使用一个
+                if city == province:
+                    address = city
+                else:
+                    address = f"{province}{city}"
+                
+                geo_url = f'https://restapi.amap.com/v3/geocode/geo?key={api_key}&address={address}'
+                print(f'  查询地址: {address}')
+                
+                response = requests.get(geo_url, timeout=3)
+                data = response.json()
+                
+                if data.get('status') == '1' and data.get('geocodes'):
+                    location_str = data['geocodes'][0].get('location', '')
+                    if location_str:
+                        lng, lat = location_str.split(',')
+                        result = {'lng': float(lng), 'lat': float(lat)}
+                        print(f'  ✅ 成功: {result}')
+                        return result
+                
+                print(f'  ⚠️ 未找到地址: {address}, 响应: {data}')
+                return None
+            except Exception as e:
+                print(f'  ❌ 获取经纬度失败: {str(e)}')
+                return None
+        
+        def _calculate_distance(lng1, lat1, lng2, lat2, api_key):
+            """使用高德地图API计算两点之间的距离（公里）"""
+            import requests
+            try:
+                # 高德地图距离测量API
+                origins = f'{lng1},{lat1}'
+                destination = f'{lng2},{lat2}'
+                distance_url = f'https://restapi.amap.com/v3/distance?key={api_key}&origins={origins}&destination={destination}&type=1'
+                
+                response = requests.get(distance_url, timeout=3)
+                data = response.json()
+                
+                if data.get('status') == '1' and data.get('results'):
+                    # 返回的距离单位是米，转换为公里
+                    distance_meters = int(data['results'][0].get('distance', 0))
+                    distance_km = round(distance_meters / 1000, 2)
+                    return distance_km
+                
+                print(f'  ⚠️ 距离计算失败')
+                return None
+            except Exception as e:
+                print(f'  ❌ 距离计算异常: {str(e)}')
+                return None
             
         # 获取用户IP
         x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
@@ -329,39 +408,91 @@ class DestinationViewSet(PublicModelViewSet):
                 
             # 计算每个目的地与用户城市的匹配度
             scored_destinations = []
+            
+            # 首先获取用户位置的经纬度
+            user_location = _get_city_coordinates(user_city, user_province, amap_key)
+            print(f'用户位置经纬度: {user_location}')
+            
             for dest in domestic_destinations:
                 score = 0
                 dest_city = dest.city.replace('市', '').strip() if dest.city else ''
                 dest_state = (dest.state or '').replace('省', '').replace('自治区', '').replace('市', '').strip()
+                
+                print(f'检查目的地: {dest.name}, 城市: {dest_city}, 省份: {dest_state}')
+                print(f'用户位置: {user_city}, {user_province}')
+                
+                # 获取目的地的经纬度
+                dest_location = _get_city_coordinates(dest_city, dest_state, amap_key)
+                print(f'目的地经纬度: {dest_location}')
+                
+                # 如果两个位置都有经纬度，计算真实距离
+                if user_location and dest_location:
+                    distance = _calculate_distance(
+                        user_location['lng'], user_location['lat'],
+                        dest_location['lng'], dest_location['lat'],
+                        amap_key
+                    )
+                    print(f'  -> 真实距离: {distance}公里')
                     
-                # 完全匹配城市
-                if dest_city and dest_city == user_city:
-                    score = 100
-                # 同省份
-                elif dest_state and dest_state == user_province:
-                    score = 50
-                # 其他城市
+                    # 根据距离分配分数
+                    if distance <= 50:  # 50公里以内
+                        score = 100
+                        print(f'  -> 超近距离（≤50km）: {score}分')
+                    elif distance <= 200:  # 200公里以内
+                        score = 80
+                        print(f'  -> 近距离（50-200km）: {score}分')
+                    elif distance <= 500:  # 500公里以内
+                        score = 60
+                        print(f'  -> 中距离（200-500km）: {score}分')
+                    elif distance <= 1000:  # 1000公里以内
+                        score = 40
+                        print(f'  -> 远距离（500-1000km）: {score}分')
+                    else:  # 1000公里以上
+                        score = 20
+                        print(f'  -> 超远距离（>1000km）: {score}分')
                 else:
-                    score = 10
+                    # 降级方案：使用原来的省份匹配逻辑
+                    print('  -> 无法获取经纬度，使用降级方案')
+                    if dest_city and dest_city == user_city:
+                        score = 100
+                        print(f'  -> 同城匹配: {score}分')
+                    elif dest_state and dest_state == user_province:
+                        score = 50
+                        print(f'  -> 同省匹配: {score}分')
+                    else:
+                        score = 10
+                        print(f'  -> 其他城市: {score}分')
                     
                 scored_destinations.append((score, dest))
                 
             # 按分数排序（高到低），分数相同时按 rating和views排序
             scored_destinations.sort(key=lambda x: (-x[0], -x[1].rating, -x[1].views))
+            
+            print(f'\n排序后的目的地列表:')
+            for idx, (score, dest) in enumerate(scored_destinations[:20]):
+                print(f'  {idx + 1}. {dest.name} ({dest.city}) - 分数: {score}')
                 
             # 获取前20个
             top_destinations = [dest for score, dest in scored_destinations[:20]]
                 
             print(f'返回 {len(top_destinations)} 个周边推荐目的地')
-                
+            
+            # 序列化结果
             serializer = self.get_serializer(top_destinations, many=True)
+            result_data = serializer.data
+            
+            # 为每个目的地添加匹配分数
+            score_map = {dest.id: score for score, dest in scored_destinations[:20]}
+            for item in result_data:
+                item['match_score'] = score_map.get(item['id'], 0)
+            
             print("="*50)
             print("请求处理成功\n")
             return Response({
                 'ip': ip,
                 'user_city': user_city,
                 'user_province': user_province,
-                'destinations': serializer.data
+                'destinations': result_data
             })
                 
         except Exception as e:
