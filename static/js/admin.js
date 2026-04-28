@@ -41,10 +41,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 通过校验后再初始化后台功能
     initForms();
     initDeleteButtons();
+    initEditorToggleButtons(); // 初始化编辑器懒加载按钮
     
-    // 初始化超级编辑器（政策法规和新闻资讯）
-    await initSuperEditors();
-    await initBasicEditors();
+    // 不再自动初始化编辑器，采用懒加载模式
+    console.log('管理后台初始化完成，编辑器采用懒加载模式');
   } catch (error) {
     console.error('管理后台权限校验失败:', error);
     showNotification('访问管理后台失败，请重新登录', 'error');
@@ -54,50 +54,46 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 });
 
-// 初始化超级编辑器
+// 初始化超级编辑器（懒加载版本 - 不再自动初始化）
 async function initSuperEditors() {
+  console.log('超级编辑器采用懒加载模式，点击“编辑文本”按钮时才会初始化');
+  // 不再自动初始化任何编辑器，等待用户点击按钮
+}
+
+// 懒加载初始化指定的编辑器
+async function lazyInitEditor(elementId, placeholder = '请输入内容...') {
   try {
+    // 检查是否已经初始化过
+    if (window.CKEditorSuperHelper && 
+        window.CKEditorSuperHelper.editorInstances[elementId] &&
+        !window.CKEditorSuperHelper.editorInstances[elementId]._destroyed) {
+      console.log(`编辑器 ${elementId} 已存在，无需重复初始化`);
+      return window.CKEditorSuperHelper.editorInstances[elementId];
+    }
+    
     // 等待CKEditorSuperHelper加载
     if (typeof window.CKEditorSuperHelper === 'undefined') {
       console.warn('CKEditorSuperHelper未加载，等待...');
-      setTimeout(initSuperEditors, 500);
-      return;
+      await new Promise(resolve => setTimeout(resolve, 500));
+      return await lazyInitEditor(elementId, placeholder);
     }
     
-    // 检查目的地编辑器是否已经初始化过
-    const destDescExists = window.CKEditorSuperHelper.editorInstances['destination-description'] && 
-                          !window.CKEditorSuperHelper.editorInstances['destination-description']._destroyed;
-    const destFeatExists = window.CKEditorSuperHelper.editorInstances['destination-features'] && 
-                          !window.CKEditorSuperHelper.editorInstances['destination-features']._destroyed;
-    
-    if (destDescExists && destFeatExists) {
-      console.log('目的地编辑器已存在，跳过初始化');
-      return;
-    }
-    
-    // 初始化政策法规和新闻资讯的超级编辑器
-    await window.CKEditorSuperHelper.initEditor('policy-content', {
-      placeholder: '请输入政策法规内容...'
-    });
-    await window.CKEditorSuperHelper.initEditor('news-content', {
-      placeholder: '请输入新闻资讯内容...'
+    console.log(`正在初始化编辑器: ${elementId}`);
+    const editor = await window.CKEditorSuperHelper.initEditor(elementId, {
+      placeholder: placeholder
     });
     
-    // 只在未初始化时才初始化目的地编辑器
-    if (!destDescExists) {
-      await window.CKEditorSuperHelper.initEditor('destination-description', {
-        placeholder: '请输入旅游目的地的详细介绍...'
-      });
-    }
-    if (!destFeatExists) {
-      await window.CKEditorSuperHelper.initEditor('destination-features', {
-        placeholder: '请输入旅游目的地特色亮点，可使用富文本排版...'
-      });
+    // 隐藏对应的按钮
+    const btn = document.querySelector(`.editor-toggle-btn[data-editor-id="${elementId}"]`);
+    if (btn) {
+      btn.style.display = 'none';
     }
     
-    console.log('超级编辑器初始化完成');
+    console.log(`编辑器 ${elementId} 初始化成功`);
+    return editor;
   } catch (error) {
-    console.error('初始化超级编辑器失败:', error);
+    console.error(`初始化编辑器 ${elementId} 失败:`, error);
+    return null;
   }
 }
 
@@ -194,6 +190,53 @@ function initDeleteButtons() {
     else if (btn.id === 'statistics-delete-btn') deleteCurrentStatistic();
     else if (btn.id === 'destination-delete-btn') deleteCurrentDestination();
     else if (btn.id === 'reply-delete-btn') deleteCurrentReply();
+  });
+}
+
+// 初始化编辑器懒加载按钮
+function initEditorToggleButtons() {
+  // 定义每个编辑器的placeholder配置
+  const editorConfigs = {
+    'policy-content': '请输入政策法规内容...',
+    'news-content': '请输入新闻资讯内容...',
+    'destination-description': '请输入旅游目的地的详细介绍...',
+    'destination-features': '请输入旅游目的地特色亮点，可使用富文本排版...'
+  };
+  
+  // 使用事件委托监听所有编辑按钮的点击
+  document.addEventListener('click', async function(e) {
+    const btn = e.target.closest('.editor-toggle-btn');
+    if (!btn) return;
+    
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const editorId = btn.getAttribute('data-editor-id');
+    if (!editorId) return;
+    
+    console.log(`用户点击了编辑器按钮: ${editorId}`);
+    
+    // 显示加载状态
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 加载中...';
+    btn.disabled = true;
+    
+    try {
+      // 懒加载初始化编辑器
+      await lazyInitEditor(editorId, editorConfigs[editorId] || '请输入内容...');
+      
+      // 如果textarea中有内容，自动填充到编辑器
+      const textarea = document.getElementById(editorId);
+      if (textarea && textarea.value) {
+        window.CKEditorSuperHelper.setContent(editorId, textarea.value);
+      }
+    } catch (error) {
+      console.error('初始化编辑器失败:', error);
+      showNotification('编辑器初始化失败，请刷新页面重试', 'error');
+      // 恢复按钮状态
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+    }
   });
 }
 

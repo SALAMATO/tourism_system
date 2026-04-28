@@ -232,7 +232,12 @@
           </div>
           <div class="form-group">
             <label class="form-label">政策内容 *</label>
-            <textarea id="policy-content" class="form-textarea" rows="8" required></textarea>
+            <div style="position: relative;">
+              <textarea id="policy-content" class="form-textarea" rows="8" required placeholder="点击下方按钮启用富文本编辑器"></textarea>
+              <button type="button" class="btn btn-secondary editor-toggle-btn" data-editor-id="policy-content" style="position: absolute; top: 8px; right: 8px; font-size: 12px; padding: 4px 12px; z-index: 10;">
+                <i class="fas fa-edit"></i> 编辑文本
+              </button>
+            </div>
           </div>
 
 
@@ -381,7 +386,12 @@
           <!-- 新闻内容 -->
           <div class="form-group">
             <label class="form-label">新闻内容 *</label>
-            <textarea id="news-content" class="form-textarea" rows="10" required></textarea>
+            <div style="position: relative;">
+              <textarea id="news-content" class="form-textarea" rows="10" required placeholder="点击下方按钮启用富文本编辑器"></textarea>
+              <button type="button" class="btn btn-secondary editor-toggle-btn" data-editor-id="news-content" style="position: absolute; top: 8px; right: 8px; font-size: 12px; padding: 4px 12px; z-index: 10;">
+                <i class="fas fa-edit"></i> 编辑文本
+              </button>
+            </div>
           </div>
 
 
@@ -723,12 +733,22 @@
 
           <div class="form-group">
             <label class="form-label">详细介绍 *</label>
-            <textarea id="destination-description" class="form-textarea" rows="6" required></textarea>
+            <div style="position: relative;">
+              <textarea id="destination-description" class="form-textarea" rows="6" required placeholder="点击下方按钮启用富文本编辑器"></textarea>
+              <button type="button" class="btn btn-secondary editor-toggle-btn" data-editor-id="destination-description" style="position: absolute; top: 8px; right: 8px; font-size: 12px; padding: 4px 12px; z-index: 10;">
+                <i class="fas fa-edit"></i> 编辑文本
+              </button>
+            </div>
           </div>
 
           <div class="form-group">
             <label class="form-label">特色亮点（支持富文本） *</label>
-            <textarea id="destination-features" class="form-textarea" rows="5" placeholder="请输入特色亮点，可分段展示、可加粗列表等" required></textarea>
+            <div style="position: relative;">
+              <textarea id="destination-features" class="form-textarea" rows="5" placeholder="请输入特色亮点，可分段展示、可加粗列表等" required></textarea>
+              <button type="button" class="btn btn-secondary editor-toggle-btn" data-editor-id="destination-features" style="position: absolute; top: 8px; right: 8px; font-size: 12px; padding: 4px 12px; z-index: 10;">
+                <i class="fas fa-edit"></i> 编辑文本
+              </button>
+            </div>
           </div>
 
           <div style="margin-top: 8px;">
