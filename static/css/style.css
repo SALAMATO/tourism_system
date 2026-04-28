@@ -436,6 +436,16 @@ body {
   transform: scale(1.02);
 }
 
+.btn-warning {
+  background: var(--warning-color);
+  color: white;
+}
+
+.btn-warning:hover {
+  background: #e68600;
+  transform: scale(1.02);
+}
+
 /* 功能卡片网格 */
 .features-section {
   padding: 80px 20px;

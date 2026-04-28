@@ -211,7 +211,7 @@ function initForms() {
 // 使用事件委托：在 document 上监听点击，避免按钮在隐藏模块内时绑定失效
 function initDeleteButtons() {
   document.addEventListener('click', function(e) {
-    const btn = e.target.closest('#policy-delete-btn, #news-delete-btn, #safety-delete-btn, #statistics-delete-btn, #destination-delete-btn, #reply-delete-btn');
+    const btn = e.target.closest('#policy-delete-btn, #news-delete-btn, #safety-delete-btn, #statistics-delete-btn, #destination-delete-btn, #reply-delete-btn, #clear-cache-btn');
     if (!btn) return;
     e.preventDefault();
     e.stopPropagation();
@@ -221,6 +221,7 @@ function initDeleteButtons() {
     else if (btn.id === 'statistics-delete-btn') deleteCurrentStatistic();
     else if (btn.id === 'destination-delete-btn') deleteCurrentDestination();
     else if (btn.id === 'reply-delete-btn') deleteCurrentReply();
+    else if (btn.id === 'clear-cache-btn') forceClearCacheAndReload();
   });
 }
 
@@ -2712,7 +2713,7 @@ document.addEventListener('keydown', function(e) {
  * 检测是否为强制刷新（Ctrl+F5）
  */
 function checkForceRefresh() {
-  // 检查URL中是否有强制刷新标记
+  // ✨ 检查URL中是否有强制刷新标记
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get(FORCE_REFRESH_FLAG) === 'true') {
     // 清除URL中的标记
@@ -2736,6 +2737,27 @@ function checkForceRefresh() {
  */
 function setForceRefreshFlag() {
   sessionStorage.setItem(FORCE_REFRESH_FLAG, 'true');
+}
+
+/**
+ * ✨ 强制清除所有缓存并刷新页面（供按钮调用）
+ */
+async function forceClearCacheAndReload() {
+  const confirmed = await showConfirm({
+    title: '清除缓存',
+    message: '确定要清除所有缓存并刷新页面吗？\n\n这将清除：\n- 所有表单数据\n- 富文本编辑器内容\n- 图片上传状态\n- 当前模块状态',
+    confirmText: '清除并刷新',
+    cancelText: '取消',
+    type: 'danger'
+  });
+  
+  if (confirmed) {
+    clearAllCache();
+    // 设置标记，确保刷新后也不会恢复
+    sessionStorage.setItem(FORCE_REFRESH_FLAG, 'true');
+    // 刷新页面
+    window.location.reload();
+  }
 }
 
 /**
