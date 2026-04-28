@@ -3,11 +3,16 @@
  * 使用Classic版本可用的功能
  */
 
+// CKEditor 5 许可证密钥（24小时评估密钥）
+// 如需长期使用，请注册免费账户获取永久密钥：https://portal.ckeditor.com/checkout?plan=free
+const LICENSE_KEY = 'eyJhbGciOiJFUzI1NiJ9.eyJleHAiOjE4MDQ1NTAzOTksImp0aSI6IjA1NGIxNGM4LWY0YTYtNDBkMS1hMzNmLWM1OWI2ZGNiNDliNSIsInVzYWdlRW5kcG9pbnQiOiJodHRwczovL3Byb3h5LWV2ZW50LmNrZWRpdG9yLmNvbSIsImRpc3RyaWJ1dGlvbkNoYW5uZWwiOlsiY2xvdWQiLCJkcnVwYWwiXSwiZmVhdHVyZXMiOlsiRFJVUCIsIkUyUCIsIkUyVyJdLCJyZW1vdmVGZWF0dXJlcyI6WyJQQiIsIlJGIiwiU0NIIiwiVENQIiwiVEwiLCJUQ1IiLCJJUiIsIlNVQSIsIkI2NEEiLCJMUCIsIkhFIiwiUkVEIiwiUEZPIiwiV0MiLCJGQVIiLCJCS00iLCJGUEgiLCJNUkUiXSwidmMiOiI4MzQyNDdkZSJ9.45H0htEMMcvtE47Z6jrbvSaGorVB25GHYwHahJHfeX05lBPlZ5SmoaXu2vMHy9wbLJ7cKrfpKIOV7opTnzGkug';
+
 // CKEditor 实例存储
 const editorInstances = {};
 
 // Classic版本的编辑器配置（只使用Classic版本支持的功能）
 const classicEditorConfig = {
+  licenseKey: LICENSE_KEY, // 添加许可证密钥
   toolbar: {
     items: [
       'heading',
@@ -243,7 +248,7 @@ async function initAllEditors() {
       return;
     }
     
-    // 管理后台的编辑器
+    // 管理后台的编辑器（仅初始化admin.html中实际存在的编辑器）
     await initEditor('news-content');
     await initEditor('policy-content');
     await initEditor('safety-description');
@@ -251,9 +256,9 @@ async function initAllEditors() {
     await initEditor('safety-plan');
     await initEditor('reply-content');
     
-    // 互动交流的编辑器
-    await initEditor('message-content');
-    await initEditor('comment-content');
+    // 注意：以下编辑器在admin.html中不存在，已禁用
+    // await initEditor('message-content');  // 仅在community.html中使用
+    // await initEditor('comment-content');  // 仅在community.html中使用
     
     console.log('所有编辑器初始化完成');
   } catch (error) {
@@ -367,13 +372,13 @@ function convertMarkdownToHTML(markdown) {
   return html;
 }
 
-// 页面加载完成后初始化
-document.addEventListener('DOMContentLoaded', function() {
-  // 延迟初始化，确保DOM和ClassicEditor都加载完成
-  setTimeout(() => {
-    initAllEditors();
-  }, 1000);
-});
+// 页面加载完成后初始化 - ❌ 已禁用，统一使用 ckeditor-super-init.js
+// document.addEventListener('DOMContentLoaded', function() {
+//   // 延迟初始化，确保DOM和ClassicEditor都加载完成
+//   setTimeout(() => {
+//     initAllEditors();
+//   }, 1000);
+// });
 
 // 导出函数供其他脚本使用
 window.CKEditorHelper = {
