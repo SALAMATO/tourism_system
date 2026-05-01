@@ -87,22 +87,22 @@ async function initSuperEditors() {
 async function lazyInitEditor(elementId, placeholder = '请输入内容...') {
   try {
     // 检查是否已经初始化过
-    if (window.CKEditorSuperHelper && 
-        window.CKEditorSuperHelper.editorInstances[elementId] &&
-        !window.CKEditorSuperHelper.editorInstances[elementId]._destroyed) {
+    if (window.WangEditorHelper && 
+        window.WangEditorHelper.editorInstances[elementId] &&
+        !window.WangEditorHelper.editorInstances[elementId]._destroyed) {
       console.log(`编辑器 ${elementId} 已存在，无需重复初始化`);
-      return window.CKEditorSuperHelper.editorInstances[elementId];
+      return window.WangEditorHelper.editorInstances[elementId];
     }
     
-    // 等待CKEditorSuperHelper加载
-    if (typeof window.CKEditorSuperHelper === 'undefined') {
-      console.warn('CKEditorSuperHelper未加载，等待...');
+    // 等待WangEditorHelper加载
+    if (typeof window.WangEditorHelper === 'undefined') {
+      console.warn('WangEditorHelper未加载，等待...');
       await new Promise(resolve => setTimeout(resolve, 500));
       return await lazyInitEditor(elementId, placeholder);
     }
     
     console.log(`正在初始化编辑器: ${elementId}`);
-    const editor = await window.CKEditorSuperHelper.initEditor(elementId, {
+    const editor = await window.WangEditorHelper.initEditor(elementId, {
       placeholder: placeholder
     });
     
@@ -264,7 +264,7 @@ function initEditorToggleButtons() {
       // 如果textarea中有内容，自动填充到编辑器
       const textarea = document.getElementById(editorId);
       if (textarea && textarea.value) {
-        window.CKEditorSuperHelper.setContent(editorId, textarea.value);
+        window.WangEditorHelper.setContent(editorId, textarea.value);
       }
     } catch (error) {
       console.error('初始化编辑器失败:', error);
@@ -300,7 +300,7 @@ async function submitPolicy() {
       category: document.getElementById('policy-category').value,
       department: document.getElementById('policy-department').value,
       publish_date: publishDate,
-      content: (window.CKEditorSuperHelper && window.CKEditorSuperHelper.editorInstances['policy-content']) ? window.CKEditorSuperHelper.getContent('policy-content') : document.getElementById('policy-content').value,
+      content: (window.WangEditorHelper && window.WangEditorHelper.editorInstances['policy-content']) ? window.WangEditorHelper.getContent('policy-content') : document.getElementById('policy-content').value,
       file_url: document.getElementById('policy-url').value || '',
       tags: tags
     };
@@ -377,19 +377,19 @@ async function editPolicy(id) {
     // 自动初始化富文本编辑器
     setTimeout(async () => {
       try {
-        if (!window.CKEditorSuperHelper || 
-            !window.CKEditorSuperHelper.editorInstances['policy-content'] ||
-            window.CKEditorSuperHelper.editorInstances['policy-content']._destroyed) {
+        if (!window.WangEditorHelper || 
+            !window.WangEditorHelper.editorInstances['policy-content'] ||
+            window.WangEditorHelper.editorInstances['policy-content']._destroyed) {
           console.log('正在自动初始化政策编辑器...');
           await lazyInitEditor('policy-content', '请输入政策法规内容...');
           
           // 填充内容
           if (policy.content) {
-            window.CKEditorSuperHelper.setContent('policy-content', policy.content);
+            window.WangEditorHelper.setContent('policy-content', policy.content);
           }
         } else {
           // 编辑器已存在，直接设置内容
-          window.CKEditorSuperHelper.setContent('policy-content', policy.content || '');
+          window.WangEditorHelper.setContent('policy-content', policy.content || '');
         }
       } catch (error) {
         console.error('自动初始化政策编辑器失败:', error);
@@ -446,7 +446,7 @@ async function submitNews() {
       category: document.getElementById('news-category').value,
       author: document.getElementById('news-author').value,
       cover_image: document.getElementById('news-cover').value || '',
-      content: (window.CKEditorSuperHelper && window.CKEditorSuperHelper.editorInstances['news-content']) ? window.CKEditorSuperHelper.getContent('news-content') : document.getElementById('news-content').value,
+      content: (window.WangEditorHelper && window.WangEditorHelper.editorInstances['news-content']) ? window.WangEditorHelper.getContent('news-content') : document.getElementById('news-content').value,
       tags: tags,
       publish_date: publishDate,
     };
@@ -524,19 +524,19 @@ async function editNews(id) {
     // 自动初始化富文本编辑器
     setTimeout(async () => {
       try {
-        if (!window.CKEditorSuperHelper || 
-            !window.CKEditorSuperHelper.editorInstances['news-content'] ||
-            window.CKEditorSuperHelper.editorInstances['news-content']._destroyed) {
+        if (!window.WangEditorHelper || 
+            !window.WangEditorHelper.editorInstances['news-content'] ||
+            window.WangEditorHelper.editorInstances['news-content']._destroyed) {
           console.log('正在自动初始化新闻编辑器...');
           await lazyInitEditor('news-content', '请输入新闻资讯内容...');
           
           // 填充内容
           if (news.content) {
-            window.CKEditorSuperHelper.setContent('news-content', news.content);
+            window.WangEditorHelper.setContent('news-content', news.content);
           }
         } else {
           // 编辑器已存在，直接设置内容
-          window.CKEditorSuperHelper.setContent('news-content', news.content || '');
+          window.WangEditorHelper.setContent('news-content', news.content || '');
         }
       } catch (error) {
         console.error('自动初始化新闻编辑器失败:', error);
@@ -674,19 +674,19 @@ async function editSafetyAlert(id) {
         ];
         
         for (const editor of editors) {
-          if (!window.CKEditorSuperHelper || 
-              !window.CKEditorSuperHelper.editorInstances[editor.id] ||
-              window.CKEditorSuperHelper.editorInstances[editor.id]._destroyed) {
+          if (!window.WangEditorHelper || 
+              !window.WangEditorHelper.editorInstances[editor.id] ||
+              window.WangEditorHelper.editorInstances[editor.id]._destroyed) {
             console.log(`正在自动初始化安全隐患编辑器: ${editor.id}`);
             await lazyInitEditor(editor.id, editor.placeholder);
             
             // 填充内容
             if (editor.content) {
-              window.CKEditorSuperHelper.setContent(editor.id, editor.content);
+              window.WangEditorHelper.setContent(editor.id, editor.content);
             }
           } else {
             // 编辑器已存在，直接设置内容
-            window.CKEditorSuperHelper.setContent(editor.id, editor.content || '');
+            window.WangEditorHelper.setContent(editor.id, editor.content || '');
           }
         }
       } catch (error) {
@@ -1129,14 +1129,14 @@ function buildDestinationFormData() {
   formData.append('is_hot', document.getElementById('destination-is-hot').value);
   formData.append(
     'description',
-    (window.CKEditorSuperHelper && window.CKEditorSuperHelper.editorInstances['destination-description'])
-      ? window.CKEditorSuperHelper.getContent('destination-description')
+    (window.WangEditorHelper && window.WangEditorHelper.editorInstances['destination-description'])
+      ? window.WangEditorHelper.getContent('destination-description')
       : document.getElementById('destination-description').value.trim()
   );
   formData.append(
     'features_display',
-    (window.CKEditorSuperHelper && window.CKEditorSuperHelper.editorInstances['destination-features'])
-      ? window.CKEditorSuperHelper.getContent('destination-features')
+    (window.WangEditorHelper && window.WangEditorHelper.editorInstances['destination-features'])
+      ? window.WangEditorHelper.getContent('destination-features')
       : document.getElementById('destination-features').value.trim()
   );
   formData.append('views', String(currentDestinationEditingData?.views || 0));
@@ -1328,8 +1328,8 @@ function resetDestinationFormState() {
   });
 
   // 优化：使用批量设置内容清空编辑器
-  if (window.CKEditorSuperHelper && window.CKEditorSuperHelper.batchSetContent) {
-    window.CKEditorSuperHelper.batchSetContent({
+  if (window.WangEditorHelper && window.WangEditorHelper.batchSetContent) {
+    window.WangEditorHelper.batchSetContent({
       'destination-description': '',
       'destination-features': ''
     });
@@ -1468,19 +1468,19 @@ async function editDestination(id) {
         ];
         
         for (const editor of editors) {
-          if (!window.CKEditorSuperHelper || 
-              !window.CKEditorSuperHelper.editorInstances[editor.id] ||
-              window.CKEditorSuperHelper.editorInstances[editor.id]._destroyed) {
+          if (!window.WangEditorHelper || 
+              !window.WangEditorHelper.editorInstances[editor.id] ||
+              window.WangEditorHelper.editorInstances[editor.id]._destroyed) {
             console.log(`正在自动初始化目的地编辑器: ${editor.id}`);
             await lazyInitEditor(editor.id, editor.placeholder);
             
             // 填充内容
             if (editor.content) {
-              window.CKEditorSuperHelper.setContent(editor.id, editor.content);
+              window.WangEditorHelper.setContent(editor.id, editor.content);
             }
           } else {
             // 编辑器已存在，直接设置内容
-            window.CKEditorSuperHelper.setContent(editor.id, editor.content || '');
+            window.WangEditorHelper.setContent(editor.id, editor.content || '');
           }
         }
       } catch (error) {
@@ -1745,9 +1745,9 @@ async function openReplyModal(messageId) {
     
     // 设置回复内容（支持CKEditor）
     const replyContent = message.reply || '';
-    if (window.CKEditorSuperHelper && window.CKEditorSuperHelper.editorInstances['reply-content']) {
+    if (window.WangEditorHelper && window.WangEditorHelper.editorInstances['reply-content']) {
       // 如果CKEditor已初始化，使用CKEditor API
-      window.CKEditorSuperHelper.setContent('reply-content', replyContent);
+      window.WangEditorHelper.setContent('reply-content', replyContent);
     } else {
       // 否则直接设置textarea的值
       document.getElementById('reply-content').value = replyContent;
@@ -1767,15 +1767,15 @@ async function openReplyModal(messageId) {
     setTimeout(async () => {
       try {
         // 检查编辑器是否已经初始化
-        if (!window.CKEditorSuperHelper || 
-            !window.CKEditorSuperHelper.editorInstances['reply-content'] ||
-            window.CKEditorSuperHelper.editorInstances['reply-content']._destroyed) {
+        if (!window.WangEditorHelper || 
+            !window.WangEditorHelper.editorInstances['reply-content'] ||
+            window.WangEditorHelper.editorInstances['reply-content']._destroyed) {
           console.log('正在自动初始化回复编辑器...');
           await lazyInitEditor('reply-content', '请输入回复内容...');
           
           // 如果textarea中有内容，自动填充到编辑器
           if (replyContent) {
-            window.CKEditorSuperHelper.setContent('reply-content', replyContent);
+            window.WangEditorHelper.setContent('reply-content', replyContent);
           }
         }
       } catch (error) {
@@ -1792,9 +1792,9 @@ async function openReplyModal(messageId) {
 async function submitReply() {
   // 获取回复内容（支持CKEditor）
   let replyContent;
-  if (window.CKEditorSuperHelper && window.CKEditorSuperHelper.editorInstances['reply-content']) {
+  if (window.WangEditorHelper && window.WangEditorHelper.editorInstances['reply-content']) {
     // 如果CKEditor已初始化，使用CKEditor API
-    replyContent = window.CKEditorSuperHelper.getContent('reply-content').trim();
+    replyContent = window.WangEditorHelper.getContent('reply-content').trim();
   } else {
     // 否则直接获取textarea的值
     replyContent = document.getElementById('reply-content').value.trim();
@@ -2396,9 +2396,9 @@ async function fetchPolicyFromUrl() {
     if (data.publish_date) document.getElementById('policy-date').value = data.publish_date;
     if (data.content) {
       // 使用CKEditor设置内容
-      if (window.CKEditorSuperHelper) {
+      if (window.WangEditorHelper) {
         setTimeout(() => {
-          window.CKEditorSuperHelper.setContent('policy-content', data.content);
+          window.WangEditorHelper.setContent('policy-content', data.content);
         }, 100);
       } else {
         document.getElementById('policy-content').value = data.content;
@@ -2444,9 +2444,9 @@ async function fetchNewsFromUrl() {
     if (data.author) document.getElementById('news-author').value = data.author;
     if (data.content) {
       // 使用CKEditor设置内容
-      if (window.CKEditorSuperHelper) {
+      if (window.WangEditorHelper) {
         setTimeout(() => {
-          window.CKEditorSuperHelper.setContent('news-content', data.content);
+          window.WangEditorHelper.setContent('news-content', data.content);
         }, 100);
       } else {
         document.getElementById('news-content').value = data.content;
@@ -2470,17 +2470,17 @@ async function fetchNewsFromUrl() {
 async function initBasicEditors() {
   try {
     // 等待CKEditorHelper加载
-    if (typeof window.CKEditorSuperHelper === 'undefined') {
+    if (typeof window.WangEditorHelper === 'undefined') {
       console.warn('CKEditorHelper未加载，等待...');
       setTimeout(initBasicEditors, 500);
       return;
     }
     
     // 初始化安全隐患和留言回复的基础编辑器
-    await window.CKEditorSuperHelper.initEditor('safety-description', { placeholder: '请输入安全隐患描述...' });
-    await window.CKEditorSuperHelper.initEditor('safety-prevention', { placeholder: '请输入预防措施...' });
-    await window.CKEditorSuperHelper.initEditor('safety-plan', { placeholder: '请输入应急预案...' });
-    await window.CKEditorSuperHelper.initEditor('reply-content', { placeholder: '请输入回复内容...' });
+    await window.WangEditorHelper.initEditor('safety-description', { placeholder: '请输入安全隐患描述...' });
+    await window.WangEditorHelper.initEditor('safety-prevention', { placeholder: '请输入预防措施...' });
+    await window.WangEditorHelper.initEditor('safety-plan', { placeholder: '请输入应急预案...' });
+    await window.WangEditorHelper.initEditor('reply-content', { placeholder: '请输入回复内容...' });
     
     console.log('基础编辑器初始化完成');
   } catch (error) {
@@ -2512,8 +2512,8 @@ async function formatContent(type) {
     ? 'http://127.0.0.1:8000/api/policies/format_content/'
     : 'http://127.0.0.1:8000/api/news/format_content/';
   
-  const rawContent = window.CKEditorSuperHelper
-    ? window.CKEditorSuperHelper.getContent(isPolicy ? 'policy-content' : 'news-content')
+  const rawContent = window.WangEditorHelper
+    ? window.WangEditorHelper.getContent(isPolicy ? 'policy-content' : 'news-content')
     : document.getElementById(isPolicy ? 'policy-content' : 'news-content').value;
   
   const plainContent = rawContent.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
@@ -2545,8 +2545,8 @@ async function formatContent(type) {
     
     // 应用格式化后的内容到编辑器
     if (data.formatted_content) {
-      if (window.CKEditorSuperHelper) {
-        window.CKEditorSuperHelper.setContent(
+      if (window.WangEditorHelper) {
+        window.WangEditorHelper.setContent(
           isPolicy ? 'policy-content' : 'news-content',
           data.formatted_content
         );
@@ -2570,8 +2570,8 @@ async function runAiSummary(type) {
     : 'http://127.0.0.1:8000/api/news/ai_summary/';
 
   const title = document.getElementById(isPolicy ? 'policy-title' : 'news-title').value.trim();
-  const content = window.CKEditorSuperHelper
-    ? window.CKEditorSuperHelper.getContent(isPolicy ? 'policy-content' : 'news-content')
+  const content = window.WangEditorHelper
+    ? window.WangEditorHelper.getContent(isPolicy ? 'policy-content' : 'news-content')
     : document.getElementById(isPolicy ? 'policy-content' : 'news-content').value;
 
   // Strip HTML tags for plain text
@@ -3027,7 +3027,7 @@ function initAutoSave() {
   
   // 5. 监听编辑器内容变化（延迟执行，等待编辑器初始化）
   setTimeout(() => {
-    if (window.CKEditorSuperHelper) {
+    if (window.WangEditorHelper) {
       const editorIds = [
         'policy-content',
         'news-content',
@@ -3040,10 +3040,10 @@ function initAutoSave() {
       ];
       
       editorIds.forEach(editorId => {
-        const editor = window.CKEditorSuperHelper.editorInstances[editorId];
+        const editor = window.WangEditorHelper.editorInstances[editorId];
         if (editor && editor.model && editor.model.document) {
           editor.model.document.on('change:data', debounce(() => {
-            const content = window.CKEditorSuperHelper.getContent(editorId);
+            const content = window.WangEditorHelper.getContent(editorId);
             if (content) {
               saveToCache(editorId, content);
             }

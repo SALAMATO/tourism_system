@@ -19,51 +19,21 @@
     <link rel="manifest" href="{% static 'images/site.webmanifest' %}">
     <!-- CSS -->
     <link rel="stylesheet" href="{% static 'css/style.css' %}?v=20260310">
-    <link rel="stylesheet" href="https://cdn.ckeditor.com/ckeditor5/47.5.0/ckeditor5.css" crossorigin>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
     
-    <!-- CKEditor 5 自定义样式 -->
+    <!-- wangEditor 5 CSS (完全免费的富文本编辑器) -->
+    <link href="https://unpkg.com/@wangeditor/editor@latest/dist/css/style.css" rel="stylesheet">
+    
+    <!-- wangEditor 自定义样式 -->
     <style>
-        /* CKEditor 容器样式 */
-        .ck-editor__editable {
+        /* wangEditor 容器样式 */
+        .w-e-text-container {
             min-height: 300px;
             max-height: 500px;
         }
         
-        /* CKEditor 内容样式 */
-        .ck-content h2 {
-            font-size: 1.5em;
-            font-weight: bold;
-            margin: 1em 0 0.5em 0;
-            color: #2c3e50;
-        }
-        
-        .ck-content h3 {
-            font-size: 1.3em;
-            font-weight: bold;
-            margin: 0.8em 0 0.4em 0;
-            color: #34495e;
-        }
-        
-        .ck-content h4 {
-            font-size: 1.1em;
-            font-weight: bold;
-            margin: 0.6em 0 0.3em 0;
-            color: #7f8c8d;
-        }
-        
-        .ck-content p {
-            margin: 0.5em 0;
-            line-height: 1.8;
-        }
-        
-        .ck-content strong {
-            font-weight: bold;
-            color: #e74c3c;
-        }
-        
         /* 隐藏原始textarea */
-        textarea.form-textarea.ck-hidden {
+        textarea.form-textarea.wang-hidden {
             display: none;
         }
     </style>
@@ -1073,24 +1043,26 @@
   </footer>
   
 
-
-<!-- CKEditor 5 CDN - 统一使用 Super-build 版本 -->
-<!-- Classic版本已禁用，不再加载 -->
-
-
-
-<!-- Super-build版本 - 用于所有富文本编辑器 -->
-<script src="https://cdn.ckeditor.com/ckeditor5/47.5.0/ckeditor5.umd.js" crossorigin></script>
-<script src="https://cdn.ckeditor.com/ckeditor5/47.5.0/translations/zh-cn.umd.js" crossorigin></script>
+<!-- wangEditor 5 JS (完全免费的富文本编辑器) -->
+<script src="https://unpkg.com/@wangeditor/editor@latest/dist/index.js"></script>
+<script>
+// 检查 wangEditor 是否成功加载
+window.addEventListener('load', function() {
+    if (typeof window.wangEditor !== 'undefined') {
+        console.log('✅ wangEditor 5 库加载成功');
+    } else {
+        console.error('❌ wangEditor 5 库加载失败！');
+    }
+});
+</script>
 
 <!-- 基础工具脚本 -->
 <script src="{% static 'js/utils.js' %}"></script>
 <script src="{% static 'js/api.js' %}"></script>
 <script src="{% static 'js/auth.js' %}"></script>
 
-<!-- 编辑器初始化脚本 - ✅ 只使用 Super Build -->
-<!-- <script src="{% static 'js/ckeditor-init.js' %}"></script> -->  <!-- ❌ Classic Build 已禁用 -->
-<script src="{% static 'js/ckeditor-super-init.js' %}"></script>  <!-- ✅ Super Build -->
+<!-- wangEditor 初始化脚本 -->
+<script src="{% static 'js/wangeditor-init.js' %}"></script>
 
 <!-- 业务逻辑脚本 -->
 <script src="{% static 'js/fetchers.js' %}"></script>
