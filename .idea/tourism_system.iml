@@ -25,6 +25,7 @@
     <orderEntry type="library" name="zh-cn" level="application" />
     <orderEntry type="library" name="ckeditor5.umd" level="application" />
     <orderEntry type="library" name="zh-cn.umd" level="application" />
+    <orderEntry type="library" name="@wangeditor/editor" level="application" />
   </component>
   <component name="TemplatesService">
     <option name="TEMPLATE_CONFIGURATION" value="Django" />

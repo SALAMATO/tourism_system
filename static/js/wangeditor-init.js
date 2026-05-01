@@ -1,6 +1,5 @@
 /**
  * wangEditor 5 富文本编辑器初始化工具
- * 用于替换 CKEditor，提供完全免费的富文本编辑功能
  * 官方网站: https://www.wangeditor.com/
  */
 
