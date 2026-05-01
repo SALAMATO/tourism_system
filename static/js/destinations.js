@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       locationField = 'city';
     } else if (currentDomestic === 'all') {
       // 显示全部模式：优先显示省份，如果没有则显示城市
-      locationField = 'state';
+      locationField = 'country';
     } else if (currentDomestic === 'true') {
       locationField = 'state';
     } else {
