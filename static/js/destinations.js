@@ -32,16 +32,25 @@ document.addEventListener('DOMContentLoaded', async () => {
       filteredCache = cache.filter(item => item.is_domestic === (currentDomestic === 'true'));
     }
     
-    // 显示全部、国内显示省份，海外显示国家，周边显示城市
+    // 二级按钮显示逻辑：国内显示省份，海外显示国家，周边显示城市
     let locationField;
     if (currentDomestic === 'nearby') {
+      // 周边模式：显示城市
       locationField = 'city';
     } else if (currentDomestic === 'all') {
-      // 显示全部模式：优先显示省份，如果没有则显示城市
-      locationField = 'state';
+      // 显示全部模式：同时包含国内和海外，需要特殊处理
+      // 这里我们提取所有唯一的省份和国家
+      const domesticStates = [...new Set(filteredCache.filter(item => item.is_domestic).map(item => item.state).filter(Boolean))];
+      const foreignCountries = [...new Set(filteredCache.filter(item => !item.is_domestic).map(item => item.country).filter(Boolean))];
+      const locations = [...domesticStates, ...foreignCountries];
+      console.log(`显示全部模式：${domesticStates.length}个省份 + ${foreignCountries.length}个国家 = ${locations.length}个地区`);
+      renderCities(locations);
+      return; // 提前返回，不需要继续执行后面的逻辑
     } else if (currentDomestic === 'true') {
+      // 国内模式：显示省份
       locationField = 'state';
     } else {
+      // 海外模式：显示国家
       locationField = 'country';
     }
     
