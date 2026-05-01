@@ -199,14 +199,30 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
       
       // 按发布日期降序排序（最新发布）
-      console.log('最新发布模式：排序前', filtered.length, '个目的地');
+      console.log('=== 最新发布模式调试信息 ===');
+      console.log('排序前数据量:', filtered.length);
+      console.log('第一条数据的 publish_date:', filtered[0]?.publish_date);
+      console.log('第一条数据的 created_at:', filtered[0]?.created_at);
+      
       filtered.sort((a, b) => {
         // 优先使用 publish_date，如果为空则使用 created_at
         const dateA = new Date(a.publish_date || a.created_at || 0);
         const dateB = new Date(b.publish_date || b.created_at || 0);
+        
+        // 调试：打印前3条数据的排序信息
+        if (filtered.indexOf(a) < 3 || filtered.indexOf(b) < 3) {
+          console.log(`比较: ${a.name} (${a.publish_date || a.created_at}) vs ${b.name} (${b.publish_date || b.created_at})`);
+          console.log(`  结果: ${dateB - dateA > 0 ? 'b在前' : 'a在前'}`);
+        }
+        
         return dateB - dateA; // 降序：最新的在前
       });
-      console.log('最新发布模式：排序完成');
+      
+      console.log('排序后前3条数据:');
+      filtered.slice(0, 3).forEach((item, index) => {
+        console.log(`  ${index + 1}. ${item.name} - publish_date: ${item.publish_date}, created_at: ${item.created_at}`);
+      });
+      console.log('=== 排序完成 ===');
     }
     // 其他推荐类型模式
     else {
@@ -392,6 +408,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 加载所有目的地到缓存
     const response = await api.getDestinations({ limit: 500, sort: 'sort_order' });
     cache = response.data || [];
+    
+    console.log('=== 数据加载调试信息 ===');
+    console.log('总共加载', cache.length, '个目的地');
+    if (cache.length > 0) {
+      console.log('第一条数据:', cache[0]);
+      console.log('第一条数据的 publish_date:', cache[0].publish_date);
+      console.log('第一条数据的 created_at:', cache[0].created_at);
+    }
+    console.log('=== 数据加载完成 ===');
     
     // 加载智能推荐
     await loadSmartRecommend();

@@ -62,6 +62,11 @@ class DestinationSerializer(serializers.ModelSerializer):
     features_display = serializers.CharField(write_only=True, required=False, allow_blank=True)
     features_rich_text = serializers.SerializerMethodField(read_only=True)
     is_domestic = serializers.BooleanField(read_only=True)
+    publish_date = serializers.DateTimeField(
+        input_formats=['iso-8601', '%Y-%m-%d', '%Y-%m-%d %H:%M:%S'],
+        required=False,
+        allow_null=True
+    )
     
     def get_features_rich_text(self, obj):
         features = obj.features or []
