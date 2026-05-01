@@ -77,13 +77,108 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 });
 
-// 初始化超级编辑器（懒加载版本 - 不再自动初始化）
+// 初始化超级编辑器（自动加载版本 - 点击模块时自动初始化）
 async function initSuperEditors() {
-  console.log('超级编辑器采用懒加载模式，点击“编辑文本”按钮时才会初始化');
-  // 不再自动初始化任何编辑器，等待用户点击按钮
+  console.log('✅ 编辑器采用自动初始化模式，点击模块时将自动加载所有编辑器');
+  // 不再需要手动调用，showModule 函数会自动处理
 }
 
-// 懒加载初始化指定的编辑器
+// ==================== 自动初始化编辑器函数 ====================
+
+// 初始化政策法规编辑器
+async function initPolicyEditors() {
+  const editorId = 'policy-content';
+  const placeholder = '请输入政策法规内容...';
+  
+  // 检查是否已经初始化
+  if (window.WangEditorHelper && window.WangEditorHelper.editorInstances[editorId]) {
+    console.log(`编辑器 ${editorId} 已存在，跳过初始化`);
+    return;
+  }
+  
+  try {
+    await lazyInitEditor(editorId, placeholder);
+    console.log(`✅ 政策法规编辑器自动初始化成功`);
+  } catch (error) {
+    console.error(`❌ 政策法规编辑器初始化失败:`, error);
+  }
+}
+
+// 初始化新闻资讯编辑器
+async function initNewsEditors() {
+  const editorId = 'news-content';
+  const placeholder = '请输入新闻资讯内容...';
+  
+  // 检查是否已经初始化
+  if (window.WangEditorHelper && window.WangEditorHelper.editorInstances[editorId]) {
+    console.log(`编辑器 ${editorId} 已存在，跳过初始化`);
+    return;
+  }
+  
+  try {
+    await lazyInitEditor(editorId, placeholder);
+    console.log(`✅ 新闻资讯编辑器自动初始化成功`);
+  } catch (error) {
+    console.error(`❌ 新闻资讯编辑器初始化失败:`, error);
+  }
+}
+
+// 初始化安全隐患编辑器
+async function initSafetyEditors() {
+  const editors = [
+    { id: 'safety-description', placeholder: '请输入安全隐患的详细描述...' },
+    { id: 'safety-prevention', placeholder: '请输入预防措施...' },
+    { id: 'safety-plan', placeholder: '请输入应急预案...' }
+  ];
+  
+  for (const editor of editors) {
+    // 检查是否已经初始化
+    if (window.WangEditorHelper && window.WangEditorHelper.editorInstances[editor.id]) {
+      console.log(`编辑器 ${editor.id} 已存在，跳过初始化`);
+      continue;
+    }
+    
+    try {
+      await lazyInitEditor(editor.id, editor.placeholder);
+      console.log(`✅ 安全隐患编辑器 ${editor.id} 自动初始化成功`);
+    } catch (error) {
+      console.error(`❌ 安全隐患编辑器 ${editor.id} 初始化失败:`, error);
+    }
+  }
+}
+
+// 初始化目的地编辑器
+async function initDestinationEditors() {
+  const editors = [
+    { id: 'destination-description', placeholder: '请输入旅游目的地的详细介绍...' },
+    { id: 'destination-features', placeholder: '请输入旅游目的地特色亮点，可使用富文本排版...' }
+  ];
+  
+  for (const editor of editors) {
+    // 检查是否已经初始化
+    if (window.WangEditorHelper && window.WangEditorHelper.editorInstances[editor.id]) {
+      console.log(`编辑器 ${editor.id} 已存在，跳过初始化`);
+      continue;
+    }
+    
+    try {
+      await lazyInitEditor(editor.id, editor.placeholder);
+      console.log(`✅ 目的地编辑器 ${editor.id} 自动初始化成功`);
+    } catch (error) {
+      console.error(`❌ 目的地编辑器 ${editor.id} 初始化失败:`, error);
+    }
+  }
+}
+
+// 初始化回复编辑器
+async function initReplyEditor() {
+  // 注意：回复编辑器在 openReplyModal 函数中已经自动初始化
+  // 当用户点击“回复”按钮打开模态框时，会自动初始化编辑器
+  // 因此这里不需要做任何操作
+  console.log('ℹ️ 回复编辑器将在打开回复模态框时自动初始化');
+}
+
+// ==================== 懒加载初始化指定的编辑器 ====================
 async function lazyInitEditor(elementId, placeholder = '请输入内容...') {
   try {
     // 检查是否已经初始化过
@@ -120,7 +215,7 @@ async function lazyInitEditor(elementId, placeholder = '请输入内容...') {
   }
 }
 
-function showModule(moduleName) {
+async function showModule(moduleName) {
   // 隐藏所有模块
   document.querySelectorAll('.admin-module').forEach(module => {
     module.style.display = 'none';
@@ -132,21 +227,41 @@ function showModule(moduleName) {
     targetModule.style.display = 'block';
     scrollToTop();
 
-    // 根据模块加载对应的数据列表
+    // 根据模块加载对应的数据列表并自动初始化编辑器
     if (moduleName === 'policy') {
-      loadPoliciesForAdmin();
+      await loadPoliciesForAdmin();
+      // 自动初始化政策法规编辑器
+      setTimeout(() => {
+        initPolicyEditors();
+      }, 300);
     } else if (moduleName === 'news') {
-      loadNewsForAdmin();
+      await loadNewsForAdmin();
+      // 自动初始化新闻资讯编辑器
+      setTimeout(() => {
+        initNewsEditors();
+      }, 300);
     } else if (moduleName === 'safety') {
-      loadSafetyAlertsForAdmin();
+      await loadSafetyAlertsForAdmin();
+      // 自动初始化安全隐患编辑器
+      setTimeout(() => {
+        initSafetyEditors();
+      }, 300);
     } else if (moduleName === 'statistics') {
-      loadStatisticsForAdmin();
+      await loadStatisticsForAdmin();
     } else if (moduleName === 'destination') {
-      loadDestinationsForAdmin();
+      await loadDestinationsForAdmin();
+      // 自动初始化目的地编辑器
+      setTimeout(() => {
+        initDestinationEditors();
+      }, 300);
     } else if (moduleName === 'message') {
-      loadMessagesForAdmin();
+      await loadMessagesForAdmin();
+      // 自动初始化回复编辑器
+      setTimeout(() => {
+        initReplyEditor();
+      }, 300);
     } else if (moduleName === 'user') {
-      loadUsersForAdmin();
+      await loadUsersForAdmin();
     }
   }
 }
@@ -225,8 +340,11 @@ function initDeleteButtons() {
   });
 }
 
-// 初始化编辑器懒加载按钮
+// 初始化编辑器懒加载按钮（已弃用 - 现在使用自动初始化）
+// 此函数保留用于特殊情况下的手动初始化
 function initEditorToggleButtons() {
+  console.log('ℹ️ 编辑器现在采用自动初始化模式，点击模块时会自动加载');
+  
   // 定义每个编辑器的placeholder配置
   const editorConfigs = {
     'policy-content': '请输入政策法规内容...',
@@ -239,7 +357,7 @@ function initEditorToggleButtons() {
     'reply-content': '请输入回复内容...'
   };
   
-  // 使用事件委托监听所有编辑按钮的点击
+  // 使用事件委托监听所有编辑按钮的点击（作为备用方案）
   document.addEventListener('click', async function(e) {
     const btn = e.target.closest('.editor-toggle-btn');
     if (!btn) return;
@@ -250,7 +368,7 @@ function initEditorToggleButtons() {
     const editorId = btn.getAttribute('data-editor-id');
     if (!editorId) return;
     
-    console.log(`用户点击了编辑器按钮: ${editorId}`);
+    console.log(`用户点击了编辑器按钮: ${editorId}（备用方案）`);
     
     // 显示加载状态
     const originalText = btn.innerHTML;
@@ -266,6 +384,9 @@ function initEditorToggleButtons() {
       if (textarea && textarea.value) {
         window.WangEditorHelper.setContent(editorId, textarea.value);
       }
+      
+      // 隐藏按钮
+      btn.style.display = 'none';
     } catch (error) {
       console.error('初始化编辑器失败:', error);
       showNotification('编辑器初始化失败，请刷新页面重试', 'error');
