@@ -102,7 +102,7 @@ function renderHomepageDestinationModule(type, destinations, container, userCity
     tagText = 'AROUND YOU';
     title = '周边低空旅行';
     subtitle = userCity 
-      ? `基于您当前所在城市（${escapeHtml(userCity)}）推荐的低空旅行目的地`
+      ? `推荐您当前所在城市——${escapeHtml(userCity)}附近的低空旅行目的地`
       : '结合城市维度展示更贴近当前浏览者的低空旅行灵感，让每一座城市都拥有独特的云端风景。';
   } else if (type === 'all') {
     tagText = "EDITOR'S PICK";
