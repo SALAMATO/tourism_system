@@ -27,12 +27,22 @@ async function loadProfileInfo() {
     }
 
     // 填充表单
+    document.getElementById('profile-username').value = user.username || '';
     document.getElementById('profile-nickname').value = user.nickname || '';
     document.getElementById('profile-email').value = user.email || '';
     document.getElementById('profile-phone').value = user.phone || '';
 
     // 获取统计数据
     const stats = await loadUserStats();
+
+    // 构建IP归属地显示
+    let locationInfo = '';
+    if (user.province) {
+      locationInfo = `<span><i class="fas fa-map-marker-alt"></i> IP归属地：${escapeHtml(user.province)}</span>`;
+      // if (user.city) {
+      //   locationInfo += `<span><i class="fas fa-city"></i> ${escapeHtml(user.city)}</span>`;
+      // }
+    }
 
     const html = `
       <div class="list-item" style="border: none; padding: 0;">
@@ -41,6 +51,7 @@ async function loadProfileInfo() {
             <h3>${escapeHtml(user.nickname || user.username)}</h3>
             <div class="list-item-meta">
               <span><i class="fas fa-user"></i> 账号：${escapeHtml(user.username)}</span>
+              ${locationInfo}
               <span><i class="fas fa-envelope"></i> ${escapeHtml(user.email || '未填写')}</span>
               <span><i class="fas fa-phone"></i> ${escapeHtml(user.phone || '未填写')}</span>
             </div>
@@ -120,10 +131,16 @@ function initProfileForm() {
 }
 
 async function submitProfileUpdate() {
+  const username = document.getElementById('profile-username').value.trim();
   const nickname = document.getElementById('profile-nickname').value.trim();
   const email = document.getElementById('profile-email').value.trim();
   const phone = document.getElementById('profile-phone').value.trim();
 
+  if (!username) {
+    showNotification('登录名不能为空', 'error');
+    return;
+  }
+  
   if (!email) {
     showNotification('邮箱不能为空', 'error');
     return;
@@ -133,6 +150,7 @@ async function submitProfileUpdate() {
     const response = await api.request('http://127.0.0.1:8000/api/user/update_profile/', {
       method: 'POST',
       body: JSON.stringify({
+        username: username,
         nickname: nickname,
         email: email,
         phone: phone

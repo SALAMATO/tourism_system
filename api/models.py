@@ -19,6 +19,10 @@ class User(AbstractUser):
     latitude = models.FloatField(blank=True, null=True, verbose_name='纬度')
     longitude = models.FloatField(blank=True, null=True, verbose_name='经度')
     last_login_ip = models.CharField(max_length=45, blank=True, null=True, verbose_name='最后登录IP')
+    
+    # username修改追踪字段
+    username_change_count = models.IntegerField(default=0, verbose_name='用户名修改次数')
+    last_username_change_at = models.DateTimeField(blank=True, null=True, verbose_name='上次用户名修改时间')
 
     class Meta:
         db_table = 'users'

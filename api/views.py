@@ -169,11 +169,12 @@ class UserViewSet(PublicModelViewSet):
 
     @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
     def update_profile(self, request):
-        """修改当前用户的昵称、邮箱和手机号"""
+        """修改当前用户的昵称、邮箱、手机号和用户名"""
         user = request.user
         nickname = request.data.get('nickname')
         email = request.data.get('email')
         phone = request.data.get('phone')
+        username = request.data.get('username')
         
         if nickname is not None:
             user.nickname = nickname
@@ -192,6 +193,38 @@ class UserViewSet(PublicModelViewSet):
             if phone and User.objects.filter(phone=phone).exclude(id=user.id).exists():
                 return Response({'error': '该手机号已被使用'}, status=status.HTTP_400_BAD_REQUEST)
             user.phone = phone
+        
+        if username is not None:
+            # 验证用户名格式
+            if not username or len(username.strip()) == 0:
+                return Response({'error': '用户名不能为空'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            # 检查60天内修改次数限制
+            from django.utils import timezone as django_timezone
+            now = django_timezone.now()
+            
+            # 如果用户已经有修改记录，检查是否在60天限制内
+            if user.last_username_change_at:
+                days_since_last_change = (now - user.last_username_change_at).days
+                if days_since_last_change < 60 and user.username_change_count >= 2:
+                    remaining_days = 60 - days_since_last_change
+                    return Response({
+                        'error': f'60天内只能修改两次用户名，还需等待{remaining_days}天才能再次修改'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+                
+                # 如果超过60天，重置计数
+                if days_since_last_change >= 60:
+                    user.username_change_count = 0
+            
+            # 检查用户名是否已被其他用户使用
+            if User.objects.filter(username=username).exclude(id=user.id).exists():
+                return Response({'error': '该用户名已被使用'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            # 更新用户名和追踪信息
+            old_username = user.username
+            user.username = username
+            user.username_change_count += 1
+            user.last_username_change_at = now
         
         user.save()
         return Response({

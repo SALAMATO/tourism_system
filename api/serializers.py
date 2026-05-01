@@ -13,8 +13,9 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'username', 'nickname', 'email', 'phone', 'avatar', 'bio', 'date_joined', 'is_staff', 'is_active',
-                  'country', 'province', 'city', 'latitude', 'longitude', 'last_login_ip']
-        read_only_fields = ['date_joined']
+                  'country', 'province', 'city', 'latitude', 'longitude', 'last_login_ip', 
+                  'username_change_count', 'last_username_change_at']
+        read_only_fields = ['date_joined', 'username_change_count', 'last_username_change_at']
 
 
 class UserRegisterSerializer(serializers.ModelSerializer):
