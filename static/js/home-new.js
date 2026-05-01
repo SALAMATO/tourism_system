@@ -18,9 +18,31 @@ async function loadHomepageDestinationModules() {
   }
 
   try {
-    const response = await api.getHomepageDestinationModules();
-    renderHomepageDestinationModule('nearby', response.nearby, nearbyContainer);
-    renderHomepageDestinationModule('managed', response.managed, managedContainer);
+    // 加载周边目的地（使用周边模式）
+    const nearbyResponse = await api.request('/api/destinations/nearby_by_ip/');
+    console.log('首页周边推荐API响应:', nearbyResponse);
+    
+    if (nearbyResponse && nearbyResponse.destinations) {
+      console.log(`周边推荐原始数据量: ${nearbyResponse.destinations.length}`);
+      const nearbyDestinations = nearbyResponse.destinations.slice(0, 4); // 只显示前4个
+      console.log(`首页周边推荐：实际显示 ${nearbyDestinations.length} 个目的地`);
+      renderHomepageDestinationModule('nearby', nearbyDestinations, nearbyContainer, nearbyResponse.user_city);
+    } else {
+      nearbyContainer.innerHTML = '<div class="loading"><div>暂无周边推荐</div></div>';
+    }
+    
+    // 加载显示全部目的地（使用智能推荐 - 国内模式）
+    const allResponse = await api.request('/api/destinations/smart_recommend/?is_domestic=true');
+    console.log('首页智能推荐API响应:', allResponse);
+    
+    if (allResponse && Array.isArray(allResponse)) {
+      console.log(`智能推荐原始数据量: ${allResponse.length}`);
+      const allDestinations = allResponse.slice(0, 4); // 只显示前4个
+      console.log(`首页智能推荐：实际显示 ${allDestinations.length} 个目的地`);
+      renderHomepageDestinationModule('all', allDestinations, managedContainer, null);
+    } else {
+      managedContainer.innerHTML = '<div class="loading"><div>暂无推荐内容</div></div>';
+    }
   } catch (error) {
     console.error('加载首页目的地模块失败:', error);
     nearbyContainer.innerHTML = '<div class="loading"><div>加载失败，请稍后重试</div></div>';
@@ -28,17 +50,31 @@ async function loadHomepageDestinationModules() {
   }
 }
 
-function renderHomepageDestinationModule(type, moduleData, container) {
-  if (!moduleData) {
+function renderHomepageDestinationModule(type, destinations, container, userCity) {
+  if (!destinations || destinations.length === 0) {
     container.innerHTML = '<div class="loading"><div>暂无推荐内容</div></div>';
     return;
   }
 
-  const citiesHtml = (moduleData.cities || []).map(city => `
-    <button class="destination-switch-btn ${city === moduleData.current_city ? 'active' : ''}" data-module-type="${type}" data-city="${escapeHtml(city)}">${escapeHtml(city)}</button>
-  `).join('');
-
-  const itemsHtml = (moduleData.items || []).map(item => {
+  // 生成目的地卡片 HTML
+  const itemsHtml = destinations.map(item => {
+    // 根据类型确定位置显示格式
+    let locationText;
+    if (type === 'nearby') {
+      // 周边模式：显示 省份 · 具体位置
+      locationText = `${escapeHtml(item.state || item.city)} · ${escapeHtml(item.location || '')}`;
+    } else if (type === 'all') {
+      // 显示全部模式：国内显示省份，海外显示国家
+      if (item.is_domestic) {
+        locationText = `${escapeHtml(item.state || item.city)} · ${escapeHtml(item.location || '')}`;
+      } else {
+        locationText = `${escapeHtml(item.country)}`; // 只显示国家
+      }
+    } else {
+      // 默认：城市 · 位置
+      locationText = `${escapeHtml(item.city)} · ${escapeHtml(item.location || '')}`;
+    }
+    
     const richContent = item.features_rich_text || item.features_display || item.description || '';
     return `
     <a href="/destination-detail.html?id=${item.id}" class="destination-explore-card">
@@ -50,7 +86,7 @@ function renderHomepageDestinationModule(type, moduleData, container) {
           <h3>${escapeHtml(item.name)}</h3>
           <span><i class="fas fa-star" style="color:#ef4444;"></i> ${Number(item.rating || 0).toFixed(1)}</span>
         </div>
-        <div class="destination-explore-location"><i class="fas fa-location-dot"></i> ${escapeHtml(item.city)} · ${escapeHtml(item.location || '')}</div>
+        <div class="destination-explore-location"><i class="fas fa-location-dot"></i> ${locationText}</div>
         <div class="destination-explore-desc rich-text-content rich-text-clamp">${richContent}</div>
         <div class="destination-explore-meta">
           <span>${escapeHtml(item.duration || '')}</span>
@@ -60,31 +96,37 @@ function renderHomepageDestinationModule(type, moduleData, container) {
     </a>
   `}).join('');
 
+  // 生成标题和描述
+  let title, subtitle, tagText;
+  if (type === 'nearby') {
+    tagText = 'AROUND YOU';
+    title = '周边低空旅行';
+    subtitle = userCity 
+      ? `基于您当前所在城市（${escapeHtml(userCity)}）推荐的低空旅行目的地`
+      : '结合城市维度展示更贴近当前浏览者的低空旅行灵感，让每一座城市都拥有独特的云端风景。';
+  } else if (type === 'all') {
+    tagText = "EDITOR'S PICK";
+    title = '精选低空旅行';
+    subtitle = '呈现更值得关注的空中观光、热气球与飞行体验目的地。';
+  }
+
   container.innerHTML = `
     <div class="destination-explore-panel">
-      <div class="destination-explore-toolbar">
-        <div class="destination-switch-group">${citiesHtml}</div>
-        <a href="/destinations/" class="btn btn-secondary destination-more-btn">查看旅游目的地</a>
+      <div class="homepage-destination-heading">
+        <div>
+          <div class="recommend-tag">${tagText}</div>
+          <h2>${title}</h2>
+          <p>${subtitle}</p>
+        </div>
       </div>
       <div class="destination-explore-grid">
-        ${itemsHtml || '<div class="loading"><div>当前城市暂无低空旅游项目</div></div>'}
+        ${itemsHtml}
+      </div>
+      <div style="text-align: center; margin-top: 32px;">
+        <a href="/destinations/" class="btn btn-secondary destination-more-btn">查看更多目的地</a>
       </div>
     </div>
   `;
-
-  container.querySelectorAll('.destination-switch-btn').forEach(button => {
-    button.addEventListener('click', async () => {
-      try {
-        const nearbyCity = type === 'nearby' ? button.dataset.city : document.querySelector('[data-module-type="nearby"].active')?.dataset.city;
-        const managedCity = type === 'managed' ? button.dataset.city : document.querySelector('[data-module-type="managed"].active')?.dataset.city;
-        const response = await api.getHomepageDestinationModules({ nearby_city: nearbyCity, managed_city: managedCity });
-        renderHomepageDestinationModule('nearby', response.nearby, document.getElementById('nearby-destination-content'));
-        renderHomepageDestinationModule('managed', response.managed, document.getElementById('managed-destination-content'));
-      } catch (error) {
-        console.error('切换首页目的地城市失败:', error);
-      }
-    });
-  });
 }
 
 // 加载热门目的地
