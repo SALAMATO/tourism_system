@@ -129,48 +129,29 @@ document.addEventListener('DOMContentLoaded', async () => {
   function renderList() {
     let filtered = [];
 
-    // 显示全部模式（一级按钮）：展示所有目的地
+    // 一级过滤：根据范围筛选数据源
     if (currentDomestic === 'all') {
+      // 显示全部模式：使用所有目的地
       filtered = [...cache];
       
       // 二级过滤：省份/国家（如果选择了）
       if (currentCity) {
-        // 尝试匹配 state 或 country
         filtered = filtered.filter(item => 
           item.state === currentCity || item.country === currentCity
         );
       }
-      
-      // 三级过滤：推荐类型（如果选择了）
-      if (currentType !== 'all') {
-        filtered = filtered.filter(item => {
-          const types = item.recommendation_type || [];
-          return Array.isArray(types) && types.includes(currentType);
-        });
-      }
-      
-      // 按创建时间降序排序（最新发布）
-      filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
     }
-    // 周边模式：按IP地理位置排序
     else if (currentDomestic === 'nearby') {
+      // 周边模式：使用IP定位数据
       filtered = [...nearbyDestinations];
       
       // 二级过滤：城市
       if (currentCity) {
         filtered = filtered.filter(item => item.city === currentCity);
       }
-      
-      // 三级过滤：推荐类型（如果选择了）
-      if (currentType !== 'all') {
-        filtered = filtered.filter(item => {
-          const types = item.recommendation_type || [];
-          return Array.isArray(types) && types.includes(currentType);
-        });
-      }
     }
-    // 三级按钮：显示全部（在国内/海外模式下）- 使用智能推荐
     else if (currentType === 'all') {
+      // 国内/海外模式 + 三级“显示全部”：使用智能推荐
       filtered = [...smartRecommendCache];
       
       // 一级过滤：国内/海外
@@ -181,14 +162,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         const locationField = currentDomestic === 'true' ? 'state' : 'country';
         filtered = filtered.filter(item => item[locationField] === currentCity);
       }
-      
-      // 按创建时间降序排序（最新发布）
-      filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
     }
-    // 最新发布模式
-    else if (currentType === 'latest') {
+    else {
+      // 国内/海外模式：使用缓存数据
       filtered = [...cache];
-      
+
       // 一级过滤：国内/海外
       filtered = filtered.filter(item => item.is_domestic === (currentDomestic === 'true'));
 
@@ -197,12 +175,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         const locationField = currentDomestic === 'true' ? 'state' : 'country';
         filtered = filtered.filter(item => item[locationField] === currentCity);
       }
-      
-      // 按发布日期降序排序（最新发布）
+    }
+
+    // 三级过滤：推荐类型
+    if (currentType === 'latest') {
+      // 最新发布模式：按发布日期降序排序
       console.log('=== 最新发布模式调试信息 ===');
+      console.log('当前一级模式:', currentDomestic);
       console.log('排序前数据量:', filtered.length);
-      console.log('第一条数据的 publish_date:', filtered[0]?.publish_date);
-      console.log('第一条数据的 created_at:', filtered[0]?.created_at);
+      if (filtered.length > 0) {
+        console.log('第一条数据的 publish_date:', filtered[0]?.publish_date);
+        console.log('第一条数据的 created_at:', filtered[0]?.created_at);
+      }
       
       filtered.sort((a, b) => {
         // 优先使用 publish_date，如果为空则使用 created_at
@@ -224,20 +208,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
       console.log('=== 排序完成 ===');
     }
-    // 其他推荐类型模式
-    else {
-      filtered = [...cache];
-
-      // 一级过滤：国内/海外
-      filtered = filtered.filter(item => item.is_domestic === (currentDomestic === 'true'));
-
-      // 二级过滤：省份/国家
-      if (currentCity) {
-        const locationField = currentDomestic === 'true' ? 'state' : 'country';
-        filtered = filtered.filter(item => item[locationField] === currentCity);
-      }
-
-      // 三级过滤：推荐类型
+    else if (currentType !== 'all') {
+      // 其他推荐类型：过滤 recommendation_type
       filtered = filtered.filter(item => {
         const types = item.recommendation_type || [];
         return Array.isArray(types) && types.includes(currentType);
