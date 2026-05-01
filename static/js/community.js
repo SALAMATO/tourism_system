@@ -73,6 +73,11 @@ document.addEventListener('DOMContentLoaded', () => {
   initMessageForm();
   initInfiniteScroll();
   loadMessages();
+  
+  // 初始化富文本编辑器
+  setTimeout(() => {
+    initCommunityEditors();
+  }, 500);
 });
 
 // 初始化发帖按钮
@@ -463,6 +468,11 @@ async function openCommentsModal(messageId) {
     }
     
     commentsModal.open();
+    
+    // 初始化评论编辑器（延迟执行，确保弹窗已显示）
+    setTimeout(() => {
+      initCommentEditor();
+    }, 300);
 
     await loadCommentsInModal(messageId);
   } catch (error) {
@@ -626,6 +636,52 @@ async function loadCommentsInline(messageId) {
     }
   } catch (error) {
     console.error("加载评论失败:", error);
+  }
+}
+
+// 初始化互动交流页面的富文本编辑器
+async function initCommunityEditors() {
+  try {
+    // 等待CKEditorHelper加载
+    if (typeof window.CKEditorHelper === 'undefined') {
+      console.warn('CKEditorHelper未加载，等待...');
+      setTimeout(initCommunityEditors, 500);
+      return;
+    }
+    
+    // 初始化留言内容编辑器
+    const messageEditor = document.getElementById('message-content');
+    if (messageEditor && !window.CKEditorHelper.editorInstances['message-content']) {
+      await window.CKEditorHelper.initEditor('message-content', {
+        placeholder: '分享你的想法...'
+      });
+      console.log('✅ 留言内容编辑器初始化成功');
+    }
+    
+    // 注意：评论编辑器在弹窗中，需要在打开弹窗时初始化
+    console.log('✅ 互动交流页面编辑器初始化完成');
+  } catch (error) {
+    console.error('❌ 初始化互动交流编辑器失败:', error);
+  }
+}
+
+// 初始化评论编辑器（在打开评论弹窗时调用）
+async function initCommentEditor() {
+  try {
+    if (typeof window.CKEditorHelper === 'undefined') {
+      console.warn('CKEditorHelper未加载');
+      return;
+    }
+    
+    const commentEditor = document.getElementById('comment-content');
+    if (commentEditor && !window.CKEditorHelper.editorInstances['comment-content']) {
+      await window.CKEditorHelper.initEditor('comment-content', {
+        placeholder: '写下你的评论...'
+      });
+      console.log('✅ 评论编辑器初始化成功');
+    }
+  } catch (error) {
+    console.error('❌ 初始化评论编辑器失败:', error);
   }
 }
 

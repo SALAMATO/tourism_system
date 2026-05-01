@@ -5,7 +5,7 @@
 
 // CKEditor 5 许可证密钥（24小时评估密钥）
 // 如需长期使用，请注册免费账户获取永久密钥：https://portal.ckeditor.com/checkout?plan=free
-const LICENSE_KEY = 'eyJhbGciOiJFUzI1NiJ9.eyJleHAiOjE4MDQ1NTAzOTksImp0aSI6IjA1NGIxNGM4LWY0YTYtNDBkMS1hMzNmLWM1OWI2ZGNiNDliNSIsInVzYWdlRW5kcG9pbnQiOiJodHRwczovL3Byb3h5LWV2ZW50LmNrZWRpdG9yLmNvbSIsImRpc3RyaWJ1dGlvbkNoYW5uZWwiOlsiY2xvdWQiLCJkcnVwYWwiXSwiZmVhdHVyZXMiOlsiRFJVUCIsIkUyUCIsIkUyVyJdLCJyZW1vdmVGZWF0dXJlcyI6WyJQQiIsIlJGIiwiU0NIIiwiVENQIiwiVEwiLCJUQ1IiLCJJUiIsIlNVQSIsIkI2NEEiLCJMUCIsIkhFIiwiUkVEIiwiUEZPIiwiV0MiLCJGQVIiLCJCS00iLCJGUEgiLCJNUkUiXSwidmMiOiI4MzQyNDdkZSJ9.45H0htEMMcvtE47Z6jrbvSaGorVB25GHYwHahJHfeX05lBPlZ5SmoaXu2vMHy9wbLJ7cKrfpKIOV7opTnzGkug';
+const LICENSE_KEY = 'GPL'; // 或 <YOUR_LICENSE_KEY>
 
 // CKEditor 实例存储
 const editorInstances = {};
