@@ -1246,6 +1246,13 @@ function buildDestinationFormData() {
   }
   formData.append('recommendation_type', JSON.stringify(checkedTypes));
   formData.append('sort_order', document.getElementById('destination-sort-order').value || '0');
+  
+  // 处理发布日期
+  const publishDateValue = document.getElementById('destination-publish-date').value;
+  if (publishDateValue) {
+    formData.append('publish_date', publishDateValue);
+  }
+  
   formData.append('is_featured', document.getElementById('destination-is-featured').value);
   formData.append('is_hot', document.getElementById('destination-is-hot').value);
   formData.append(
@@ -1428,6 +1435,11 @@ function resetDestinationFormState() {
   if (submitBtn) submitBtn.textContent = '提交';
   const deleteBtn = document.getElementById('destination-delete-btn');
   if (deleteBtn) deleteBtn.style.display = 'none';
+  
+  // 重置发布日期
+  const publishDateInput = document.getElementById('destination-publish-date');
+  if (publishDateInput) publishDateInput.value = '';
+  
   const preview = document.getElementById('destination-cover-preview');
   const previewImage = document.getElementById('destination-cover-preview-img');
   const fileNameEl = document.getElementById('destination-cover-file-name');
@@ -1484,6 +1496,20 @@ async function editDestination(id) {
       defaultCheckbox.checked = true;
     }
     document.getElementById('destination-sort-order').value = destination.sort_order || 0;
+    
+    // 处理发布日期 - 将 ISO 格式转换为 datetime-local 格式
+    if (destination.publish_date) {
+      const publishDate = new Date(destination.publish_date);
+      const year = publishDate.getFullYear();
+      const month = String(publishDate.getMonth() + 1).padStart(2, '0');
+      const day = String(publishDate.getDate()).padStart(2, '0');
+      const hours = String(publishDate.getHours()).padStart(2, '0');
+      const minutes = String(publishDate.getMinutes()).padStart(2, '0');
+      document.getElementById('destination-publish-date').value = `${year}-${month}-${day}T${hours}:${minutes}`;
+    } else {
+      document.getElementById('destination-publish-date').value = '';
+    }
+    
     document.getElementById('destination-is-featured').value = String(Boolean(destination.is_featured));
     document.getElementById('destination-is-hot').value = String(Boolean(destination.is_hot));
     
@@ -1554,6 +1580,18 @@ async function editDestination(id) {
     saveToCache('destination-best-season', destination.best_season || '');
     saveToCache('destination-rating', destination.rating || 4.9);
     saveToCache('destination-sort-order', destination.sort_order || 0);
+    
+    // 缓存发布日期
+    if (destination.publish_date) {
+      const publishDate = new Date(destination.publish_date);
+      const year = publishDate.getFullYear();
+      const month = String(publishDate.getMonth() + 1).padStart(2, '0');
+      const day = String(publishDate.getDate()).padStart(2, '0');
+      const hours = String(publishDate.getHours()).padStart(2, '0');
+      const minutes = String(publishDate.getMinutes()).padStart(2, '0');
+      saveToCache('destination-publish-date', `${year}-${month}-${day}T${hours}:${minutes}`);
+    }
+    
     saveToCache('destination-is-featured', String(Boolean(destination.is_featured)));
     saveToCache('destination-is-hot', String(Boolean(destination.is_hot)));
     saveToCache('destination-description', destination.description || '');
@@ -3017,6 +3055,7 @@ function restoreFormData() {
     { id: 'destination-is-featured', type: 'select' },
     { id: 'destination-is-hot', type: 'select' },
     { id: 'destination-sort-order', type: 'input' },
+    { id: 'destination-publish-date', type: 'input' },
   ];
   
   formFields.forEach(field => {
