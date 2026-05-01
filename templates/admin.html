@@ -529,33 +529,36 @@
               <input type="text" id="destination-name" class="form-input" required>
             </div>
             <div class="form-group">
-              <label class="form-label">所属城市 *</label>
-              <input type="text" id="destination-city" class="form-input" placeholder="如：北京、三亚、桂林" required>
+              <label class="form-label">类别 *</label>
+              <input type="text" id="destination-category" class="form-input" placeholder="如：直升机观光、热气球、滑翔伞" required>
             </div>
           </div>
 
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label">国家（选填，用于IP定位）</label>
+              <label class="form-label">国家/地区 *</label>
               <input type="text" id="destination-country" class="form-input" placeholder="如：中国、China" value="中国">
               <div style="margin-top: 4px; font-size: 12px; color: var(--text-secondary);">
                 输入“中国”、“China”等会自动标记为国内旅游地
               </div>
             </div>
             <div class="form-group">
-              <label class="form-label">省份/州（选填，用于IP定位）</label>
-              <input type="text" id="destination-state" class="form-input" placeholder="如：北京市、广东省">
+              <label class="form-label">省份/州 *</label>
+              <input type="text" id="destination-state" class="form-input" placeholder="如：北京市、广东省、加利福尼亚州、香港特别行政区、东京都">
+                <div style="margin-top: 4px; font-size: 12px; color: var(--text-secondary);">
+                国家、地区、城市将用于IP定位，地理位置用于精确位置
+              </div>
             </div>
           </div>
 
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label">地理位置 *</label>
-              <input type="text" id="destination-location" class="form-input" placeholder="如：北京市延庆区八达岭机场" required>
+              <label class="form-label">城市/区 *</label>
+              <input type="text" id="destination-city" class="form-input" placeholder="如：北京、广州、旧金山/新界、新宿区" required>
             </div>
             <div class="form-group">
-              <label class="form-label">类别 *</label>
-              <input type="text" id="destination-category" class="form-input" placeholder="如：直升机观光、热气球、滑翔伞" required>
+              <label class="form-label">地理位置 *</label>
+              <input type="text" id="destination-location" class="form-input" placeholder="如：延庆区八达岭机场" required>
             </div>
           </div>
 
