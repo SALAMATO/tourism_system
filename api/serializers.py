@@ -74,6 +74,10 @@ class DestinationSerializer(serializers.ModelSerializer):
             return ''
         return '\n'.join(features) if len(features) > 1 else features[0]
     
+    def get_is_domestic(self, obj):
+        """获取是否国内的布尔值"""
+        return obj.is_domestic
+    
 
     class Meta:
         model = Destination

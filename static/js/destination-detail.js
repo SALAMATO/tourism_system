@@ -1,3 +1,35 @@
+// 格式化位置信息：国家-省份-城市-地理位置（中国不显示国家）
+function formatLocation(destination) {
+  const parts = [];
+  
+  // 如果国家不是中国，则显示国家
+  if (destination.country && destination.country !== '中国') {
+    parts.push(escapeHtml(destination.country));
+  }
+  
+  // 添加省份
+  if (destination.state) {
+    parts.push(escapeHtml(destination.state));
+  }
+  
+  // 添加城市
+  if (destination.city) {
+    parts.push(escapeHtml(destination.city));
+  }
+  
+  // 添加地理位置
+  if (destination.location) {
+    parts.push(escapeHtml(destination.location));
+  }
+  
+  return parts.join(' · ') || '--';
+}
+
+// 为卡片格式化的位置信息（用于侧边栏）
+function formatLocationForCard(destination) {
+  return formatLocation(destination);
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   const shell = document.getElementById('destination-detail-shell');
   const params = new URLSearchParams(window.location.search);
@@ -10,6 +42,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   try {
     const destination = await api.getDestination(id);
+    console.log('目的地详情数据:', destination); // 调试信息
     await api.incrementDestinationViews(id);
 
     const fallbackImage = 'https://via.placeholder.com/1200x800/f3f4f6/9ca3af?text=Low+Altitude+Tourism';
@@ -33,7 +66,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         <div class="detail-title">${escapeHtml(destination.name)}</div>
         <div class="detail-meta-row">
           <span><i class="fas fa-star" style="color:#ef4444;"></i> ${Number(destination.rating || 0).toFixed(1)}</span>
-          <span><i class="fas fa-location-dot"></i> ${escapeHtml(destination.city)} · ${escapeHtml(destination.location || '')}</span>
+          <span><i class="fas fa-location-dot"></i> ${formatLocation(destination)}</span>
           <span><i class="fas fa-eye"></i> ${destination.views || 0} 次浏览</span>
           <span><i class="fas fa-tag"></i> ${escapeHtml(destination.category || '')}</span>
         </div>
@@ -74,7 +107,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           <div class="booking-grid">
             <div class="booking-grid-item">
               <span class="booking-label">所在城市</span>
-              <span class="booking-value">${escapeHtml(destination.city || '--')}</span>
+              <span class="booking-value">${formatLocationForCard(destination)}</span>
             </div>
             <div class="booking-grid-item">
               <span class="booking-label">项目类型</span>
