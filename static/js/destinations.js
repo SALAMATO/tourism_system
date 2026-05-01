@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const levelButtons = Array.from(document.querySelectorAll('[data-domestic]'));
   const typeButtons = Array.from(document.querySelectorAll('[data-type]'));
 
-  let currentDomestic = 'true'; // 默认显示国内
+  let currentDomestic = 'all'; // 默认显示全部
   let currentCity = '';
   let currentType = 'all';
   let cache = [];
@@ -24,14 +24,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.log('所有城市的值（按API返回顺序）:', filteredCache.map(item => item.city));
         console.log('所有城市的分数（按API返回顺序）:', filteredCache.map(item => item.match_score));
       }
+    } else if (currentDomestic === 'all') {
+      // 显示全部模式：使用所有缓存数据
+      filteredCache = [...cache];
+      console.log(`显示全部模式：当前有 ${filteredCache.length} 个目的地`);
     } else {
       filteredCache = cache.filter(item => item.is_domestic === (currentDomestic === 'true'));
     }
     
-    // 国内显示省份，海外显示国家，周边显示城市
+    // 显示全部、国内显示省份，海外显示国家，周边显示城市
     let locationField;
     if (currentDomestic === 'nearby') {
       locationField = 'city';
+    } else if (currentDomestic === 'all') {
+      // 显示全部模式：优先显示省份，如果没有则显示城市
+      locationField = 'state';
     } else if (currentDomestic === 'true') {
       locationField = 'state';
     } else {
@@ -99,17 +106,21 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    cityFilter.innerHTML = locations.map((location, index) => `
-      <button class="city-chip ${index === 0 ? 'active' : ''}" data-city="${escapeHtml(location)}">${escapeHtml(location)}</button>
+    // 在地区列表前添加"全部地区"选项
+    const allRegionsButton = `<button class="city-chip active" data-city="">全部地区</button>`;
+    const regionButtons = locations.map((location) => `
+      <button class="city-chip" data-city="${escapeHtml(location)}">${escapeHtml(location)}</button>
     `).join('');
+    
+    cityFilter.innerHTML = allRegionsButton + regionButtons;
 
-    currentCity = locations[0];
+    currentCity = ''; // 默认不筛选任何地区
 
     cityFilter.querySelectorAll('[data-city]').forEach(button => {
       button.addEventListener('click', () => {
         cityFilter.querySelectorAll('[data-city]').forEach(item => item.classList.remove('active'));
         button.classList.add('active');
-        currentCity = button.dataset.city;
+        currentCity = button.dataset.city; // 空字符串表示显示全部地区
         renderList();
       });
     });
@@ -118,8 +129,31 @@ document.addEventListener('DOMContentLoaded', async () => {
   function renderList() {
     let filtered = [];
 
+    // 显示全部模式（一级按钮）：展示所有目的地
+    if (currentDomestic === 'all') {
+      filtered = [...cache];
+      
+      // 二级过滤：省份/国家（如果选择了）
+      if (currentCity) {
+        // 尝试匹配 state 或 country
+        filtered = filtered.filter(item => 
+          item.state === currentCity || item.country === currentCity
+        );
+      }
+      
+      // 三级过滤：推荐类型（如果选择了）
+      if (currentType !== 'all') {
+        filtered = filtered.filter(item => {
+          const types = item.recommendation_type || [];
+          return Array.isArray(types) && types.includes(currentType);
+        });
+      }
+      
+      // 按创建时间降序排序（最新发布）
+      filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    }
     // 周边模式：按IP地理位置排序
-    if (currentDomestic === 'nearby') {
+    else if (currentDomestic === 'nearby') {
       filtered = [...nearbyDestinations];
       
       // 二级过滤：城市
@@ -135,7 +169,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
       }
     }
-    // 智能推荐模式
+    // 三级按钮：显示全部（在国内/海外模式下）- 使用智能推荐
     else if (currentType === 'all') {
       filtered = [...smartRecommendCache];
       
@@ -147,6 +181,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         const locationField = currentDomestic === 'true' ? 'state' : 'country';
         filtered = filtered.filter(item => item[locationField] === currentCity);
       }
+      
+      // 按创建时间降序排序（最新发布）
+      filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
     }
     // 最新发布模式
     else if (currentType === 'latest') {
@@ -162,7 +199,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
       
       // 按创建时间降序排序（最新发布）
-      filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      console.log('最新发布模式：排序前', filtered.length, '个目的地');
+      filtered.sort((a, b) => {
+        const dateA = new Date(a.created_at || 0);
+        const dateB = new Date(b.created_at || 0);
+        return dateB - dateA; // 降序：最新的在前
+      });
+      console.log('最新发布模式：排序完成');
     }
     // 其他推荐类型模式
     else {
@@ -186,7 +229,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (!filtered.length) {
       let msg = '';
-      if (currentDomestic === 'nearby') {
+      if (currentDomestic === 'all') {
+        msg = '全部';
+      } else if (currentDomestic === 'nearby') {
         msg = '周边';
       } else {
         msg = currentDomestic === 'true' ? '国内' : '海外';
@@ -197,7 +242,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 确定显示的位置字段和标签
     let locationField, locationLabel;
-    if (currentDomestic === 'nearby') {
+    if (currentDomestic === 'all') {
+      // 显示全部模式：根据 is_domestic 判断显示省份还是国家
+      locationLabel = item => {
+        if (item.is_domestic) {
+          return `${escapeHtml(item.state || item.city)} · ${escapeHtml(item.location || '')}`;
+        } else {
+          return `${escapeHtml(item.country)} · ${escapeHtml(item.location || '')}`;
+        }
+      };
+    } else if (currentDomestic === 'nearby') {
       // 周边模式：显示 state · location（省份/州 · 具体位置）
       locationField = 'city';
       locationLabel = item => `${escapeHtml(item.state || item.city)} · ${escapeHtml(item.location || '')}`;
@@ -262,8 +316,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       typeButtons.forEach(item => item.classList.remove('active'));
       typeButtons[0].classList.add('active');
       
+      // 如果是显示全部模式，不需要加载特殊数据
+      if (currentDomestic === 'all') {
+        // 显示全部模式直接使用缓存数据
+        listContainer.innerHTML = '<div class="destination-page-empty">正在加载全部目的地...</div>';
+      }
       // 如果是周边模式，加载IP定位数据
-      if (currentDomestic === 'nearby') {
+      else if (currentDomestic === 'nearby') {
         listContainer.innerHTML = '<div class="destination-page-empty">正在获取周边推荐...</div>';
         try {
           const nearbyResponse = await api.request('/api/destinations/nearby_by_ip/');
@@ -301,13 +360,28 @@ document.addEventListener('DOMContentLoaded', async () => {
       typeButtons.forEach(item => item.classList.remove('active'));
       button.classList.add('active');
       currentType = button.dataset.type;
-      
-      // 智能推荐模式（仅在国内或海外模式下有效）
-      if (currentType === 'all' && currentDomestic !== 'nearby') {
-        listContainer.innerHTML = '<div class="destination-page-empty">正在计算智能推荐...</div>';
-        await loadSmartRecommend();
+        
+      // 显示全部模式：清除二级地区筛选，使用智能推荐
+      if (currentType === 'all') {
+        currentCity = ''; // 清空城市筛选，显示所有地区
+        // 移除二级按钮的所有激活状态，并激活“全部地区”按钮
+        cityFilter.querySelectorAll('[data-city]').forEach(item => item.classList.remove('active'));
+        const allRegionsBtn = cityFilter.querySelector('[data-city=""]');
+        if (allRegionsBtn) {
+          allRegionsBtn.classList.add('active');
+        }
+          
+        // 加载智能推荐数据（仅在国内/海外模式下）
+        if (currentDomestic !== 'nearby' && currentDomestic !== 'all') {
+          listContainer.innerHTML = '<div class="destination-page-empty">正在计算智能推荐...</div>';
+          await loadSmartRecommend();
+        }
       }
-      
+      // 最新发布模式：重新加载数据以确保最新
+      else if (currentType === 'latest') {
+        // 最新发布直接使用 cache，无需额外加载
+      }
+        
       updateCities();
       renderList();
     });
