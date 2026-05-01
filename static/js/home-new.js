@@ -68,7 +68,7 @@ function renderHomepageDestinationModule(type, destinations, container, userCity
       if (item.is_domestic) {
         locationText = `${escapeHtml(item.state || item.city)} · ${escapeHtml(item.location || '')}`;
       } else {
-        locationText = `${escapeHtml(item.country)}`; // 只显示国家
+        locationText = `${escapeHtml(item.country)} · ${escapeHtml(item.location || '')}`; // 显示国家和地理位置
       }
     } else {
       // 默认：城市 · 位置
