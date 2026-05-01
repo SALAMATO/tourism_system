@@ -198,11 +198,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         filtered = filtered.filter(item => item[locationField] === currentCity);
       }
       
-      // 按创建时间降序排序（最新发布）
+      // 按发布日期降序排序（最新发布）
       console.log('最新发布模式：排序前', filtered.length, '个目的地');
       filtered.sort((a, b) => {
-        const dateA = new Date(a.created_at || 0);
-        const dateB = new Date(b.created_at || 0);
+        // 优先使用 publish_date，如果为空则使用 created_at
+        const dateA = new Date(a.publish_date || a.created_at || 0);
+        const dateB = new Date(b.publish_date || b.created_at || 0);
         return dateB - dateA; // 降序：最新的在前
       });
       console.log('最新发布模式：排序完成');

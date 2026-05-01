@@ -13,7 +13,7 @@ class CustomUserAdmin(UserAdmin):
 class DestinationAdmin(admin.ModelAdmin):
     list_display = (
         'name', 'city', 'category', 'get_recommendation_types', 'is_featured',
-        'is_hot', 'rating', 'views', 'sort_order', 'updated_at'
+        'is_hot', 'rating', 'views', 'sort_order', 'publish_date', 'updated_at'
     )
     list_filter = ('is_featured', 'is_hot', 'category', 'city', 'best_season', 'is_domestic')
     search_fields = ('name', 'city', 'location', 'description')

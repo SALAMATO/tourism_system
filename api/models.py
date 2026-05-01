@@ -89,6 +89,7 @@ class Destination(models.Model):
         help_text='支持多选：default(默认推荐), nearby(IP周边推荐), managed(管理员精选), selected(出行推荐)'
     )
     sort_order = models.PositiveIntegerField(default=0, verbose_name='排序值')
+    publish_date = models.DateTimeField(null=True, blank=True, verbose_name='发布日期', help_text='用于最新发布排序，留空则使用创建时间')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
 
