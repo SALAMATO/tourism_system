@@ -137,13 +137,15 @@ Be professional and friendly."""
             for model_id, config in self.models.items()
         }
     
-    def _process_tool_calls(self, text: str) -> str:
+    def _process_tool_calls(self, text: str, request=None) -> str:
         """Process tool calls in text using display_handler"""
         if not self.tools:
             return text
         
         # 提取工具调用
         tool_calls = display_handler.extract_tool_calls(text)
+        
+        print(f"\n🔧 [AI] 检测到 {len(tool_calls)} 个工具调用: {tool_calls}")
         
         # 过滤工具标记
         filtered_text = display_handler.filter_tool_calls(text)
@@ -152,10 +154,20 @@ Be professional and friendly."""
         results = []
         for tool_name, params in tool_calls:
             try:
-                result = self.tools.execute_tool(tool_name, **params)
+                print(f"⚙️  执行工具: {tool_name}, 参数: {params}")
+                # 如果是get_user_location工具，传递request对象
+                if tool_name == 'get_user_location' and request:
+                    print("📍 传递request对象给get_user_location工具")
+                    result = self.tools.execute_tool(tool_name, request=request)
+                else:
+                    result = self.tools.execute_tool(tool_name, **params)
                 if result and not result.startswith("暂无"):
+                    print(f"✅ 工具 {tool_name} 执行成功，结果长度: {len(result)}")
                     results.append(result)
+                else:
+                    print(f"⚠️  工具 {tool_name} 返回空结果")
             except Exception as e:
+                print(f"❌ 工具 {tool_name} 执行失败: {e}")
                 pass  # Silently ignore errors
         
         # 合并内容和工具结果
@@ -169,7 +181,8 @@ Be professional and friendly."""
         self,
         message: str,
         context: Optional[Dict[str, Any]] = None,
-        stream: bool = True
+        stream: bool = True,
+        request=None
     ) -> Dict[str, Any]:
         """Send message and get AI reply"""
         if not self.current_model or self.current_model not in self.models:
@@ -190,7 +203,7 @@ Be professional and friendly."""
         response = self._call_ai_model(message, context, stream)
         
         if response.get("success") and response.get("content"):
-            processed_content = self._process_tool_calls(response["content"])
+            processed_content = self._process_tool_calls(response["content"], request=request)
             response["content"] = processed_content
         
         if response.get("success"):
@@ -204,7 +217,8 @@ Be professional and friendly."""
     def chat_stream(
         self,
         message: str,
-        context: Optional[Dict[str, Any]] = None
+        context: Optional[Dict[str, Any]] = None,
+        request=None
     ) -> Generator[str, None, None]:
         """Streaming chat generator - 使用官方流式输出方法，实时格式化"""
         if not self.current_model or self.current_model not in self.models:
@@ -289,7 +303,11 @@ Be professional and friendly."""
                     yield "\n\n"  # 添加分隔
                     for tool_name, params in tool_calls:
                         try:
-                            result = self.tools.execute_tool(tool_name, **params)
+                            # 如果是get_user_location工具，传递request对象
+                            if tool_name == 'get_user_location' and request:
+                                result = self.tools.execute_tool(tool_name, request=request)
+                            else:
+                                result = self.tools.execute_tool(tool_name, **params)
                             if result and not result.startswith("暂无"):
                                 # 格式化工具结果后逐段输出
                                 formatted_result = display_handler.format_output(result)
@@ -474,8 +492,8 @@ def add_ai_model(model_id: str, model_name: str, api_key: str = "", **kwargs) ->
     return lowsky_ai.add_model(model_id, model_name, api_key, **kwargs)
 
 
-def chat_with_ai(message: str, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-    return lowsky_ai.chat(message, context)
+def chat_with_ai(message: str, context: Optional[Dict[str, Any]] = None, request=None) -> Dict[str, Any]:
+    return lowsky_ai.chat(message, context, request=request)
 
 
 def get_ai_models() -> Dict[str, Dict[str, Any]]:

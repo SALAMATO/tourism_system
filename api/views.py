@@ -1490,7 +1490,8 @@ class LowSkyAIViewSet(viewsets.ViewSet):
             return Response({'error': '消息不能为空'}, status=status.HTTP_400_BAD_REQUEST)
         
         try:
-            response = lowsky_ai.chat(message, context, stream=False)
+            # ✅ 传递request对象以支持位置获取
+            response = lowsky_ai.chat(message, context, stream=False, request=request)
             return Response(response)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -1543,7 +1544,8 @@ class LowSkyAIViewSet(viewsets.ViewSet):
                 if tool_mode == 'web_only':
                     forced_message = f'[强制使用联网搜索，必须调用search_web工具] {message}'
                 
-                for chunk in lowsky_ai.chat_stream(forced_message, context):
+                # ✅ 传递request对象以支持位置获取
+                for chunk in lowsky_ai.chat_stream(forced_message, context, request=request):
                     yield f"data: {json.dumps({'content': chunk})}\n\n"
                 yield f"data: {json.dumps({'done': True})}\n\n"
             except Exception as e:

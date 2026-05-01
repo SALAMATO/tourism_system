@@ -419,6 +419,111 @@ class AITools:
         now = datetime.now()
         return f"当前时间：{now.strftime('%Y年%m月%d日 %H:%M:%S')}"
     
+    def get_user_location(self, request=None) -> str:
+        """
+        获取用户IP地址和地理位置信息
+        
+        Args:
+            request: Django请求对象（可选）
+            
+        Returns:
+            str: 用户IP和位置信息
+        """
+        try:
+            from api.utils import get_client_ip, parse_location_by_ip
+            from django.conf import settings
+            
+            print("\n" + "="*60)
+            print("🔍 [AI工具] get_user_location 被调用")
+            print("="*60)
+            
+            # 如果没有request对象，尝试从Django设置中获取
+            if request is None:
+                print("❌ 错误：request对象为None")
+                # 尝试从全局变量或上下文中获取
+                try:
+                    # 这里返回一个提示信息，实际使用时需要传入request
+                    return "提示：此工具需要在有HTTP请求的上下文中使用，以获取用户的真实IP地址。"
+                except:
+                    return "无法获取用户位置信息（缺少请求上下文）"
+            
+            print(f"✅ request对象存在")
+            
+            # 获取客户端IP
+            ip = get_client_ip(request)
+            print(f"📍 客户端IP: {ip}")
+            
+            # 检查Session缓存（24小时有效期）
+            cached_location = request.session.get('user_location_cache')
+            print(f"💾 Session缓存: {cached_location is not None}")
+            
+            if cached_location:
+                import time
+                cache_time = cached_location.get('timestamp', 0)
+                current_time = time.time()
+                cache_age = current_time - cache_time
+                
+                print(f"⏰ 缓存时间: {cache_age:.0f}秒前")
+                print(f"📊 缓存数据: city={cached_location.get('city')}, province={cached_location.get('province')}")
+                
+                # 如果缓存未过期（24小时内），直接返回缓存数据
+                if current_time - cache_time < 86400:  # 24小时 = 86400秒
+                    print("✅ 使用Session缓存的位置信息")
+                    location_info = (
+                        f"用户位置信息（来自缓存）：\n"
+                        f"• IP地址：{ip}\n"
+                        f"• 国家：{cached_location.get('country', '中国')}\n"
+                        f"• 省份：{cached_location.get('province', '')}\n"
+                        f"• 城市：{cached_location.get('city', '')}\n"
+                        f"• 纬度：{cached_location.get('latitude', '')}\n"
+                        f"• 经度：{cached_location.get('longitude', '')}"
+                    )
+                    print("="*60 + "\n")
+                    return location_info
+                else:
+                    print("⚠️ 缓存已过期，将重新获取")
+            
+            # 缓存过期或不存在，调用API获取新位置
+            print("🌐 调用高德地图API获取位置...")
+            result = parse_location_by_ip(ip)
+            
+            if result:
+                print(f"✅ API返回成功: {result}")
+                # 更新Session缓存
+                import time
+                request.session['user_location_cache'] = {
+                    'country': result.get('country', '中国'),
+                    'province': result.get('province', ''),
+                    'city': result.get('city', ''),
+                    'latitude': result.get('latitude', ''),
+                    'longitude': result.get('longitude', ''),
+                    'timestamp': time.time()
+                }
+                print("💾 已更新Session缓存")
+                
+                location_info = (
+                    f"用户位置信息：\n"
+                    f"• IP地址：{ip}\n"
+                    f"• 国家：{result.get('country', '中国')}\n"
+                    f"• 省份：{result.get('province', '')}\n"
+                    f"• 城市：{result.get('city', '')}\n"
+                    f"• 纬度：{result.get('latitude', '')}\n"
+                    f"• 经度：{result.get('longitude', '')}"
+                )
+                print("="*60 + "\n")
+                return location_info
+            else:
+                print("❌ API返回失败")
+                print("="*60 + "\n")
+                return f"无法解析IP地址 {ip} 的位置信息"
+                
+        except Exception as e:
+            import traceback
+            print(f"❌ 异常: {str(e)}")
+            print(traceback.format_exc())
+            print("="*60 + "\n")
+            return f"获取用户位置失败：{str(e)}"
+    
     def execute_tool(self, tool_name: str, **kwargs) -> str:
         """
         执行工具函数
@@ -441,6 +546,7 @@ class AITools:
             "db_query": self.db_query,
             "get_destinations": self.get_destinations,
             "search_destinations": self.search_destinations,
+            "get_user_location": self.get_user_location,
         }
         
         if tool_name not in tools:
@@ -530,5 +636,10 @@ def get_available_tools() -> List[Dict[str, Any]]:
                 "keyword": "搜索关键词",
                 "limit": "返回数量（默认5）"
             }
+        },
+        {
+            "name": "get_user_location",
+            "description": "获取当前用户的IP地址和地理位置信息（国家、省份、城市、经纬度），用于提供个性化推荐",
+            "parameters": {}
         }
     ]
