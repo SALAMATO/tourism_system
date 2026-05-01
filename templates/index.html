@@ -916,7 +916,7 @@
         <h1>换个高度看风景</h1>
         <p class="subtitle">探索中国低空旅游的无限魅力<br>直升机观光 · 热气球体验 · 滑翔伞飞行</p>
         <div class="hero-cta">
-          <a href="#nearby-destination-content" class="btn btn-primary" style="padding: 16px 40px; font-size: 18px;">
+          <a href="#homepage-destinations" class="btn btn-primary" style="padding: 16px 40px; font-size: 18px;">
             <i class="fas fa-compass"></i> 探索目的地
           </a>
           <a href="#video" class="btn btn-glass" style="padding: 16px 40px; font-size: 18px; margin-left: 16px;">
@@ -1116,7 +1116,7 @@
     </div>
 </div>
 
-<section class="homepage-destination-section">
+<section class="homepage-destination-section" id="homepage-destinations">
   <div class="homepage-destination-shell">
     <div class="homepage-destination-module">
       <div class="homepage-destination-heading">
@@ -1273,7 +1273,7 @@
     // 所有需要精确定位的区域
     const sections = [
       document.querySelector('.hero-large'),
-      document.getElementById('destinations'),
+      document.getElementById('homepage-destinations'),
       document.getElementById('video')
     ].filter(el => el !== null);
 
