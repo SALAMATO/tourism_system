@@ -944,14 +944,14 @@ class DestinationViewSet(PublicModelViewSet):
         from django.db import connection
         
         # 获取查询参数
-        is_domestic = request.query_params.get('is_domestic', 'true')
+        is_domestic = request.query_params.get('is_domestic')  # 默认为None，不过滤
         city = request.query_params.get('city')
         recommendation_type = request.query_params.get('recommendation_type')
         
         # 构建查询
         queryset = Destination.objects.all()
         
-        # 应用过滤
+        # 应用过滤（只有当参数明确提供时才过滤）
         if is_domestic is not None:
             queryset = queryset.filter(is_domestic=is_domestic.lower() == 'true')
         if city:
@@ -959,6 +959,19 @@ class DestinationViewSet(PublicModelViewSet):
         
         # 获取所有目的地
         destinations = list(queryset)
+        
+        # 调试日志：打印目的地统计信息
+        print(f"\n=== smart_recommend API 调试 ===")
+        print(f"查询参数: is_domestic={is_domestic}, city={city}, recommendation_type={recommendation_type}")
+        print(f"查询到的目的地总数: {len(destinations)}")
+        domestic_count = sum(1 for d in destinations if d.is_domestic)
+        overseas_count = sum(1 for d in destinations if not d.is_domestic)
+        print(f"国内目的地: {domestic_count}个, 国外目的地: {overseas_count}个")
+        if destinations:
+            print(f"目的地列表:")
+            for d in destinations[:10]:  # 只打印前10个
+                print(f"  - {d.name} (is_domestic={d.is_domestic}, country={d.country})")
+        print(f"==============================\n")
         
         # 如果指定了recommendation_type，在Python中过滤（兼容SQLite）
         if recommendation_type:

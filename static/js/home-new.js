@@ -31,8 +31,8 @@ async function loadHomepageDestinationModules() {
       nearbyContainer.innerHTML = '<div class="loading"><div>暂无周边推荐</div></div>';
     }
     
-    // 加载显示全部目的地（使用智能推荐 - 国内模式）
-    const allResponse = await api.request('/api/destinations/smart_recommend/?is_domestic=true');
+    // 加载精选目的地（使用智能推荐 - 不限制国内外）
+    const allResponse = await api.request('/api/destinations/smart_recommend/');
     console.log('首页智能推荐API响应:', allResponse);
     
     if (allResponse && Array.isArray(allResponse)) {
