@@ -75,7 +75,14 @@ function renderHomepageDestinationModule(type, destinations, container, userCity
       locationText = `${escapeHtml(item.city)} · ${escapeHtml(item.location || '')}`;
     }
     
-    const richContent = item.features_rich_text || item.features_display || item.description || '';
+    // 获取详细介绍，如果是HTML则转换为纯文本
+    let richContent = item.description || item.features_rich_text || item.features_display || '';
+    // 如果内容包含HTML标签，去除标签只保留文本
+    if (richContent && richContent.includes('<')) {
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = richContent;
+      richContent = tempDiv.textContent || tempDiv.innerText || '';
+    }
     return `
     <a href="/destination-detail.html?id=${item.id}" class="destination-explore-card">
       <div class="destination-explore-image-wrap">
@@ -87,7 +94,7 @@ function renderHomepageDestinationModule(type, destinations, container, userCity
           <span><i class="fas fa-star" style="color:#ef4444;"></i> ${Number(item.rating || 0).toFixed(1)}</span>
         </div>
         <div class="destination-explore-location"><i class="fas fa-location-dot"></i> ${locationText}</div>
-        <div class="destination-explore-desc rich-text-content rich-text-clamp">${richContent}</div>
+        <div class="destination-explore-desc">${escapeHtml(richContent)}</div>
         <div class="destination-explore-meta">
           <span>${escapeHtml(item.duration || '')}</span>
           <strong>${escapeHtml(item.price_range || '')}</strong>
