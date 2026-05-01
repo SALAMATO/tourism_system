@@ -17,10 +17,15 @@ DB_SCHEMA_DESCRIPTION = """
 本系统使用 SQLite 数据库，包含以下数据表（均为低空旅游系统数据）：
 
 【destinations】低空旅游目的地
-  - id, name(目的地名称), location(地理位置), description(详细介绍)
-  - category(类别), price_range(价格区间), duration(游玩时长)
-  - best_season(最佳季节), rating(评分0-10), views(浏览次数)
-  - is_hot(是否热门 0/1), created_at, updated_at
+  - id, name(目的地名称), city(所属城市), location(地理位置)
+  - state(省份/州), country(国家), is_domestic(是否国内 0/1)
+  - description(详细介绍), category(类别), price_range(价格区间)
+  - duration(游玩时长), best_season(最佳季节)
+  - features(JSON数组-特色亮点), rating(评分0-10), views(浏览次数)
+  - is_hot(是否热门 0/1), is_featured(首页推荐 0/1)
+  - recommendation_type(JSON数组-推荐类型: default/nearby/managed/selected)
+  - sort_order(排序值), publish_date(发布日期)
+  - created_at, updated_at
 
 【policies】政策法规
   - id, title(标题), level(政策级别), category(分类)
@@ -46,6 +51,11 @@ DB_SCHEMA_DESCRIPTION = """
 【messages】用户留言
   - id, message_type(消息类型), content(内容), reply(回复)
   - status(状态), likes_count(点赞数), created_at, updated_at
+
+【china_cities】中国城市经纬度数据（可选表）
+  - country(国家), state(省份), city(城市名称)
+  - latitude(纬度), longitude(经度), is_domestic(是否国内 0/1)
+  - 注意：此表需要单独导入，用于地理位置查询和距离计算
 
 注意：
 - 日期字段格式为 ISO 8601（如 '2024-01-01'）
@@ -117,6 +127,8 @@ class SQLDatabaseChain:
 6. 凡是查询 created_at / updated_at 字段，必须用 STRFTIME('%Y-%m-%d %H:%M:%S', created_at) 格式化，去除微秒部分
 7. 统计数据（statistics 表）查询时，不要 SELECT created_at 和 updated_at，只查业务字段
 8. 统计数据字段对应关系：tourist_count=游客人数(万人次), revenue=营收(万元), flight_count=航班次数, aircraft_count=航空器数量, growth_rate=增长率(%)
+9. destinations表的features和recommendation_type是JSON数组字段，SQLite中使用json_each()或LIKE进行查询
+10. 地理位置查询可以使用china_cities表（如果存在）关联destinations表的city字段，获取经纬度进行距离计算
 """)
         human_msg = HumanMessage(content=f"用户问题：{question}")
 

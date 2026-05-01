@@ -259,7 +259,8 @@ class AITools:
             destinations = Destination.objects.filter(
                 Q(name__icontains=keyword) | 
                 Q(location__icontains=keyword) |
-                Q(description__icontains=keyword)
+                Q(description__icontains=keyword) |
+                Q(city__icontains=keyword)
             )[:3]
             
             result = f"网站内搜索：{keyword}\n\n"
@@ -307,6 +308,112 @@ class AITools:
         except Exception as e:
             return f"数据库查询失败：{str(e)}"
 
+    def get_destinations(self, limit: int = 5, city: str = None, category: str = None, is_hot: bool = None) -> str:
+        """
+        获取网站旅游目的地数据（使用Django ORM）
+        
+        Args:
+            limit: 返回数量
+            city: 城市筛选（可选）
+            category: 类别筛选（可选）
+            is_hot: 是否热门筛选（可选）
+            
+        Returns:
+            str: 旅游目的地列表
+        """
+        try:
+            from api.models import Destination
+            from django.db.models import Q
+            
+            # 构建查询条件
+            query = Destination.objects.all()
+            
+            if city:
+                query = query.filter(city__icontains=city)
+            
+            if category:
+                query = query.filter(category__icontains=category)
+            
+            if is_hot is not None:
+                query = query.filter(is_hot=is_hot)
+            
+            destinations = query.order_by('-is_hot', '-rating', '-views')[:limit]
+            
+            if not destinations:
+                return "暂无旅游目的地数据。"
+            
+            result = "低空旅游目的地信息：\n\n"
+            for dest in destinations:
+                result += f"• {dest.name}\n"
+                result += f"  城市：{dest.city}\n"
+                if dest.state:
+                    result += f"  省份：{dest.state}\n"
+                result += f"  位置：{dest.location}\n"
+                result += f"  类别：{dest.category}\n"
+                result += f"  价格区间：{dest.price_range}\n"
+                result += f"  游玩时长：{dest.duration}\n"
+                result += f"  最佳季节：{dest.best_season}\n"
+                result += f"  评分：{dest.rating}/10\n"
+                result += f"  浏览次数：{dest.views:,}\n"
+                if dest.is_hot:
+                    result += f"  🔥 热门目的地\n"
+                if dest.is_featured:
+                    result += f"  ⭐ 首页推荐\n"
+                
+                # 显示特色亮点
+                if dest.features and isinstance(dest.features, list):
+                    result += f"  特色：{', '.join(dest.features[:5])}\n"
+                
+                # 显示简介（截取前300字符）
+                desc = dest.description[:300] + '...' if len(dest.description) > 300 else dest.description
+                result += f"  简介：{desc}\n\n"
+            
+            return result
+        except Exception as e:
+            return f"获取旅游目的地数据失败：{str(e)}"
+    
+    def search_destinations(self, keyword: str, limit: int = 5) -> str:
+        """
+        搜索旅游目的地（支持名称、位置、描述搜索）
+        
+        Args:
+            keyword: 搜索关键词
+            limit: 返回数量
+            
+        Returns:
+            str: 搜索结果
+        """
+        try:
+            from api.models import Destination
+            from django.db.models import Q
+            
+            destinations = Destination.objects.filter(
+                Q(name__icontains=keyword) | 
+                Q(city__icontains=keyword) |
+                Q(location__icontains=keyword) |
+                Q(description__icontains=keyword) |
+                Q(category__icontains=keyword)
+            ).order_by('-is_hot', '-rating', '-views')[:limit]
+            
+            if not destinations:
+                return f"未找到与'{keyword}'相关的旅游目的地。"
+            
+            result = f"搜索关键词：{keyword}\n\n找到 {len(destinations)} 个相关目的地：\n\n"
+            for dest in destinations:
+                result += f"• {dest.name}\n"
+                result += f"  城市：{dest.city}\n"
+                result += f"  位置：{dest.location}\n"
+                result += f"  类别：{dest.category}\n"
+                result += f"  评分：{dest.rating}/10\n"
+                if dest.is_hot:
+                    result += f"  🔥 热门\n"
+                desc = dest.description[:200] + '...' if len(dest.description) > 200 else dest.description
+                result += f"  简介：{desc}\n\n"
+            
+            return result
+        except Exception as e:
+            return f"搜索旅游目的地失败：{str(e)}"
+    
     def get_current_time(self) -> str:
         """获取当前时间"""
         now = datetime.now()
@@ -332,6 +439,8 @@ class AITools:
             "search_site_content": self.search_site_content,
             "get_current_time": self.get_current_time,
             "db_query": self.db_query,
+            "get_destinations": self.get_destinations,
+            "search_destinations": self.search_destinations,
         }
         
         if tool_name not in tools:
@@ -402,6 +511,24 @@ def get_available_tools() -> List[Dict[str, Any]]:
             "description": "自然语言数据库查询：将问题转为SQL执行并返回结构化结果。适用于统计分析、数据汇总、多条件筛选等复杂查询",
             "parameters": {
                 "question": "自然语言查询问题，例如：各地区游客数量排名、高风险安全预警列表、最新10条政策"
+            }
+        },
+        {
+            "name": "get_destinations",
+            "description": "获取旅游目的地列表，支持按城市、类别、热门程度筛选",
+            "parameters": {
+                "limit": "返回数量（默认5）",
+                "city": "城市名称（可选）",
+                "category": "类别（可选）",
+                "is_hot": "是否热门（可选，true/false）"
+            }
+        },
+        {
+            "name": "search_destinations",
+            "description": "搜索旅游目的地，支持名称、位置、描述、类别的关键词搜索",
+            "parameters": {
+                "keyword": "搜索关键词",
+                "limit": "返回数量（默认5）"
             }
         }
     ]
