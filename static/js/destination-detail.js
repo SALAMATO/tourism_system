@@ -2,6 +2,25 @@
 function formatLocation(destination) {
   const parts = [];
   
+  // 定义直辖市和特别行政区列表
+  const directMunicipalities = ['北京市', '上海市', '天津市', '重庆市','北京', '上海', '天津', '重庆'];
+  const specialRegions = ['香港特别行政区', '澳门特别行政区', '香港', '澳门'];
+  
+  // 检查是否为直辖市或特别行政区
+  const isDirectMunicipality = directMunicipalities.includes(destination.city);
+  const isSpecialRegion = specialRegions.some(region => destination.city && destination.city.includes(region));
+  
+  // 如果是直辖市或特别行政区，只显示城市
+  if (isDirectMunicipality || isSpecialRegion) {
+    if (destination.city) {
+      parts.push(escapeHtml(destination.city));
+    }
+    if (destination.location) {
+      parts.push(escapeHtml(destination.location));
+    }
+    return parts.join(' · ') || '--';
+  }
+  
   // 如果国家不是中国，则显示国家
   if (destination.country && destination.country !== '中国') {
     parts.push(escapeHtml(destination.country));
