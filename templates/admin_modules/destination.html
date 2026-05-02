@@ -1,0 +1,364 @@
+<!-- 旅游目的地管理模块 - 完整版 -->
+<div id="destination-module" class="admin-module">
+  <h2 class="section-title">旅游目的地管理</h2>
+  <div class="card">
+    <h3 class="card-title">新增旅游目的地</h3>
+    <form id="destination-form" enctype="multipart/form-data">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">目的地名称 *</label>
+          <input type="text" id="destination-name" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">类别 *</label>
+          <input type="text" id="destination-category" class="form-input" placeholder="如：直升机观光、热气球、滑翔伞" required>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">国家/地区 *</label>
+          <input type="text" id="destination-country" class="form-input" placeholder="如：中国、China" value="中国">
+          <div style="margin-top: 4px; font-size: 12px; color: var(--text-secondary);">
+            输入"中国"、"China"等会自动标记为国内旅游地
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">省份/州 *</label>
+          <input type="text" id="destination-state" class="form-input" placeholder="如：北京市、广东省、加利福尼亚州、香港特别行政区、东京都">
+          <div style="margin-top: 4px; font-size: 12px; color: var(--text-secondary);">
+            国家、地区、城市将用于IP定位，地理位置用于精确位置
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">城市/区 *</label>
+          <input type="text" id="destination-city" class="form-input" placeholder="如：北京、广州、旧金山/新界、新宿区" required>
+          <div style="margin-top: 4px; font-size: 12px; color: var(--text-secondary);">
+            如果城市是直辖市、特别行政区等，请在省份与城市栏目中均填相同名称
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">地理位置 </label>
+          <input type="text" id="destination-location" class="form-input" placeholder="如：延庆区八达岭机场" required>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">价格区间 *</label>
+          <input type="text" id="destination-price-range" class="form-input" placeholder="如：¥599 - ¥1299 / 人" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">游玩时长 *</label>
+          <input type="text" id="destination-duration" class="form-input" placeholder="如：30分钟 - 2小时" required>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">最佳季节 *</label>
+          <input type="text" id="destination-best-season" class="form-input" placeholder="如：春秋两季" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">评分 *</label>
+          <input type="number" id="destination-rating" class="form-input" min="0" max="5" step="0.1" value="4.9" required>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group" style="flex: 2;">
+          <label class="form-label">推荐类型（多选）*</label>
+          <div class="apple-checkbox-group" style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px;">
+            <label class="apple-checkbox" style="display: flex; align-items: center; cursor: pointer; padding: 10px 16px; border-radius: 12px; background: #f5f5f7; transition: all 0.2s ease; border: 2px solid transparent;">
+              <input type="checkbox" name="recommendation_type" value="default" checked style="display: none;">
+              <div class="apple-checkbox-icon" style="width: 22px; height: 22px; border-radius: 6px; background: #fff; border: 2px solid #d1d1d6; margin-right: 10px; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease;">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="opacity: 0; transition: opacity 0.2s ease;">
+                  <path d="M2 7L5.5 10.5L12 3.5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <span style="font-size: 14px; font-weight: 500; color: #1d1d1f;">默认推荐</span>
+            </label>
+            <label class="apple-checkbox" style="display: flex; align-items: center; cursor: pointer; padding: 10px 16px; border-radius: 12px; background: #f5f5f7; transition: all 0.2s ease; border: 2px solid transparent;">
+              <input type="checkbox" name="recommendation_type" value="nearby" style="display: none;">
+              <div class="apple-checkbox-icon" style="width: 22px; height: 22px; border-radius: 6px; background: #fff; border: 2px solid #d1d1d6; margin-right: 10px; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease;">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="opacity: 0; transition: opacity 0.2s ease;">
+                  <path d="M2 7L5.5 10.5L12 3.5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <span style="font-size: 14px; font-weight: 500; color: #1d1d1f;">IP周边推荐</span>
+            </label>
+            <label class="apple-checkbox" style="display: flex; align-items: center; cursor: pointer; padding: 10px 16px; border-radius: 12px; background: #f5f5f7; transition: all 0.2s ease; border: 2px solid transparent;">
+              <input type="checkbox" name="recommendation_type" value="managed" style="display: none;">
+              <div class="apple-checkbox-icon" style="width: 22px; height: 22px; border-radius: 6px; background: #fff; border: 2px solid #d1d1d6; margin-right: 10px; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease;">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="opacity: 0; transition: opacity 0.2s ease;">
+                  <path d="M2 7L5.5 10.5L12 3.5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <span style="font-size: 14px; font-weight: 500; color: #1d1d1f;">热门推荐</span>
+            </label>
+            <label class="apple-checkbox" style="display: flex; align-items: center; cursor: pointer; padding: 10px 16px; border-radius: 12px; background: #f5f5f7; transition: all 0.2s ease; border: 2px solid transparent;">
+              <input type="checkbox" name="recommendation_type" value="selected" style="display: none;">
+              <div class="apple-checkbox-icon" style="width: 22px; height: 22px; border-radius: 6px; background: #fff; border: 2px solid #d1d1d6; margin-right: 10px; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease;">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="opacity: 0; transition: opacity 0.2s ease;">
+                  <path d="M2 7L5.5 10.5L12 3.5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <span style="font-size: 14px; font-weight: 500; color: #1d1d1f;">出行推荐</span>
+            </label>
+          </div>
+          <div style="margin-top: 8px; font-size: 13px; color: var(--text-secondary);">至少选择一个推荐类型，默认推荐会自动添加。</div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">绝对优先级（越小优先级，越靠前显示）</label>
+          <input type="number" id="destination-sort-order" class="form-input" min="0" value="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">发布日期（选填，留空则使用创建时间）</label>
+          <input type="datetime-local" id="destination-publish-date" class="form-input">
+        </div>
+      </div>
+
+      <style>
+        /* Apple风格多选框样式 */
+        .apple-checkbox:hover {
+          background: #e8e8ed !important;
+        }
+        .apple-checkbox input:checked + .apple-checkbox-icon {
+          background: #0071e3 !important;
+          border-color: #0071e3 !important;
+        }
+        .apple-checkbox input:checked + .apple-checkbox-icon svg {
+          opacity: 1 !important;
+        }
+        .apple-checkbox:has(input:checked) {
+          background: #e8f0fe !important;
+          border-color: #0071e3 !important;
+        }
+        /* 隐藏默认推荐选项 */
+        .apple-checkbox input[value="default"] {
+          display: none !important;
+        }
+        .apple-checkbox:has(input[value="default"]) {
+          display: none !important;
+        }
+      </style>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">首页推荐</label>
+          <select id="destination-is-featured" class="form-select">
+            <option value="true">是</option>
+            <option value="false">否</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">热门目的地</label>
+          <select id="destination-is-hot" class="form-select">
+            <option value="true">是</option>
+            <option value="false">否</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">封面图片（选填）</label>
+        <div class="image-upload-wrapper" id="destination-cover-upload-wrapper">
+          <!-- 上传框 -->
+          <div class="image-upload-box" id="destination-cover-upload-box" onclick="document.getElementById('destination-cover-image').click()">
+            <i class="fas fa-cloud-upload-alt image-upload-icon"></i>
+            <div class="image-upload-title">点击上传封面图片</div>
+            <div class="image-upload-desc">支持 JPG、PNG 格式，建议尺寸 1200x800</div>
+            <input type="file" id="destination-cover-image" class="image-upload-input" accept="image/*">
+          </div>
+          
+          <!-- 预览卡片（上传后显示，覆盖上传框） -->
+          <div id="destination-cover-preview" style="display:none; position: relative;">
+            <div class="image-preview-item" style="cursor: zoom-in;" onclick="openImageZoom('destination-cover-preview-img')">
+              <!-- 右上角操作按钮 -->
+              <div class="image-top-actions" onclick="event.stopPropagation()">
+                <button type="button" class="image-edit-btn" onclick="AdminApp.Modules.Destination.editCoverImage()" title="修改图片">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button type="button" class="image-remove-btn" onclick="AdminApp.Modules.Destination.removeCoverImage()" title="删除图片">
+                  <i class="fas fa-trash-alt"></i>
+                </button>
+              </div>
+              <div class="image-preview-image-wrapper">
+                <img id="destination-cover-preview-img" src="" alt="封面预览">
+              </div>
+            </div>
+            <div class="image-preview-footer">
+              <div class="image-file-name" id="destination-cover-file-name"></div>
+            </div>
+          </div>
+          
+          <div style="margin-top: 8px; font-size: 13px; color: var(--text-secondary);">不上传图片时，前端将使用统一的默认占位风格。</div>
+        </div>
+        <input type="hidden" id="destination-existing-cover-image">
+      </div>
+
+      <div class="form-row" style="grid-template-columns: repeat(4, 1fr);">
+        <div class="form-group">
+          <label class="form-label">展示图片 1（选填）</label>
+          <div class="image-upload-wrapper" id="destination-gallery-upload-wrapper-1">
+            <!-- 上传框 -->
+            <div class="image-upload-box" id="destination-gallery-upload-box-1" onclick="document.getElementById('destination-gallery-image-1').click()">
+              <i class="fas fa-cloud-upload-alt image-upload-icon"></i>
+              <div class="image-upload-title">点击上传图片 1</div>
+              <div class="image-upload-desc">支持 JPG、PNG 格式</div>
+              <input type="file" id="destination-gallery-image-1" class="image-upload-input" accept="image/*">
+            </div>
+            
+            <!-- 预览卡片（上传后显示，覆盖上传框） -->
+            <div id="destination-gallery-preview-1" style="display:none; position: relative;">
+              <div class="image-preview-item" style="cursor: zoom-in;" onclick="openImageZoom('destination-gallery-preview-img-1')">
+                <!-- 右上角操作按钮 -->
+                <div class="image-top-actions" onclick="event.stopPropagation()">
+                  <button type="button" class="image-edit-btn" onclick="AdminApp.Modules.Destination.editGalleryImage(1)" title="修改图片">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button type="button" class="image-remove-btn" onclick="AdminApp.Modules.Destination.removeGalleryImage(1)" title="删除图片">
+                    <i class="fas fa-trash-alt"></i>
+                  </button>
+                </div>
+                <div class="image-preview-image-wrapper">
+                  <img id="destination-gallery-preview-img-1" src="" alt="展示图片1预览">
+                </div>
+              </div>
+              <div class="image-preview-footer">
+                <div class="image-file-name" id="destination-gallery-file-name-1"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">展示图片 2（选填）</label>
+          <div class="image-upload-wrapper" id="destination-gallery-upload-wrapper-2">
+            <!-- 上传框 -->
+            <div class="image-upload-box" id="destination-gallery-upload-box-2" onclick="document.getElementById('destination-gallery-image-2').click()">
+              <i class="fas fa-cloud-upload-alt image-upload-icon"></i>
+              <div class="image-upload-title">点击上传图片 2</div>
+              <div class="image-upload-desc">支持 JPG、PNG 格式</div>
+              <input type="file" id="destination-gallery-image-2" class="image-upload-input" accept="image/*">
+            </div>
+            
+            <!-- 预览卡片（上传后显示，覆盖上传框） -->
+            <div id="destination-gallery-preview-2" style="display:none; position: relative;">
+              <div class="image-preview-item" style="cursor: zoom-in;" onclick="openImageZoom('destination-gallery-preview-img-2')">
+                <!-- 右上角操作按钮 -->
+                <div class="image-top-actions" onclick="event.stopPropagation()">
+                  <button type="button" class="image-edit-btn" onclick="AdminApp.Modules.Destination.editGalleryImage(2)" title="修改图片">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button type="button" class="image-remove-btn" onclick="AdminApp.Modules.Destination.removeGalleryImage(2)" title="删除图片">
+                    <i class="fas fa-trash-alt"></i>
+                  </button>
+                </div>
+                <div class="image-preview-image-wrapper">
+                  <img id="destination-gallery-preview-img-2" src="" alt="展示图片2预览">
+                </div>
+              </div>
+              <div class="image-preview-footer">
+                <div class="image-file-name" id="destination-gallery-file-name-2"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">展示图片 3（选填）</label>
+          <div class="image-upload-wrapper" id="destination-gallery-upload-wrapper-3">
+            <!-- 上传框 -->
+            <div class="image-upload-box" id="destination-gallery-upload-box-3" onclick="document.getElementById('destination-gallery-image-3').click()">
+              <i class="fas fa-cloud-upload-alt image-upload-icon"></i>
+              <div class="image-upload-title">点击上传图片 3</div>
+              <div class="image-upload-desc">支持 JPG、PNG 格式</div>
+              <input type="file" id="destination-gallery-image-3" class="image-upload-input" accept="image/*">
+            </div>
+            
+            <!-- 预览卡片（上传后显示，覆盖上传框） -->
+            <div id="destination-gallery-preview-3" style="display:none; position: relative;">
+              <div class="image-preview-item" style="cursor: zoom-in;" onclick="openImageZoom('destination-gallery-preview-img-3')">
+                <!-- 右上角操作按钮 -->
+                <div class="image-top-actions" onclick="event.stopPropagation()">
+                  <button type="button" class="image-edit-btn" onclick="AdminApp.Modules.Destination.editGalleryImage(3)" title="修改图片">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button type="button" class="image-remove-btn" onclick="AdminApp.Modules.Destination.removeGalleryImage(3)" title="删除图片">
+                    <i class="fas fa-trash-alt"></i>
+                  </button>
+                </div>
+                <div class="image-preview-image-wrapper">
+                  <img id="destination-gallery-preview-img-3" src="" alt="展示图片3预览">
+                </div>
+              </div>
+              <div class="image-preview-footer">
+                <div class="image-file-name" id="destination-gallery-file-name-3"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">展示图片 4（选填）</label>
+          <div class="image-upload-wrapper" id="destination-gallery-upload-wrapper-4">
+            <!-- 上传框 -->
+            <div class="image-upload-box" id="destination-gallery-upload-box-4" onclick="document.getElementById('destination-gallery-image-4').click()">
+              <i class="fas fa-cloud-upload-alt image-upload-icon"></i>
+              <div class="image-upload-title">点击上传图片 4</div>
+              <div class="image-upload-desc">支持 JPG、PNG 格式</div>
+              <input type="file" id="destination-gallery-image-4" class="image-upload-input" accept="image/*">
+            </div>
+            
+            <!-- 预览卡片（上传后显示，覆盖上传框） -->
+            <div id="destination-gallery-preview-4" style="display:none; position: relative;">
+              <div class="image-preview-item" style="cursor: zoom-in;" onclick="openImageZoom('destination-gallery-preview-img-4')">
+                <!-- 右上角操作按钮 -->
+                <div class="image-top-actions" onclick="event.stopPropagation()">
+                  <button type="button" class="image-edit-btn" onclick="AdminApp.Modules.Destination.editGalleryImage(4)" title="修改图片">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button type="button" class="image-remove-btn" onclick="AdminApp.Modules.Destination.removeGalleryImage(4)" title="删除图片">
+                    <i class="fas fa-trash-alt"></i>
+                  </button>
+                </div>
+                <div class="image-preview-image-wrapper">
+                  <img id="destination-gallery-preview-img-4" src="" alt="展示图片4预览">
+                </div>
+              </div>
+              <div class="image-preview-footer">
+                <div class="image-file-name" id="destination-gallery-file-name-4"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">详细介绍 *</label>
+        <textarea id="destination-description" class="form-textarea" rows="6" placeholder="请详细介绍旅游目的地的特色、景观、体验项目等"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">特色亮点（支持富文本） *</label>
+        <textarea id="destination-features" class="form-textarea" rows="5" placeholder="请输入特色亮点，可分段展示、可加粗列表等"></textarea>
+      </div>
+
+      <div style="margin-top: 8px;">
+        <button type="submit" class="btn btn-primary">提交</button>
+        <button type="button" id="destination-delete-btn" class="btn btn-danger" style="display:none; margin-left: 12px;">删除</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="card" style="margin-top: 24px;">
+    <h3 class="card-title">已创建目的地</h3>
+    <div id="destination-list-container">
+      <div class="loading"><div class="spinner"></div><div>加载中...</div></div>
+    </div>
+  </div>
+</div>

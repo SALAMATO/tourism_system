@@ -1,0 +1,119 @@
+<!-- 新闻资讯管理模块 -->
+<div id="news-module" class="admin-module">
+  <h2 class="section-title">新闻资讯管理</h2>
+  
+  <div class="card">
+    <h3 class="card-title">发布新闻</h3>
+    
+    <!-- 新闻识别功能 -->
+    <div style="background: var(--background-secondary); padding: 20px; border-radius: 12px; margin-bottom: 24px;">
+      <h4 style="font-size: 18px; margin-bottom: 12px; color: var(--text-primary);">
+        <i class="fas fa-magic"></i> 智能新闻识别
+      </h4>
+      <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 16px;">
+        输入新闻URL，自动提取标题、作者和内容
+      </p>
+      <div style="display: flex; gap: 12px;">
+        <input type="url" id="news-url-input" class="form-input" placeholder="输入新闻URL" style="flex: 1;">
+        <button type="button" id="fetch-news-btn" class="btn btn-primary" style="white-space: nowrap;">
+          <i class="fas fa-download"></i> 识别新闻
+        </button>
+      </div>
+      <div id="fetch-news-status" style="margin-top: 12px; font-size: 14px;"></div>
+    </div>
+    
+    <form id="news-form">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">新闻标题 *</label>
+          <input type="text" id="news-title" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">作者 *</label>
+          <input type="text" id="news-author" class="form-input" required>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">分类 *</label>
+          <select id="news-category" class="form-select" required>
+            <option value="行业动态">行业动态</option>
+            <option value="政策解读">政策解读</option>
+            <option value="技术创新">技术创新</option>
+            <option value="企业新闻">企业新闻</option>
+            <option value="市场分析">市场分析</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">发布日期</label>
+          <input type="date" id="news-date" class="form-input">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">标签（用逗号分隔）</label>
+          <input type="text" id="news-tags" class="form-input" placeholder="低空旅游,行业发展">
+        </div>
+        <div class="form-group">
+          <label class="form-label">封面图片URL（选填）</label>
+          <input type="url" id="news-cover" class="form-input" placeholder="https://...">
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">新闻内容 *</label>
+        <textarea id="news-content" class="form-textarea" rows="10" placeholder="请输入新闻资讯的详细内容"></textarea>
+      </div>
+
+      <!-- AI 智能摘要 -->
+      <div style="background: linear-gradient(135deg, rgba(0,113,227,0.06), rgba(99,179,237,0.08)); 
+                  border: 1px solid rgba(0,113,227,0.2); border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <h4 style="font-size: 16px; color: var(--text-primary); margin: 0;">
+            <i class="fas fa-robot" style="color: var(--primary-color);"></i> AI 智能助手
+          </h4>
+          <div style="display: flex; gap: 8px;">
+            <button type="button" id="news-ai-format-btn" class="btn btn-secondary" style="font-size: 13px; padding: 6px 16px;">
+              <i class="fas fa-align-left"></i> 整理原文
+            </button>
+            <button type="button" id="news-ai-summary-btn" class="btn btn-primary" style="font-size: 13px; padding: 6px 16px;">
+              <i class="fas fa-magic"></i> 生成摘要
+            </button>
+          </div>
+        </div>
+        <p style="font-size: 13px; color: var(--text-secondary); margin: 0 0 12px;">
+          <strong>整理原文</strong>：AI 自动识别标题层级、段落结构，清洗数据并格式化<br>
+          <strong>生成摘要</strong>：生成关键摘要、核心观点、推荐标签与分类，并自动排版原文
+        </p>
+        <div id="news-ai-summary-loading" style="display:none; text-align:center; padding: 12px;">
+          <i class="fas fa-spinner fa-spin"></i> AI 正在分析，请稍候...
+        </div>
+        <div id="news-ai-summary-error" style="display:none; color: var(--danger-color); font-size: 13px; margin-top: 8px;"></div>
+        <div id="news-ai-summary-result" style="display:none;">
+          <div style="margin-bottom: 10px;">
+            <div style="font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px;">关键摘要</div>
+            <div id="news-ai-summary-text" style="font-size: 14px; line-height: 1.7; padding: 10px 14px; 
+                       background: var(--background); border-radius: 8px; border-left: 3px solid var(--primary-color);"></div>
+          </div>
+          <button type="button" id="news-ai-apply-btn" class="btn btn-primary" style="font-size: 12px; padding: 5px 14px;">
+            <i class="fas fa-check"></i> 应用标签与分类
+          </button>
+        </div>
+      </div>
+      
+      <div style="margin-top: 8px;">
+        <button type="submit" class="btn btn-primary">发布</button>
+        <button type="button" id="news-delete-btn" class="btn btn-danger" style="display:none; margin-left: 12px;">删除</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="card" style="margin-top: 24px;">
+    <h3 class="card-title">已发布新闻（最近）</h3>
+    <div id="news-list-container">
+      <div class="loading"><div class="spinner"></div><div>加载中...</div></div>
+    </div>
+  </div>
+</div>

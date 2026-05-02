@@ -5,7 +5,7 @@ from django.conf import settings
 from django.views.generic import TemplateView
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import views as auth_views
-from .views import admin_logout
+from .views import admin_logout, admin_module_loader
 from django.conf.urls.static import static
 
 urlpatterns = [
@@ -31,6 +31,13 @@ urlpatterns = [
         TemplateView.as_view(template_name='admin.html'),
         name='admin_page'
     ),
+    path(
+        'admin-old/',
+        TemplateView.as_view(template_name='admin_old.html'),
+        name='admin_old'
+    ),
+    # 模块化Admin - 动态加载模块HTML
+    path('api/admin/module/<str:module_name>/', admin_module_loader, name='admin_module_loader'),
     path('messages/', TemplateView.as_view(template_name='community.html'), name='community'),
 ]
 

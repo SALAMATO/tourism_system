@@ -1,0 +1,59 @@
+<!-- 统计数据管理模块 -->
+<div id="statistics-module" class="admin-module">
+  <h2 class="section-title">统计数据管理</h2>
+  <div class="card">
+    <h3 class="card-title">添加统计数据</h3>
+    
+    <form id="statistics-form">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">地区 *</label>
+          <input type="text" id="stat-region" class="form-input" placeholder="如：北京" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">年份 *</label>
+          <input type="number" id="stat-year" class="form-input" min="2020" max="2030" value="2024" required>
+        </div>
+      </div>
+    
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">游客数量（万人次）*</label>
+          <input type="number" id="stat-tourists" class="form-input" min="0" step="0.1" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">营收（万元）*</label>
+          <input type="number" id="stat-revenue" class="form-input" min="0" step="0.01" required>
+        </div>
+      </div>
+    
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">航班次数 *</label>
+          <input type="number" id="stat-flights" class="form-input" min="0" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">航空器数量 *</label>
+          <input type="number" id="stat-aircraft" class="form-input" min="0" required>
+        </div>
+      </div>
+    
+      <div class="form-group">
+        <label class="form-label">增长率（%）*</label>
+        <input type="number" id="stat-growth" class="form-input" min="-100" max="1000" step="0.1" required>
+      </div>
+        
+      <div style="margin-top: 8px;">
+        <button type="submit" class="btn btn-primary">提交</button>
+        <button type="button" id="statistics-delete-btn" class="btn btn-danger" style="display:none; margin-left: 12px;">删除</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="card" style="margin-top: 24px;">
+    <h3 class="card-title">统计数据（最近）</h3>
+    <div id="statistics-list-container">
+      <div class="loading"><div class="spinner"></div><div>加载中...</div></div>
+    </div>
+  </div>
+</div>

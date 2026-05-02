@@ -1,0 +1,67 @@
+<!-- 安全隐患管理模块 -->
+<div id="safety-module" class="admin-module">
+  <h2 class="section-title">安全隐患管理</h2>
+  
+  <div class="card">
+    <h3 class="card-title">添加安全隐患</h3>
+    
+    <form id="safety-form">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">隐患标题 *</label>
+          <input type="text" id="safety-title" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">隐患类别 *</label>
+          <input type="text" id="safety-category" class="form-input" placeholder="如：天气因素、设备故障等" required>
+        </div>
+      </div>
+    
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">风险等级 *</label>
+          <select id="safety-risk" class="form-select" required>
+            <option value="高">高</option>
+            <option value="中">中</option>
+            <option value="低">低</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">状态 *</label>
+          <select id="safety-status" class="form-select" required>
+            <option value="待处理">待处理</option>
+            <option value="处理中">处理中</option>
+            <option value="已解决">已解决</option>
+          </select>
+        </div>
+      </div>
+    
+      <div class="form-group">
+        <label class="form-label">详细描述 *</label>
+        <textarea id="safety-description" class="form-textarea" rows="5" placeholder="请详细描述安全隐患"></textarea>
+      </div>
+    
+      <div class="form-group">
+        <label class="form-label">预防措施 *</label>
+        <textarea id="safety-prevention" class="form-textarea" rows="5" placeholder="请输入预防措施"></textarea>
+      </div>
+    
+      <div class="form-group">
+        <label class="form-label">应急预案 *</label>
+        <textarea id="safety-plan" class="form-textarea" rows="5" placeholder="请输入应急预案"></textarea>
+      </div>
+        
+      <div style="margin-top: 8px;">
+        <button type="submit" class="btn btn-primary">提交</button>
+        <button type="button" id="safety-delete-btn" class="btn btn-danger" style="display:none; margin-left: 12px;">删除</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="card" style="margin-top: 24px;">
+    <h3 class="card-title">已登记隐患（最近）</h3>
+    <div id="safety-list-container">
+      <div class="loading"><div class="spinner"></div><div>加载中...</div></div>
+    </div>
+  </div>
+</div>
