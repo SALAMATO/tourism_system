@@ -1,0 +1,1085 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理后台-低空旅游</title>
+        <!-- 基础 ICO（Windows / 旧浏览器） -->
+    <link rel="icon" href="{% static 'images/favicon.ico' %}" type="image/x-icon">
+    <!-- PNG 标准尺寸 -->
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'images/favicon-16x16.png' %}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'images/favicon-32x32.png' %}">
+    <!-- Apple 设备 -->
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'images/apple-touch-icon.png' %}">
+    <!-- Android / Chrome -->
+    <link rel="icon" type="image/png" sizes="192x192" href="{% static 'images/android-chrome-192x192.png' %}">
+    <link rel="icon" type="image/png" sizes="512x512" href="{% static 'images/android-chrome-512x512.png' %}">
+    <!-- PWA -->
+    <link rel="manifest" href="{% static 'images/site.webmanifest' %}">
+    <!-- CSS -->
+    <link rel="stylesheet" href="{% static 'css/style.css' %}?v=20260310">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    
+    <!-- wangEditor 5 CSS (完全免费的富文本编辑器) -->
+    <link href="https://unpkg.com/@wangeditor/editor@latest/dist/css/style.css" rel="stylesheet">
+    
+    <!-- wangEditor 自定义样式 -->
+    <style>
+        /* wangEditor 容器样式 */
+        .w-e-text-container {
+            min-height: 300px;
+            max-height: 500px;
+        }
+        
+        /* 隐藏原始textarea */
+        textarea.form-textarea.wang-hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="navbar-container">
+      <a href="{% url 'home' %}" class="navbar-brand"><i class="fas fa-plane-departure"></i> 低空旅游信息管理系统</a>
+      <ul class="navbar-menu">
+        <li><a href="{% url 'destinations' %}">旅游目的地</a></li>
+        <li><a href="{% url 'policies' %}">政策法规</a></li>
+        <li><a href="{% url 'statistics' %}">发展现状</a></li>
+        <li><a href="{% url 'safety' %}">安全预警</a></li>
+        <li><a href="{% url 'news' %}">新闻资讯</a></li>
+        <li><a href="{% url 'community' %}">互动交流</a></li>
+      </ul>
+      <button class="navbar-toggle" id="navbar-toggle">
+        <i class="fas fa-bars"></i>
+      </button>
+      <div id="user-menu">
+        <!-- 用户菜单将通过JS动态加载 -->
+      </div>
+    </div>
+  </nav>
+
+  <!-- 移动端菜单覆盖层 -->
+  <div class="mobile-menu-overlay" id="mobile-menu-overlay">
+    <div class="mobile-menu">
+      <a href="{% url 'destinations' %}" class="mobile-menu-item">旅游目的地</a>
+      <a href="{% url 'policies' %}" class="mobile-menu-item">政策法规</a>
+      <a href="{% url 'statistics' %}" class="mobile-menu-item">发展现状</a>
+      <a href="{% url 'safety' %}" class="mobile-menu-item">安全预警</a>
+      <a href="{% url 'news' %}" class="mobile-menu-item">新闻资讯</a>
+      <a href="{% url 'community' %}" class="mobile-menu-item">互动交流</a>
+    </div>
+  </div>  
+  
+  <div class="page-header">
+    <h1>⚙️ 管理后台</h1>
+    <p>统一管理平台内容、数据录入与系统配置</p>
+  </div>
+
+  <main class="container">
+    <!-- 管理模块选择 -->
+    <div class="features-grid" style="margin-bottom: 40px;">
+      <div class="feature-card" onclick="showModule('policy')">
+        <span class="feature-icon">📚</span>
+        <h3>政策法规管理</h3>
+        <p>添加、编辑、删除政策法规</p>
+      </div>
+
+      <div class="feature-card" onclick="showModule('news')">
+        <span class="feature-icon">📰</span>
+        <h3>新闻资讯管理</h3>
+        <p>发布和管理新闻资讯</p>
+      </div>
+
+      <div class="feature-card" onclick="showModule('safety')">
+        <span class="feature-icon">⚠️</span>
+        <h3>安全隐患管理</h3>
+        <p>记录和处理安全隐患</p>
+      </div>
+
+      <div class="feature-card" onclick="showModule('statistics')">
+        <span class="feature-icon">📊</span>
+        <h3>统计数据管理</h3>
+        <p>录入和更新统计数据</p>
+      </div>
+
+      <div class="feature-card" onclick="showModule('destination')">
+        <span class="feature-icon">🗺️</span>
+        <h3>旅游目的地管理</h3>
+        <p>维护低空旅游目的地与首页推荐内容</p>
+      </div>
+
+      <div class="feature-card" onclick="showModule('message')">
+        <span class="feature-icon">💬</span>
+        <h3>留言管理</h3>
+        <p>查看和回复用户留言</p>
+      </div>
+
+      <div class="feature-card" onclick="showModule('user')">
+        <span class="feature-icon">👥</span>
+        <h3>用户管理</h3>
+        <p>查看和管理系统用户</p>
+      </div>
+    </div>
+
+    <!-- 政策法规管理 -->
+    <div id="policy-module" class="admin-module" style="display:none;">
+      <h2 class="section-title">政策法规管理</h2>
+      <div class="card">
+        <h3 class="card-title">添加政策法规</h3>
+        
+        <!-- 政策识别功能 -->
+        <div style="background: var(--background-secondary); padding: 20px; border-radius: 12px; margin-bottom: 24px;">
+          <h4 style="font-size: 18px; margin-bottom: 12px; color: var(--text-primary);">
+            <i class="fas fa-magic"></i> 智能原文识别
+          </h4>
+          <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 16px;">
+            输入政策原文URL，自动提取标题、发布部门、发布日期和内容
+          </p>
+          <div style="display: flex; gap: 12px;">
+            <input 
+              type="url" 
+              id="policy-url-input" 
+              class="form-input" 
+              placeholder="输入政策URL，例如：https://www.ndrc.gov.cn/xxgk/zcfb/tz/202408/t20240821_1392498.html"
+              style="flex: 1;">
+            <button 
+              type="button" 
+              id="fetch-policy-btn" 
+              class="btn btn-primary"
+              style="white-space: nowrap;">
+              <i class="fas fa-download"></i> 识别原文
+            </button>
+          </div>
+          <div id="fetch-policy-status" style="margin-top: 12px; font-size: 14px;"></div>
+        </div>
+        
+        <form id="policy-form">
+          <!-- 第一行：政策标题 + 发布部门 -->
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">政策标题 *</label>
+              <input type="text" id="policy-title" class="form-input" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">发布部门 *</label>
+              <input type="text" id="policy-department" class="form-input" required>
+            </div>
+          </div>
+
+          <!-- 第二行：政策级别 + 发布日期 -->
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">政策级别 *</label>
+              <select id="policy-level" class="form-select" required>
+                <option value="国家级">国家级</option>
+                <option value="省级">省级</option>
+                <option value="市级">市级</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">发布日期 *</label>
+              <input type="date" id="policy-date" class="form-input" required>
+            </div>
+          </div>
+
+          <!-- 第三行：分类 + 标签 -->
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">分类 *</label>
+              <input type="text" id="policy-category" class="form-input" placeholder="如：安全管理、运营规范等" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">标签（用逗号分隔）</label>
+              <input type="text" id="policy-tags" class="form-input" placeholder="低空旅游,航空安全,政策解读">
+            </div>
+          </div>
+
+          <!-- 原文链接和政策内容 -->
+          <div class="form-group">
+            <label class="form-label">原文链接（选填）</label>
+            <input type="url" id="policy-url" class="form-input" placeholder="https://...">
+          </div>
+          <div class="form-group">
+            <label class="form-label">政策内容 *</label>
+            <div style="position: relative;">
+              <textarea id="policy-content" class="form-textarea" rows="8" placeholder="请输入政策法规的详细内容，支持富文本格式"></textarea>
+              <button type="button" class="btn btn-secondary editor-toggle-btn" data-editor-id="policy-content" style="position: absolute; top: 8px; right: 8px; font-size: 12px; padding: 4px 12px; z-index: 10;">
+                <i class="fas fa-edit"></i> 编辑文本
+              </button>
+            </div>
+          </div>
+
+
+
+          <!-- AI 智能摘要（政策） -->
+          <div style="background: linear-gradient(135deg, rgba(0,113,227,0.06), rgba(99,179,237,0.08)); border: 1px solid rgba(0,113,227,0.2); border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+              <h4 style="font-size: 16px; color: var(--text-primary); margin: 0;">
+                <i class="fas fa-robot" style="color: var(--primary-color);"></i> AI 智能助手
+              </h4>
+              <div style="display: flex; gap: 8px;">
+                <button type="button" id="policy-ai-format-btn" class="btn btn-secondary" style="font-size: 13px; padding: 6px 16px;">
+                  <i class="fas fa-align-left"></i> 整理原文
+                </button>
+                <button type="button" id="policy-ai-summary-btn" class="btn btn-primary" style="font-size: 13px; padding: 6px 16px;">
+                  <i class="fas fa-magic"></i> 生成摘要
+                </button>
+              </div>
+            </div>
+            <p style="font-size: 13px; color: var(--text-secondary); margin: 0 0 12px;">
+              <strong>整理原文</strong>：AI 自动识别标题层级、段落结构，清洗数据并格式化<br>
+              <strong>生成摘要</strong>：生成关键摘要、核心观点、推荐标签与分类，并自动排版原文
+            </p>
+            <div id="policy-ai-summary-loading" style="display:none; text-align:center; padding: 12px; color: var(--text-secondary); font-size: 14px;">
+              <i class="fas fa-spinner fa-spin"></i> AI 正在分析，请稍候...
+            </div>
+            <div id="policy-ai-summary-error" style="display:none; color: var(--danger-color); font-size: 13px; margin-top: 8px;"></div>
+            <div id="policy-ai-summary-result" style="display:none;">
+              <div style="margin-bottom: 10px;">
+                <div style="font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px;">关键摘要</div>
+                <div id="policy-ai-summary-text" style="font-size: 14px; line-height: 1.7; padding: 10px 14px; background: var(--background); border-radius: 8px; border-left: 3px solid var(--primary-color);"></div>
+              </div>
+              <div style="margin-bottom: 10px;">
+                <div style="font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px;">核心观点</div>
+                <ul id="policy-ai-keypoints" style="margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.8;"></ul>
+              </div>
+              <div style="display: flex; gap: 16px; flex-wrap: wrap; align-items: center; margin-bottom: 12px;">
+                <div>
+                  <span style="font-size: 13px; font-weight: 600; color: var(--text-secondary);">推荐分类：</span>
+                  <span id="policy-ai-category" style="font-size: 13px; padding: 2px 10px; background: rgba(0,113,227,0.1); color: var(--primary-color); border-radius: 20px;"></span>
+                </div>
+                <div>
+                  <span style="font-size: 13px; font-weight: 600; color: var(--text-secondary);">推荐标签：</span>
+                  <span id="policy-ai-tags" style="font-size: 13px;"></span>
+                </div>
+              </div>
+              <button type="button" id="policy-ai-apply-btn" class="btn btn-primary" style="font-size: 12px; padding: 5px 14px;">
+                <i class="fas fa-check"></i> 应用标签与分类
+              </button>
+            </div>
+          </div>
+          <div style="margin-top: 8px;">
+            <button type="submit" class="btn btn-primary">提交</button>
+            <!-- 删除按钮事件由 admin.js 中的事件委托统一绑定，这里不再使用 inline onclick，避免触发两次 -->
+            <button type="button" id="policy-delete-btn" class="btn btn-danger" style="display:none; margin-left: 12px;">
+              删除
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card" style="margin-top: 24px;">
+        <h3 class="card-title">已发布政策（最近）</h3>
+        <div id="policy-list-container">
+          <div class="loading"><div class="spinner"></div><div>加载中...</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 新闻资讯管理 -->
+    <div id="news-module" class="admin-module" style="display:none;">
+      <h2 class="section-title">新闻资讯管理</h2>
+      <div class="card">
+        <h3 class="card-title">发布新闻</h3>
+        
+        <!-- 新闻识别功能 -->
+        <div style="background: var(--background-secondary); padding: 20px; border-radius: 12px; margin-bottom: 24px;">
+          <h4 style="font-size: 18px; margin-bottom: 12px; color: var(--text-primary);">
+            <i class="fas fa-magic"></i> 智能新闻识别
+          </h4>
+          <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 16px;">
+            输入新闻URL，自动提取标题、作者和内容
+          </p>
+          <div style="display: flex; gap: 12px;">
+            <input 
+              type="url" 
+              id="news-url-input" 
+              class="form-input" 
+              placeholder="输入新闻URL，例如：https://www.ndrc.gov.cn/wsdwhfz/202408/t20240821_1392498.html"
+              style="flex: 1;">
+            <button 
+              type="button" 
+              id="fetch-news-btn" 
+              class="btn btn-primary"
+              style="white-space: nowrap;">
+              <i class="fas fa-download"></i> 识别新闻
+            </button>
+          </div>
+          <div id="fetch-news-status" style="margin-top: 12px; font-size: 14px;"></div>
+        </div>
+        
+        <form id="news-form">
+          <!-- 第一行：新闻标题 + 作者 -->
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">新闻标题 *</label>
+              <input type="text" id="news-title" class="form-input" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">作者 *</label>
+              <input type="text" id="news-author" class="form-input" required>
+            </div>
+          </div>
+
+          <!-- 第二行：分类 + 发布日期 -->
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">分类 *</label>
+              <select id="news-category" class="form-select" required>
+                <option value="行业动态">行业动态</option>
+                <option value="政策解读">政策解读</option>
+                <option value="技术创新">技术创新</option>
+                <option value="企业新闻">企业新闻</option>
+                <option value="市场分析">市场分析</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">发布日期</label>
+              <input type="date" id="news-date" class="form-input">
+            </div>
+          </div>
+
+            <!-- 标签 + 封面 -->
+          <div class="form-row">
+              <!-- 标签 -->
+              <div class="form-group">
+                <label class="form-label">标签（用逗号分隔）</label>
+                <input type="text" id="news-tags" class="form-input" placeholder="低空旅游,行业发展">
+              </div>
+              <!-- 封面图片 -->
+              <div class="form-group">
+                <label class="form-label">封面图片URL（选填）</label>
+                <input type="url" id="news-cover" class="form-input" placeholder="https://...">
+              </div>
+          </div>
+          <!-- 新闻内容 -->
+          <div class="form-group">
+            <label class="form-label">新闻内容 *</label>
+            <div style="position: relative;">
+              <textarea id="news-content" class="form-textarea" rows="10" placeholder="请输入新闻资讯的详细内容，支持富文本格式"></textarea>
+              <button type="button" class="btn btn-secondary editor-toggle-btn" data-editor-id="news-content" style="position: absolute; top: 8px; right: 8px; font-size: 12px; padding: 4px 12px; z-index: 10;">
+                <i class="fas fa-edit"></i> 编辑文本
+              </button>
+            </div>
+          </div>
+
+
+
+          <!-- AI 智能摘要（新闻） -->
+          <div style="background: linear-gradient(135deg, rgba(0,113,227,0.06), rgba(99,179,237,0.08)); border: 1px solid rgba(0,113,227,0.2); border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+              <h4 style="font-size: 16px; color: var(--text-primary); margin: 0;">
+                <i class="fas fa-robot" style="color: var(--primary-color);"></i> AI 智能助手
+              </h4>
+              <div style="display: flex; gap: 8px;">
+                <button type="button" id="news-ai-format-btn" class="btn btn-secondary" style="font-size: 13px; padding: 6px 16px;">
+                  <i class="fas fa-align-left"></i> 整理原文
+                </button>
+                <button type="button" id="news-ai-summary-btn" class="btn btn-primary" style="font-size: 13px; padding: 6px 16px;">
+                  <i class="fas fa-magic"></i> 生成摘要
+                </button>
+              </div>
+            </div>
+            <p style="font-size: 13px; color: var(--text-secondary); margin: 0 0 12px;">
+              <strong>整理原文</strong>：AI 自动识别标题层级、段落结构，清洗数据并格式化<br>
+              <strong>生成摘要</strong>：生成关键摘要、核心观点、推荐标签与分类，并自动排版原文
+            </p>
+            <div id="news-ai-summary-loading" style="display:none; text-align:center; padding: 12px; color: var(--text-secondary); font-size: 14px;">
+              <i class="fas fa-spinner fa-spin"></i> AI 正在分析，请稍候...
+            </div>
+            <div id="news-ai-summary-error" style="display:none; color: var(--danger-color); font-size: 13px; margin-top: 8px;"></div>
+            <div id="news-ai-summary-result" style="display:none;">
+              <div style="margin-bottom: 10px;">
+                <div style="font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px;">关键摘要</div>
+                <div id="news-ai-summary-text" style="font-size: 14px; line-height: 1.7; padding: 10px 14px; background: var(--background); border-radius: 8px; border-left: 3px solid var(--primary-color);"></div>
+              </div>
+              <div style="margin-bottom: 10px;">
+                <div style="font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px;">核心观点</div>
+                <ul id="news-ai-keypoints" style="margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.8;"></ul>
+              </div>
+              <div style="display: flex; gap: 16px; flex-wrap: wrap; align-items: center; margin-bottom: 12px;">
+                <div>
+                  <span style="font-size: 13px; font-weight: 600; color: var(--text-secondary);">推荐分类：</span>
+                  <span id="news-ai-category" style="font-size: 13px; padding: 2px 10px; background: rgba(0,113,227,0.1); color: var(--primary-color); border-radius: 20px;"></span>
+                </div>
+                <div>
+                  <span style="font-size: 13px; font-weight: 600; color: var(--text-secondary);">推荐标签：</span>
+                  <span id="news-ai-tags" style="font-size: 13px;"></span>
+                </div>
+              </div>
+              <button type="button" id="news-ai-apply-btn" class="btn btn-primary" style="font-size: 12px; padding: 5px 14px;">
+                <i class="fas fa-check"></i> 应用标签与分类
+              </button>
+            </div>
+          </div>
+          <div style="margin-top: 8px;">
+            <button type="submit" class="btn btn-primary">发布</button>
+            <button type="button" id="news-delete-btn" class="btn btn-danger" style="display:none; margin-left: 12px;">
+              删除
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card" style="margin-top: 24px;">
+        <h3 class="card-title">已发布新闻（最近）</h3>
+        <div id="news-list-container">
+          <div class="loading"><div class="spinner"></div><div>加载中...</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 安全隐患管理 -->
+    <div id="safety-module" class="admin-module" style="display:none;">
+      <h2 class="section-title">安全隐患管理</h2>
+      <div class="card">
+        <h3 class="card-title">添加安全隐患</h3>
+          
+                <form id="safety-form">
+          <!-- 第一行：隐患标题 + 隐患类别 -->
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">隐患标题 *</label>
+              <input type="text" id="safety-title" class="form-input" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">隐患类别 *</label>
+              <input type="text" id="safety-category" class="form-input" placeholder="如：天气因素、设备故障等" required>
+            </div>
+          </div>
+        
+          <!-- 第二行：风险等级 + 状态 -->
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">风险等级 *</label>
+              <select id="safety-risk" class="form-select" required>
+                <option value="高">高</option>
+                <option value="中">中</option>
+                <option value="低">低</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">状态 *</label>
+              <select id="safety-status" class="form-select" required>
+                <option value="待处理">待处理</option>
+                <option value="处理中">处理中</option>
+                <option value="已解决">已解决</option>
+              </select>
+            </div>
+          </div>
+        
+          <!-- 其他单列字段 -->
+          <div class="form-group">
+            <label class="form-label">详细描述 *</label>
+            <div style="position: relative;">
+              <textarea id="safety-description" class="form-textarea" rows="5" placeholder="请详细描述安全隐患的具体情况、影响范围和严重程度"></textarea>
+              <button type="button" class="btn btn-secondary editor-toggle-btn" data-editor-id="safety-description" style="position: absolute; top: 8px; right: 8px; font-size: 12px; padding: 4px 12px; z-index: 10;">
+                <i class="fas fa-edit"></i> 编辑文本
+              </button>
+            </div>
+          </div>
+        
+          <div class="form-group">
+            <label class="form-label">预防措施 *</label>
+            <div style="position: relative;">
+              <textarea id="safety-prevention" class="form-textarea" rows="5" placeholder="请输入预防措施和建议，包括事前防范和事中应对"></textarea>
+              <button type="button" class="btn btn-secondary editor-toggle-btn" data-editor-id="safety-prevention" style="position: absolute; top: 8px; right: 8px; font-size: 12px; padding: 4px 12px; z-index: 10;">
+                <i class="fas fa-edit"></i> 编辑文本
+              </button>
+            </div>
+          </div>
+        
+          <div class="form-group">
+            <label class="form-label">应急预案 *</label>
+            <div style="position: relative;">
+              <textarea id="safety-plan" class="form-textarea" rows="5" placeholder="请输入应急预案，包括应急响应流程和处置措施"></textarea>
+              <button type="button" class="btn btn-secondary editor-toggle-btn" data-editor-id="safety-plan" style="position: absolute; top: 8px; right: 8px; font-size: 12px; padding: 4px 12px; z-index: 10;">
+                <i class="fas fa-edit"></i> 编辑文本
+              </button>
+            </div>
+          </div>
+            
+          <div style="margin-top: 8px;">
+            <button type="submit" class="btn btn-primary">提交</button>
+            <button type="button" id="safety-delete-btn" class="btn btn-danger" style="display:none; margin-left: 12px;">
+              删除
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card" style="margin-top: 24px;">
+        <h3 class="card-title">已登记隐患（最近）</h3>
+        <div id="safety-list-container">
+          <div class="loading"><div class="spinner"></div><div>加载中...</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 旅游目的地管理 -->
+    <div id="destination-module" class="admin-module" style="display:none;">
+      <h2 class="section-title">旅游目的地管理</h2>
+      <div class="card">
+        <h3 class="card-title">新增旅游目的地</h3>
+        <form id="destination-form" enctype="multipart/form-data">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">目的地名称 *</label>
+              <input type="text" id="destination-name" class="form-input" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">类别 *</label>
+              <input type="text" id="destination-category" class="form-input" placeholder="如：直升机观光、热气球、滑翔伞" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">国家/地区 *</label>
+              <input type="text" id="destination-country" class="form-input" placeholder="如：中国、China" value="中国">
+              <div style="margin-top: 4px; font-size: 12px; color: var(--text-secondary);">
+                输入“中国”、“China”等会自动标记为国内旅游地
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">省份/州 *</label>
+              <input type="text" id="destination-state" class="form-input" placeholder="如：北京市、广东省、加利福尼亚州、香港特别行政区、东京都">
+                <div style="margin-top: 4px; font-size: 12px; color: var(--text-secondary);">
+                国家、地区、城市将用于IP定位，地理位置用于精确位置
+              </div>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">城市/区 *</label>
+              <input type="text" id="destination-city" class="form-input" placeholder="如：北京、广州、旧金山/新界、新宿区" required>
+                <div style="margin-top: 4px; font-size: 12px; color: var(--text-secondary);">
+                如果城市是直辖市、特别行政区等，请在省份与城市栏目中均填相同名称
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">地理位置 </label>
+              <input type="text" id="destination-location" class="form-input" placeholder="如：延庆区八达岭机场" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">价格区间 *</label>
+              <input type="text" id="destination-price-range" class="form-input" placeholder="如：¥599 - ¥1299 / 人" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">游玩时长 *</label>
+              <input type="text" id="destination-duration" class="form-input" placeholder="如：30分钟 - 2小时" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">最佳季节 *</label>
+              <input type="text" id="destination-best-season" class="form-input" placeholder="如：春秋两季" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">评分 *</label>
+              <input type="number" id="destination-rating" class="form-input" min="0" max="5" step="0.1" value="4.9" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group" style="flex: 2;">
+              <label class="form-label">推荐类型（多选）*</label>
+              <div class="apple-checkbox-group" style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px;">
+                <label class="apple-checkbox" style="display: flex; align-items: center; cursor: pointer; padding: 10px 16px; border-radius: 12px; background: #f5f5f7; transition: all 0.2s ease; border: 2px solid transparent;">
+                  <input type="checkbox" name="recommendation_type" value="default" checked style="display: none;">
+                  <div class="apple-checkbox-icon" style="width: 22px; height: 22px; border-radius: 6px; background: #fff; border: 2px solid #d1d1d6; margin-right: 10px; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease;">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="opacity: 0; transition: opacity 0.2s ease;">
+                      <path d="M2 7L5.5 10.5L12 3.5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </div>
+                  <span style="font-size: 14px; font-weight: 500; color: #1d1d1f;">默认推荐</span>
+                </label>
+                <label class="apple-checkbox" style="display: flex; align-items: center; cursor: pointer; padding: 10px 16px; border-radius: 12px; background: #f5f5f7; transition: all 0.2s ease; border: 2px solid transparent;">
+                  <input type="checkbox" name="recommendation_type" value="nearby" style="display: none;">
+                  <div class="apple-checkbox-icon" style="width: 22px; height: 22px; border-radius: 6px; background: #fff; border: 2px solid #d1d1d6; margin-right: 10px; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease;">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="opacity: 0; transition: opacity 0.2s ease;">
+                      <path d="M2 7L5.5 10.5L12 3.5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </div>
+                  <span style="font-size: 14px; font-weight: 500; color: #1d1d1f;">IP周边推荐</span>
+                </label>
+                <label class="apple-checkbox" style="display: flex; align-items: center; cursor: pointer; padding: 10px 16px; border-radius: 12px; background: #f5f5f7; transition: all 0.2s ease; border: 2px solid transparent;">
+                  <input type="checkbox" name="recommendation_type" value="managed" style="display: none;">
+                  <div class="apple-checkbox-icon" style="width: 22px; height: 22px; border-radius: 6px; background: #fff; border: 2px solid #d1d1d6; margin-right: 10px; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease;">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="opacity: 0; transition: opacity 0.2s ease;">
+                      <path d="M2 7L5.5 10.5L12 3.5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </div>
+                  <span style="font-size: 14px; font-weight: 500; color: #1d1d1f;">热门推荐</span>
+                </label>
+                <label class="apple-checkbox" style="display: flex; align-items: center; cursor: pointer; padding: 10px 16px; border-radius: 12px; background: #f5f5f7; transition: all 0.2s ease; border: 2px solid transparent;">
+                  <input type="checkbox" name="recommendation_type" value="selected" style="display: none;">
+                  <div class="apple-checkbox-icon" style="width: 22px; height: 22px; border-radius: 6px; background: #fff; border: 2px solid #d1d1d6; margin-right: 10px; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease;">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="opacity: 0; transition: opacity 0.2s ease;">
+                      <path d="M2 7L5.5 10.5L12 3.5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </div>
+                  <span style="font-size: 14px; font-weight: 500; color: #1d1d1f;">出行推荐</span>
+                </label>
+              </div>
+              <div style="margin-top: 8px; font-size: 13px; color: var(--text-secondary);">至少选择一个推荐类型，默认推荐会自动添加。</div>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">绝对优先级（越小优先级，越靠前显示）</label>
+              <input type="number" id="destination-sort-order" class="form-input" min="0" value="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">发布日期（选填，留空则使用创建时间）</label>
+              <input type="datetime-local" id="destination-publish-date" class="form-input">
+            </div>
+          </div>
+
+          <style>
+            /* Apple风格多选框样式 */
+            .apple-checkbox:hover {
+              background: #e8e8ed !important;
+            }
+            .apple-checkbox input:checked + .apple-checkbox-icon {
+              background: #0071e3 !important;
+              border-color: #0071e3 !important;
+            }
+            .apple-checkbox input:checked + .apple-checkbox-icon svg {
+              opacity: 1 !important;
+            }
+            .apple-checkbox:has(input:checked) {
+              background: #e8f0fe !important;
+              border-color: #0071e3 !important;
+            }
+            /* 隐藏默认推荐选项 */
+            .apple-checkbox input[value="default"] {
+              display: none !important;
+            }
+            .apple-checkbox:has(input[value="default"]) {
+              display: none !important;
+            }
+          </style>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">首页推荐</label>
+              <select id="destination-is-featured" class="form-select">
+                <option value="true">是</option>
+                <option value="false">否</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">热门目的地</label>
+              <select id="destination-is-hot" class="form-select">
+                <option value="true">是</option>
+                <option value="false">否</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">封面图片（选填）</label>
+            <div class="image-upload-wrapper" id="destination-cover-upload-wrapper">
+              <!-- 上传框 -->
+              <div class="image-upload-box" id="destination-cover-upload-box" onclick="document.getElementById('destination-cover-image').click()">
+                <i class="fas fa-cloud-upload-alt image-upload-icon"></i>
+                <div class="image-upload-title">点击上传封面图片</div>
+                <div class="image-upload-desc">支持 JPG、PNG 格式，建议尺寸 1200x800</div>
+                <input type="file" id="destination-cover-image" class="image-upload-input" accept="image/*">
+              </div>
+              
+              <!-- 预览卡片（上传后显示，覆盖上传框） -->
+              <div id="destination-cover-preview" style="display:none; position: relative;">
+                <div class="image-preview-item" style="cursor: zoom-in;" onclick="openImageZoom('destination-cover-preview-img')">
+                  <!-- 右上角操作按钮 -->
+                  <div class="image-top-actions" onclick="event.stopPropagation()">
+                    <button type="button" class="image-edit-btn" onclick="editDestinationCover()" title="修改图片">
+                      <i class="fas fa-edit"></i>
+                    </button>
+                    <button type="button" class="image-remove-btn" onclick="removeDestinationCover()" title="删除图片">
+                      <i class="fas fa-trash-alt"></i>
+                    </button>
+                  </div>
+                  <div class="image-preview-image-wrapper">
+                    <img id="destination-cover-preview-img" src="" alt="封面预览">
+                  </div>
+                </div>
+                <div class="image-preview-footer">
+                  <div class="image-file-name" id="destination-cover-file-name"></div>
+                </div>
+              </div>
+              
+              <div style="margin-top: 8px; font-size: 13px; color: var(--text-secondary);">不上传图片时，前端将使用统一的默认占位风格。</div>
+            </div>
+            <input type="hidden" id="destination-existing-cover-image">
+          </div>
+
+          <div class="form-row" style="grid-template-columns: repeat(4, 1fr);">
+            <div class="form-group">
+              <label class="form-label">展示图片 1（选填）</label>
+              <div class="image-upload-wrapper" id="destination-gallery-upload-wrapper-1">
+                <!-- 上传框 -->
+                <div class="image-upload-box" id="destination-gallery-upload-box-1" onclick="document.getElementById('destination-gallery-image-1').click()">
+                  <i class="fas fa-cloud-upload-alt image-upload-icon"></i>
+                  <div class="image-upload-title">点击上传图片 1</div>
+                  <div class="image-upload-desc">支持 JPG、PNG 格式</div>
+                  <input type="file" id="destination-gallery-image-1" class="image-upload-input" accept="image/*">
+                </div>
+                
+                <!-- 预览卡片（上传后显示，覆盖上传框） -->
+                <div id="destination-gallery-preview-1" style="display:none; position: relative;">
+                  <div class="image-preview-item" style="cursor: zoom-in;" onclick="openImageZoom('destination-gallery-preview-img-1')">
+                    <!-- 右上角操作按钮 -->
+                    <div class="image-top-actions" onclick="event.stopPropagation()">
+                      <button type="button" class="image-edit-btn" onclick="editDestinationGalleryImage(1)" title="修改图片">
+                        <i class="fas fa-edit"></i>
+                      </button>
+                      <button type="button" class="image-remove-btn" onclick="removeDestinationGalleryImage(1)" title="删除图片">
+                        <i class="fas fa-trash-alt"></i>
+                      </button>
+                    </div>
+                    <div class="image-preview-image-wrapper">
+                      <img id="destination-gallery-preview-img-1" src="" alt="展示图片1预览">
+                    </div>
+                  </div>
+                  <div class="image-preview-footer">
+                    <div class="image-file-name" id="destination-gallery-file-name-1"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">展示图片 2（选填）</label>
+              <div class="image-upload-wrapper" id="destination-gallery-upload-wrapper-2">
+                <!-- 上传框 -->
+                <div class="image-upload-box" id="destination-gallery-upload-box-2" onclick="document.getElementById('destination-gallery-image-2').click()">
+                  <i class="fas fa-cloud-upload-alt image-upload-icon"></i>
+                  <div class="image-upload-title">点击上传图片 2</div>
+                  <div class="image-upload-desc">支持 JPG、PNG 格式</div>
+                  <input type="file" id="destination-gallery-image-2" class="image-upload-input" accept="image/*">
+                </div>
+                
+                <!-- 预览卡片（上传后显示，覆盖上传框） -->
+                <div id="destination-gallery-preview-2" style="display:none; position: relative;">
+                  <div class="image-preview-item" style="cursor: zoom-in;" onclick="openImageZoom('destination-gallery-preview-img-2')">
+                    <!-- 右上角操作按钮 -->
+                    <div class="image-top-actions" onclick="event.stopPropagation()">
+                      <button type="button" class="image-edit-btn" onclick="editDestinationGalleryImage(2)" title="修改图片">
+                        <i class="fas fa-edit"></i>
+                      </button>
+                      <button type="button" class="image-remove-btn" onclick="removeDestinationGalleryImage(2)" title="删除图片">
+                        <i class="fas fa-trash-alt"></i>
+                      </button>
+                    </div>
+                    <div class="image-preview-image-wrapper">
+                      <img id="destination-gallery-preview-img-2" src="" alt="展示图片2预览">
+                    </div>
+                  </div>
+                  <div class="image-preview-footer">
+                    <div class="image-file-name" id="destination-gallery-file-name-2"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">展示图片 3（选填）</label>
+              <div class="image-upload-wrapper" id="destination-gallery-upload-wrapper-3">
+                <!-- 上传框 -->
+                <div class="image-upload-box" id="destination-gallery-upload-box-3" onclick="document.getElementById('destination-gallery-image-3').click()">
+                  <i class="fas fa-cloud-upload-alt image-upload-icon"></i>
+                  <div class="image-upload-title">点击上传图片 3</div>
+                  <div class="image-upload-desc">支持 JPG、PNG 格式</div>
+                  <input type="file" id="destination-gallery-image-3" class="image-upload-input" accept="image/*">
+                </div>
+                
+                <!-- 预览卡片（上传后显示，覆盖上传框） -->
+                <div id="destination-gallery-preview-3" style="display:none; position: relative;">
+                  <div class="image-preview-item" style="cursor: zoom-in;" onclick="openImageZoom('destination-gallery-preview-img-3')">
+                    <!-- 右上角操作按钮 -->
+                    <div class="image-top-actions" onclick="event.stopPropagation()">
+                      <button type="button" class="image-edit-btn" onclick="editDestinationGalleryImage(3)" title="修改图片">
+                        <i class="fas fa-edit"></i>
+                      </button>
+                      <button type="button" class="image-remove-btn" onclick="removeDestinationGalleryImage(3)" title="删除图片">
+                        <i class="fas fa-trash-alt"></i>
+                      </button>
+                    </div>
+                    <div class="image-preview-image-wrapper">
+                      <img id="destination-gallery-preview-img-3" src="" alt="展示图片3预览">
+                    </div>
+                  </div>
+                  <div class="image-preview-footer">
+                    <div class="image-file-name" id="destination-gallery-file-name-3"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">展示图片 4（选填）</label>
+              <div class="image-upload-wrapper" id="destination-gallery-upload-wrapper-4">
+                <!-- 上传框 -->
+                <div class="image-upload-box" id="destination-gallery-upload-box-4" onclick="document.getElementById('destination-gallery-image-4').click()">
+                  <i class="fas fa-cloud-upload-alt image-upload-icon"></i>
+                  <div class="image-upload-title">点击上传图片 4</div>
+                  <div class="image-upload-desc">支持 JPG、PNG 格式</div>
+                  <input type="file" id="destination-gallery-image-4" class="image-upload-input" accept="image/*">
+                </div>
+                
+                <!-- 预览卡片（上传后显示，覆盖上传框） -->
+                <div id="destination-gallery-preview-4" style="display:none; position: relative;">
+                  <div class="image-preview-item" style="cursor: zoom-in;" onclick="openImageZoom('destination-gallery-preview-img-4')">
+                    <!-- 右上角操作按钮 -->
+                    <div class="image-top-actions" onclick="event.stopPropagation()">
+                      <button type="button" class="image-edit-btn" onclick="editDestinationGalleryImage(4)" title="修改图片">
+                        <i class="fas fa-edit"></i>
+                      </button>
+                      <button type="button" class="image-remove-btn" onclick="removeDestinationGalleryImage(4)" title="删除图片">
+                        <i class="fas fa-trash-alt"></i>
+                      </button>
+                    </div>
+                    <div class="image-preview-image-wrapper">
+                      <img id="destination-gallery-preview-img-4" src="" alt="展示图片4预览">
+                    </div>
+                  </div>
+                  <div class="image-preview-footer">
+                    <div class="image-file-name" id="destination-gallery-file-name-4"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">详细介绍 *</label>
+            <div style="position: relative;">
+              <textarea id="destination-description" class="form-textarea" rows="6" placeholder="请详细介绍旅游目的地的特色、景观、体验项目等"></textarea>
+              <button type="button" class="btn btn-secondary editor-toggle-btn" data-editor-id="destination-description" style="position: absolute; top: 8px; right: 8px; font-size: 12px; padding: 4px 12px; z-index: 10;">
+                <i class="fas fa-edit"></i> 编辑文本
+              </button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">特色亮点（支持富文本） *</label>
+            <div style="position: relative;">
+              <textarea id="destination-features" class="form-textarea" rows="5" placeholder="请输入特色亮点，可分段展示、可加粗列表等"></textarea>
+              <button type="button" class="btn btn-secondary editor-toggle-btn" data-editor-id="destination-features" style="position: absolute; top: 8px; right: 8px; font-size: 12px; padding: 4px 12px; z-index: 10;">
+                <i class="fas fa-edit"></i> 编辑文本
+              </button>
+            </div>
+          </div>
+
+          <div style="margin-top: 8px;">
+            <button type="submit" class="btn btn-primary">提交</button>
+            <button type="button" id="destination-delete-btn" class="btn btn-danger" style="display:none; margin-left: 12px;">删除</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card" style="margin-top: 24px;">
+        <h3 class="card-title">已创建目的地</h3>
+        <div id="destination-list-container">
+          <div class="loading"><div class="spinner"></div><div>加载中...</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 统计数据管理 -->
+    <div id="statistics-module" class="admin-module" style="display:none;">
+      <h2 class="section-title">统计数据管理</h2>
+      <div class="card">
+        <h3 class="card-title">添加统计数据</h3>
+          
+        <form id="statistics-form">
+          <!-- 第一行：地区 + 年份 -->
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">地区 *</label>
+              <input type="text" id="stat-region" class="form-input" placeholder="如：北京、上海等" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">年份 *</label>
+              <input type="number" id="stat-year" class="form-input" min="2020" max="2030" value="2024" required>
+            </div>
+          </div>
+        
+          <!-- 第二行：游客数量 + 营收 -->
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">游客数量（万人次）*</label>
+              <input type="number" id="stat-tourists" class="form-input" min="0" step="0.1" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">营收（万元）*</label>
+              <input type="number" id="stat-revenue" class="form-input" min="0" step="0.01" required>
+            </div>
+          </div>
+        
+          <!-- 第三行：航班次数 + 航空器数量 -->
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">航班次数 *</label>
+              <input type="number" id="stat-flights" class="form-input" min="0" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">航空器数量 *</label>
+              <input type="number" id="stat-aircraft" class="form-input" min="0" required>
+            </div>
+          </div>
+        
+          <!-- 第四行：增长率 -->
+          <div class="form-group">
+            <label class="form-label">增长率（%）*</label>
+            <input type="number" id="stat-growth" class="form-input" min="-100" max="1000" step="0.1" required>
+          </div>
+            
+          <div style="margin-top: 8px;">
+            <button type="submit" class="btn btn-primary">提交</button>
+            <button type="button" id="statistics-delete-btn" class="btn btn-danger" style="display:none; margin-left: 12px;">
+              删除
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card" style="margin-top: 24px;">
+        <h3 class="card-title">统计数据（最近）</h3>
+        <div id="statistics-list-container">
+          <div class="loading"><div class="spinner"></div><div>加载中...</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 留言管理 -->
+    <div id="message-module" class="admin-module" style="display:none;">
+      <h2 class="section-title">留言管理</h2>
+      <div id="messages-admin-container">
+        <div class="loading"><div class="spinner"></div><div>加载中...</div></div>
+      </div>
+    </div>
+
+    <!-- 用户管理 -->
+    <div id="user-module" class="admin-module" style="display:none;">
+      <h2 class="section-title">用户管理</h2>
+      <div class="card">
+        <h3 class="card-title">系统用户列表</h3>
+        <div id="users-admin-container">
+          <div class="loading"><div class="spinner"></div><div>加载中...</div></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- 回复留言模态框 -->
+  <div id="reply-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">回复留言</h2>
+        <button class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="reply-message-info"></div>
+        <div class="form-group" style="margin-top: 20px;">
+          <label class="form-label">回复内容 *</label>
+          <div style="position: relative;">
+            <textarea id="reply-content" class="form-textarea" rows="6" placeholder="请输入回复内容，可以格式化排版"></textarea>
+            <button type="button" class="btn btn-secondary editor-toggle-btn" data-editor-id="reply-content" style="position: absolute; top: 8px; right: 8px; font-size: 12px; padding: 4px 12px; z-index: 10;">
+              <i class="fas fa-edit"></i> 编辑文本
+            </button>
+          </div>
+        </div>
+        <div style="display: flex; justify-content: flex-start; gap: 12px;">
+          <button type="button" onclick="submitReply()" class="btn btn-primary" style="padding: 10px 24px;">提交回复</button>
+{#          <button type="button" class="btn btn-secondary" onclick="closeCommentsModal()" style="padding: 12px 24px;">取消</button>#}
+{#          <button type="button" id="reply-delete-btn" class="btn btn-danger" style="margin-left: 12px;">删除#}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 用户管理模态框 -->
+  <div id="user-manage-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">用户管理</h2>
+        <button class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="user-manage-info"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 图片放大查看模态框 -->
+  <div id="image-zoom-modal" class="image-zoom-modal" onclick="closeImageZoom()">
+    <div class="image-zoom-content" onclick="event.stopPropagation()">
+      <button class="image-zoom-close" onclick="closeImageZoom()">
+        <i class="fas fa-times"></i>
+      </button>
+      <img id="image-zoom-img" src="" alt="放大查看">
+    </div>
+  </div>
+
+  <!-- ✨ 缓存管理工具 -->
+  <div class="container" style="padding-top: 20px; padding-bottom: 20px;">
+    <div class="card" style="text-align: center;">
+      <button type="button" 
+              id="clear-cache-btn"
+              class="btn btn-danger">
+        <i class="fas fa-trash-alt"></i> 清除缓存并刷新
+      </button>
+      <p style="margin-top: 12px; font-size: 13px; color: var(--text-secondary);">
+        清除所有表单数据、编辑器内容和图片上传状态
+      </p>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="footer-links">
+      <a href="{% url 'destinations' %}">旅游目的地</a>
+      <a href="{% url 'policies' %}">政策法规</a>
+      <a href="{% url 'statistics' %}">发展现状</a>
+      <a href="{% url 'safety' %}">安全预警</a>
+      <a href="{% url 'news' %}">新闻资讯</a>
+      <a href="{% url 'community' %}">互动交流</a>
+    </div>
+    <p>&copy; 2024 低空旅游信息管理系统. All rights reserved.</p>
+  </footer>
+  
+
+<!-- wangEditor 5 JS (完全免费的富文本编辑器) -->
+<script src="https://unpkg.com/@wangeditor/editor@latest/dist/index.js"></script>
+<script>
+// 检查 wangEditor 是否成功加载
+window.addEventListener('load', function() {
+    if (typeof window.wangEditor !== 'undefined') {
+        console.log('✅ wangEditor 5 库加载成功');
+    } else {
+        console.error('❌ wangEditor 5 库加载失败！');
+    }
+});
+</script>
+
+<!-- 基础工具脚本 -->
+<script src="{% static 'js/utils.js' %}"></script>
+<script src="{% static 'js/api.js' %}"></script>
+<script src="{% static 'js/auth.js' %}"></script>
+
+<!-- wangEditor 初始化脚本 -->
+<script src="{% static 'js/wangeditor-init.js' %}"></script>
+
+<!-- 业务逻辑脚本 -->
+<script src="{% static 'js/fetchers.js' %}"></script>
+<script src="{% static 'js/ai-chat.js' %}?v=20260310?v=20260310"></script>
+<script src="{% static 'js/admin_old.js' %}"></script>
+</body>
+</html>
