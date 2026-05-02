@@ -93,7 +93,7 @@ AdminApp.Modules.Message = {
                     </button>
                     
                     <div class="dropdown-menu">
-                        <button class="dropdown-toggle" onclick="toggleAdminDropdown('admin-msg-menu-${msg.id}')">
+                        <button class="dropdown-toggle" onclick="AdminApp.Modules.Message.toggleDropdown('admin-msg-menu-${msg.id}')">
                             <i class="fas fa-ellipsis-v"></i>
                         </button>
                         <div class="dropdown-content" id="admin-msg-menu-${msg.id}">
@@ -307,10 +307,15 @@ AdminApp.Modules.Message = {
                 AdminApp.showLoading(commentsContainer);
                 const response = await api.getComments(messageId);
                 
-                if (response.data && response.data.length > 0) {
-                    const html = response.data.map(comment => `
+                console.log('评论API响应:', response);
+                
+                // API直接返回数组，不是 {data: [...]}
+                const comments = Array.isArray(response) ? response : (response.data || response.results || []);
+                
+                if (comments && comments.length > 0) {
+                    const html = comments.map(comment => `
                         <div style="padding: 12px; border-bottom: 1px solid var(--border-color);">
-                            <div style="font-weight: 500;">${escapeHtml(comment.user_nickname || '匿名用户')}</div>
+                            <div style="font-weight: 500;">${escapeHtml(comment.user_nickname || comment.user?.nickname || '匿名用户')}</div>
                             <div style="margin-top: 8px;">${escapeHtml(comment.content)}</div>
                             <div style="margin-top: 4px; font-size: 12px; color: var(--text-secondary);">
                                 ${formatDateTime(comment.created_at)}
@@ -325,10 +330,26 @@ AdminApp.Modules.Message = {
                 commentsContainer.style.display = 'block';
             } catch (error) {
                 console.error('加载评论失败:', error);
-                commentsContainer.innerHTML = '<div style="padding: 12px; text-align: center; color: #f56c6c;">加载失败</div>';
+                commentsContainer.innerHTML = '<div style="padding: 12px; text-align: center; color: #f56c6c;">加载失败: ' + error.message + '</div>';
             }
         } else {
             commentsContainer.style.display = 'none';
         }
+    },
+    
+    // 切换下拉菜单显示/隐藏
+    toggleDropdown(menuId) {
+        const menu = document.getElementById(menuId);
+        if (!menu) return;
+        
+        // 关闭所有其他下拉菜单
+        document.querySelectorAll('.dropdown-content').forEach(m => {
+            if (m.id !== menuId) {
+                m.classList.remove('show');
+            }
+        });
+        
+        // 切换当前菜单
+        menu.classList.toggle('show');
     }
 };

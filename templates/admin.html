@@ -83,6 +83,79 @@
     .back-button:active {
       transform: translateX(0);
     }
+    /* 下拉菜单样式 */
+    .dropdown-menu {
+      position: relative;
+      display: inline-block;
+    }
+    .dropdown-toggle {
+      background: none;
+      border: none;
+      padding: 8px 12px;
+      cursor: pointer;
+      color: var(--text-secondary);
+      font-size: 16px;
+      transition: color 0.2s;
+    }
+    .dropdown-toggle:hover {
+      color: var(--primary-color);
+    }
+    .dropdown-content {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 100%;
+      min-width: 160px;
+      background: var(--background);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      z-index: 1000;
+      margin-top: 4px;
+      overflow: hidden;
+    }
+    .dropdown-content.show {
+      display: block;
+      animation: dropdownFadeIn 0.2s ease;
+    }
+    @keyframes dropdownFadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .dropdown-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      padding: 10px 16px;
+      border: none;
+      background: none;
+      color: var(--text-primary);
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 0.2s;
+      text-align: left;
+    }
+    .dropdown-item:hover {
+      background: var(--background-secondary);
+    }
+    .dropdown-item.danger {
+      color: var(--danger-color);
+    }
+    .dropdown-item.danger:hover {
+      background: rgba(255, 59, 48, 0.1);
+    }
+    .dropdown-divider {
+      height: 1px;
+      background: var(--border-color);
+      margin: 4px 0;
+    }
   </style>
 </head>
 <body>

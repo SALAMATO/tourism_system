@@ -279,6 +279,18 @@ class API {
   async getMessageComments(messageId) {
     return await this.request(`${this.baseURL}messages/${messageId}/comments/`);
   }
+  
+  // 别名方法，兼容message.js中的调用
+  async getComments(messageId) {
+    return await this.getMessageComments(messageId);
+  }
+  
+  // 清空所有评论
+  async clearComments(messageId) {
+    return await this.request(`${this.baseURL}messages/${messageId}/clear_comments/`, {
+      method: 'POST'
+    });
+  }
 
   async deleteComment(commentId) {
     return await this.deleteRecord('message-comments', commentId);
