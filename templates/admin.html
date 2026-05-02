@@ -49,6 +49,40 @@
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
+    /* 返回按钮样式 */
+    .back-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      margin-bottom: 20px;
+      background: var(--background);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+    .back-button:hover {
+      background: var(--background-secondary);
+      border-color: var(--primary-color);
+      color: var(--primary-color);
+      transform: translateX(-2px);
+      box-shadow: 0 4px 8px rgba(0, 113, 227, 0.15);
+    }
+    .back-button i {
+      font-size: 12px;
+      transition: transform 0.2s ease;
+    }
+    .back-button:hover i {
+      transform: translateX(-3px);
+    }
+    .back-button:active {
+      transform: translateX(0);
+    }
   </style>
 </head>
 <body>

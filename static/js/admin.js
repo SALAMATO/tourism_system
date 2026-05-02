@@ -29,6 +29,9 @@ const AdminApp = {
             // 初始化通用功能
             this.initCommonFeatures();
             
+            // ✅ 监听浏览器返回/前进按钮（hash变化）
+            this.initHashChangeListener();
+            
             // 检查URL hash，自动加载对应模块
             const hash = window.location.hash.replace('#', '');
             if (hash && this.modules[hash]) {
@@ -80,6 +83,27 @@ const AdminApp = {
         console.log('✅ 通用功能初始化完成');
     },
     
+    // ✅ 初始化Hash变化监听器（支持浏览器返回/前进按钮）
+    initHashChangeListener() {
+        window.addEventListener('popstate', (event) => {
+            console.log('🔙 检测到浏览器返回/前进操作');
+            
+            const hash = window.location.hash.replace('#', '');
+            
+            if (hash && this.modules[hash]) {
+                // 如果hash指向一个有效模块，加载该模块
+                console.log(`📦 加载模块: ${hash}`);
+                this.loadModule(hash);
+            } else {
+                // 如果hash为空或无效，显示模块选择器
+                console.log('🏠 显示模块选择器');
+                this.showModuleSelector();
+            }
+        });
+        
+        console.log('✅ Hash变化监听器已启动');
+    },
+    
     // 加载模块
     async loadModule(moduleName) {
         const module = this.modules[moduleName];
@@ -121,11 +145,14 @@ const AdminApp = {
                 container.innerHTML = html;
             }
             
+            // ✅ 添加返回按钮到模块左上角
+            this.addBackButton(moduleName);
+            
             // 更新当前模块
             this.currentModule = moduleName;
             
-            // 更新URL hash
-            window.location.hash = moduleName;
+            // ✅ 更新URL hash（使用pushState添加到历史记录）
+            window.history.pushState({ module: moduleName }, '', `#${moduleName}`);
             
             // 初始化模块特定功能
             await this.initModule(moduleName);
@@ -194,9 +221,42 @@ const AdminApp = {
         }
         
         this.currentModule = null;
-        window.history.pushState('', document.title, window.location.pathname);
+        
+        // ✅ 清除hash并添加到历史记录（支持浏览器返回）
+        window.history.pushState({ module: null }, '', window.location.pathname);
         
         console.log('🏠 返回模块选择器');
+    },
+    
+    // 添加返回按钮到模块左上角
+    addBackButton(moduleName) {
+        const module = this.modules[moduleName];
+        if (!module) return;
+        
+        // 查找模块容器
+        const moduleContainer = document.querySelector('.admin-module') || 
+                               document.getElementById(`${moduleName}-module`);
+        
+        if (!moduleContainer) {
+            console.warn(`未找到模块容器: ${moduleName}`);
+            return;
+        }
+        
+        // 检查是否已经存在返回按钮
+        if (moduleContainer.querySelector('.back-button')) {
+            return;
+        }
+        
+        // 创建返回按钮
+        const backButton = document.createElement('button');
+        backButton.className = 'back-button';
+        backButton.innerHTML = '<i class="fas fa-arrow-left"></i> 返回模块选择';
+        backButton.onclick = () => this.showModuleSelector();
+        
+        // 插入到模块容器的最前面
+        moduleContainer.insertBefore(backButton, moduleContainer.firstChild);
+        
+        console.log(`✅ 已为 ${module.name} 添加返回按钮`);
     },
     
     // 清除所有缓存
