@@ -93,7 +93,7 @@ AdminApp.Modules.Message = {
                     </button>
                     
                     <div class="dropdown-menu">
-                        <button class="dropdown-toggle" onclick="AdminApp.Modules.Message.toggleDropdown('admin-msg-menu-${msg.id}')">
+                        <button class="dropdown-toggle" onclick="AdminApp.Modules.Message.toggleAdminDropdown('admin-msg-menu-${msg.id}')">
                             <i class="fas fa-ellipsis-v"></i>
                         </button>
                         <div class="dropdown-content" id="admin-msg-menu-${msg.id}">
@@ -280,7 +280,7 @@ AdminApp.Modules.Message = {
     async clearAllComments(messageId) {
         const confirmed = await showConfirm({
             title: '清空所有评论',
-            message: '确定要清空该留言下的所有评论吗？此操作不可恢复！',
+            message: '确定要清空这条留言的所有评论吗？此操作无法恢复！',
             confirmText: '清空',
             cancelText: '取消',
             type: 'danger'
@@ -289,67 +289,142 @@ AdminApp.Modules.Message = {
         if (!confirmed) return;
         
         try {
-            await api.clearComments(messageId);
-            showNotification('清空评论成功', 'success');
+            const comments = await api.getMessageComments(messageId);
+            
+            if (!comments || comments.length === 0) {
+                showNotification('该留言没有评论', 'warning');
+                return;
+            }
+            
+            // 逐个删除评论
+            for (const comment of comments) {
+                await api.deleteComment(comment.id);
+            }
+            
+            showNotification(`成功清空 ${comments.length} 条评论`, 'success');
+            await this.loadAdminMessageComments(messageId);
             await this.loadMessagesList();
         } catch (error) {
             console.error('清空评论失败:', error);
-            showNotification('清空评论失败', 'error');
+            showNotification('清空失败：' + error.message, 'error');
         }
     },
     
+    // 查看留言的评论
     async viewComments(messageId) {
-        const commentsContainer = document.getElementById(`admin-comments-${messageId}`);
-        if (!commentsContainer) return;
+        const container = document.getElementById(`admin-comments-${messageId}`);
+        if (!container) return;
         
-        if (commentsContainer.style.display === 'none') {
-            try {
-                AdminApp.showLoading(commentsContainer);
-                const response = await api.getComments(messageId);
-                
-                console.log('评论API响应:', response);
-                
-                // API直接返回数组，不是 {data: [...]}
-                const comments = Array.isArray(response) ? response : (response.data || response.results || []);
-                
-                if (comments && comments.length > 0) {
-                    const html = comments.map(comment => `
-                        <div style="padding: 12px; border-bottom: 1px solid var(--border-color);">
-                            <div style="font-weight: 500;">${escapeHtml(comment.user_nickname || comment.user?.nickname || '匿名用户')}</div>
-                            <div style="margin-top: 8px;">${escapeHtml(comment.content)}</div>
-                            <div style="margin-top: 4px; font-size: 12px; color: var(--text-secondary);">
-                                ${formatDateTime(comment.created_at)}
+        if (container.style.display === 'none') {
+            container.style.display = 'block';
+            await this.loadAdminMessageComments(messageId);
+        } else {
+            container.style.display = 'none';
+        }
+    },
+    
+    // 加载留言评论（管理员视图）
+    async loadAdminMessageComments(messageId) {
+        const container = document.getElementById(`admin-comments-${messageId}`);
+        if (!container) return;
+        
+        try {
+            const comments = await api.getMessageComments(messageId);
+            
+            if (comments && comments.length > 0) {
+                const html = `
+                    <h4 style="margin-bottom: 12px; font-size: 16px; color: var(--primary-color);">
+                        <i class="fas fa-comments"></i> 评论列表 (${comments.length})
+                    </h4>
+                    ${comments.map(comment => `
+                        <div class="comment-item" style="position: relative; padding: 16px; background: var(--background-secondary); border-radius: 8px; margin-bottom: 12px;">
+                            <div class="comment-header" style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+                                <div>
+                                    <div class="comment-author" style="font-weight: 500; font-size: 14px;">
+                                        <i class="fas fa-user-circle"></i> ${escapeHtml(comment.user_nickname || '匿名用户')}
+                                        ${comment.user_is_staff ? '<span class="tag primary" style="margin-left: 8px; font-size: 12px;">官方回复</span>' : ''}
+                                    </div>
+                                    <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">
+                                        <i class="fas fa-id-badge"></i> 用户ID: ${comment.user || '未知'}
+                                    </div>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <div class="comment-time" style="font-size: 12px; color: var(--text-secondary);">
+                                        ${formatDateTime(comment.created_at)}
+                                    </div>
+                                    <div class="dropdown-menu">
+                                        <button class="dropdown-toggle" onclick="AdminApp.Modules.Message.toggleAdminDropdown('admin-comment-menu-${comment.id}')" style="padding: 4px 8px; font-size: 14px;">
+                                            <i class="fas fa-ellipsis-v"></i>
+                                        </button>
+                                        <div class="dropdown-content" id="admin-comment-menu-${comment.id}">
+                                            <button class="dropdown-item danger" onclick="AdminApp.Modules.Message.deleteAdminComment('${comment.id}', '${messageId}')">
+                                                <i class="fas fa-trash"></i> 删除评论
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="comment-content rich-text-content" style="font-size: 14px; line-height: 1.6; padding: 8px 0;">
+                                ${formatRichTextContent(comment.content)}
                             </div>
                         </div>
-                    `).join('');
-                    commentsContainer.innerHTML = html;
-                } else {
-                    commentsContainer.innerHTML = '<div style="padding: 12px; text-align: center; color: var(--text-secondary);">暂无评论</div>';
-                }
-                
-                commentsContainer.style.display = 'block';
-            } catch (error) {
-                console.error('加载评论失败:', error);
-                commentsContainer.innerHTML = '<div style="padding: 12px; text-align: center; color: #f56c6c;">加载失败: ' + error.message + '</div>';
+                    `).join('')}
+                `;
+                container.innerHTML = html;
+            } else {
+                container.innerHTML = '<div style="text-align: center; color: var(--text-secondary); padding: 16px;">暂无评论</div>';
             }
-        } else {
-            commentsContainer.style.display = 'none';
+        } catch (error) {
+            console.error('加载评论失败:', error);
+            container.innerHTML = '<div style="text-align: center; color: var(--danger-color); padding: 16px;">加载评论失败</div>';
         }
     },
     
-    // 切换下拉菜单显示/隐藏
-    toggleDropdown(menuId) {
-        const menu = document.getElementById(menuId);
-        if (!menu) return;
+    // 删除评论（管理员）
+    async deleteAdminComment(commentId, messageId) {
+        const confirmed = await showConfirm({
+            title: '删除评论',
+            message: '确定要删除这条评论吗？删除后无法恢复。',
+            confirmText: '删除',
+            cancelText: '取消',
+            type: 'danger'
+        });
         
+        if (!confirmed) return;
+        
+        try {
+            await api.deleteComment(commentId);
+            showNotification('评论删除成功', 'success');
+            await this.loadAdminMessageComments(messageId);
+            await this.loadMessagesList(); // 刷新留言列表以更新评论数
+        } catch (error) {
+            console.error('删除评论失败:', error);
+            showNotification('删除失败：' + error.message, 'error');
+        }
+    },
+    
+    // 切换管理员下拉菜单
+    toggleAdminDropdown(menuId) {
         // 关闭所有其他下拉菜单
-        document.querySelectorAll('.dropdown-content').forEach(m => {
-            if (m.id !== menuId) {
-                m.classList.remove('show');
+        document.querySelectorAll('.dropdown-content').forEach(menu => {
+            if (menu.id !== menuId) {
+                menu.classList.remove('show');
             }
         });
         
         // 切换当前菜单
-        menu.classList.toggle('show');
+        const menu = document.getElementById(menuId);
+        if (menu) {
+            menu.classList.toggle('show');
+        }
     }
 };
+
+// 点击外部关闭下拉菜单
+document.addEventListener('click', function(event) {
+    if (!event.target.closest('.dropdown-menu')) {
+        document.querySelectorAll('.dropdown-content').forEach(menu => {
+            menu.classList.remove('show');
+        });
+    }
+});
