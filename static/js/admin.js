@@ -1,6 +1,6 @@
 /**
  * 管理后台主应用 - 模块化架构
- * 版本: 20260502
+ * 版本: 20260503
  * 说明: 采用模块化设计，降低耦合度
  */
 
@@ -178,7 +178,7 @@ const AdminApp = {
     
     // 初始化模块特定功能
     async initModule(moduleName) {
-        console.log(`🔧 初始化模块功能: ${moduleName}`);
+        console.log(` 初始化模块功能: ${moduleName}`);
         
         // 根据模块名称调用对应的初始化函数
         switch (moduleName) {
@@ -259,26 +259,36 @@ const AdminApp = {
         console.log(`✅ 已为 ${module.name} 添加返回按钮`);
     },
     
-    // 清除所有缓存
+    // 清除所有缓存（带确认对话框）
     clearAllCache() {
-        // 清除localStorage中的admin缓存
-        Object.keys(localStorage).forEach(key => {
-            if (key.startsWith('admin_cache_')) {
-                localStorage.removeItem(key);
+        showConfirm({
+            title: '清除缓存',
+            message: '此操作将清除所有表单数据、编辑器内容和图片上传状态，未保存的数据将会丢失。确定要继续吗？',
+            confirmText: '清除',
+            cancelText: '取消',
+            type: 'danger'
+        }).then((confirmed) => {
+            if (confirmed) {
+                // 清除localStorage中的admin缓存
+                Object.keys(localStorage).forEach(key => {
+                    if (key.startsWith('admin_cache_')) {
+                        localStorage.removeItem(key);
+                    }
+                });
+                
+                // 清除sessionStorage
+                Object.keys(sessionStorage).forEach(key => {
+                    if (key.startsWith('admin_')) {
+                        sessionStorage.removeItem(key);
+                    }
+                });
+                
+                showNotification('缓存已清除，页面将刷新', 'success');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
             }
         });
-        
-        // 清除sessionStorage
-        Object.keys(sessionStorage).forEach(key => {
-            if (key.startsWith('admin_')) {
-                sessionStorage.removeItem(key);
-            }
-        });
-        
-        showNotification('缓存已清除，页面将刷新', 'success');
-        setTimeout(() => {
-            window.location.reload();
-        }, 1000);
     },
     
     // 清除模块缓存
