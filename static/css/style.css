@@ -981,6 +981,16 @@ body {
     display: none;
   }
   
+  /* 增加移动端导航栏高度，让汉堡按钮和标题自然居中 */
+  .navbar {
+    height: 60px;
+  }
+  
+  .navbar-container {
+    height: 60px;
+    padding: 0 20px;
+  }
+  
   .navbar-toggle {
     display: block;
     position: fixed;
@@ -1022,13 +1032,13 @@ body {
   }
   
   /* 优化移动端导航栏布局 */
-  .navbar-container {
-    padding: 0 20px;
-  }
-  
   .navbar-brand {
     font-size: 18px;
     left: 20px;
+    /* 让标题文字在60px导航栏中垂直居中 */
+    height: 60px;
+    display: flex;
+    align-items: center;
   }
   
   #user-menu {
@@ -1109,13 +1119,23 @@ body {
 
 /* 超小屏幕优化 */
 @media (max-width: 480px) {
+  /* 超小屏幕也保持高度一致 */
+  .navbar {
+    height: 60px;
+  }
+  
   .navbar-container {
+    height: 60px;
     padding: 0 15px;
   }
   
   .navbar-brand {
     font-size: 16px;
     left: 15px;
+    /* 让标题文字在60px导航栏中垂直居中 */
+    height: 60px;
+    display: flex;
+    align-items: center;
   }
   
   .navbar-toggle {
