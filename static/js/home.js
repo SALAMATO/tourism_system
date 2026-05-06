@@ -4,7 +4,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const destinationContainer = document.getElementById('destinations-container');
   if (destinationContainer) {
     loadHotDestinations();
-    loadLatestNews();
     loadStatistics();
   }
 });
@@ -87,53 +86,6 @@ function renderDestinations(container, destinations) {
         </div>
       </div>
     </a>
-  `).join('');
-
-  container.innerHTML = html;
-}
-
-async function loadLatestNews() {
-  const container = document.getElementById('latest-policy-container');
-  if (!container) return;
-
-  try {
-    showLoading(container);
-    console.log('开始加载政策法规...');
-    const response = await api.getPolicies({ limit: 3, sort: '-created_at' });
-    console.log('API响应:', response);
-
-    if (response.data && response.data.length > 0) {
-      console.log('获取到政策法规数据:', response.data.length, '条');
-      renderPolicyList(container, response.data);
-    } else {
-      console.log('没有获取到政策法规数据');
-      container.innerHTML = '<div class="loading"><div>暂无政策法规</div></div>';
-    }
-  } catch (error) {
-    console.error('加载政策法规失败:', error);
-    showError(container);
-  }
-}
-
-function renderPolicyList(container, policyItems) {
-  const html = policyItems.map(item => `
-    <div class="list-item" onclick="location.href='policy-detail.html?id=${item.id}'">
-      <h3>${escapeHtml(item.title)}</h3>
-      <div class="list-item-meta">
-        <span><i class="fas fa-tag"></i> ${escapeHtml(item.level || '未分类')}</span>
-        <span><i class="fas fa-building"></i> ${escapeHtml(item.department || '未知')}</span>
-        <span><i class="fas fa-calendar"></i> ${formatDate(item.publish_date)}</span>
-        <span><i class="fas fa-eye"></i> ${item.views || 0} 次浏览</span>
-      </div>
-      <div class="list-item-content">
-        ${truncateText(stripHtml(item.content), 150)}
-      </div>
-      ${item.tags && item.tags.length > 0 ? `
-        <div style="margin-top: 12px;">
-          ${item.tags.map(tag => `<span class="tag">${escapeHtml(tag)}</span>`).join('')}
-        </div>
-      ` : ''}
-    </div>
   `).join('');
 
   container.innerHTML = html;

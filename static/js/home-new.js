@@ -5,7 +5,8 @@ document.addEventListener('DOMContentLoaded', () => {
     loadHotDestinations();
   }
   loadHomepageDestinationModules();
-  loadLatestNews();
+  loadLatestNewsList(); // 加载最新资讯
+  loadLatestPolicy(); // 加载最新政策法规
   loadStatistics();
 });
 
@@ -197,16 +198,96 @@ function renderDestinations(container, destinations) {
   container.innerHTML = html;
 }
 
+// 加载最新资讯
+async function loadLatestNewsList() {
+  const container = document.getElementById('latest-news-content');
+  if (!container) return;
+
+  try {
+    showLoading(container);
+    console.log('[home-new] 开始加载最新资讯...');
+    const response = await api.getNews({ limit: 4, sort: '-created_at' });
+    console.log('[home-new] 资讯API响应:', response);
+
+    if (response.data && response.data.length > 0) {
+      console.log('[home-new] 获取到资讯数据:', response.data.length, '条');
+      renderNewsListModule(container, response.data);
+    } else {
+      console.log('[home-new] 没有获取到资讯数据');
+      container.innerHTML = '<div class="loading"><div>暂无最新资讯</div></div>';
+    }
+  } catch (error) {
+    console.error('[home-new] 加载最新资讯失败:', error);
+    showError(container);
+  }
+}
+
+// 渲染资讯模块
+function renderNewsListModule(container, newsItems) {
+  // 生成新闻卡片 HTML
+  const itemsHtml = newsItems.map(item => {
+    // 提取纯文本内容
+    let contentText = item.content || '';
+    if (contentText && contentText.includes('<')) {
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = contentText;
+      contentText = tempDiv.textContent || tempDiv.innerText || '';
+    }
+    
+    return `
+    <a href="/news-detail.html?id=${item.id}" class="destination-explore-card">
+      <div class="destination-explore-image-wrap">
+        ${item.cover_image_url || item.cover_image ? 
+          `<img src="${escapeHtml(item.cover_image_url || item.cover_image)}" alt="${escapeHtml(item.title)}" class="destination-explore-image">` :
+          `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);color:white;font-size:48px;"><i class="fas fa-newspaper"></i></div>`
+        }
+      </div>
+      <div class="destination-explore-body">
+        <div class="destination-explore-title-row">
+          <h3>${escapeHtml(item.title)}</h3>
+        </div>
+        <div class="destination-explore-location">
+          <i class="fas fa-tag"></i> ${escapeHtml(item.category || '未分类')}
+        </div>
+        <div class="destination-explore-desc">${truncateText(escapeHtml(contentText), 100)}</div>
+        <div class="destination-explore-meta">
+          <span><i class="fas fa-clock"></i> ${formatDate(item.publish_date)}</span>
+          <strong><i class="fas fa-eye"></i> ${item.views || 0} 浏览</strong>
+        </div>
+      </div>
+    </a>
+  `}).join('');
+
+  container.innerHTML = `
+    <div class="destination-explore-panel">
+      <div class="homepage-destination-heading">
+        <div>
+          <div class="recommend-tag">LATEST NEWS</div>
+          <h2>最新资讯</h2>
+          <p>了解低空旅游行业动态与最新发展</p>
+        </div>
+      </div>
+      <div class="destination-explore-grid">
+        ${itemsHtml}
+      </div>
+      <div style="text-align: center; margin-top: 32px;">
+        <a href="/news/" class="btn btn-secondary destination-more-btn">查看更多资讯</a>
+      </div>
+    </div>
+  `;
+}
+
 // 加载最新政策法规
-async function loadLatestNews() {
+async function loadLatestPolicy() {
   const container = document.getElementById('latest-policy-container');
-  
+  if (!container) return;
+
   try {
     showLoading(container);
     console.log('[home-new] 开始加载政策法规...');
     const response = await api.getPolicies({ limit: 3, sort: '-created_at' });
-    console.log('[home-new] API响应:', response);
-    
+    console.log('[home-new] 政策API响应:', response);
+
     if (response.data && response.data.length > 0) {
       console.log('[home-new] 获取到政策法规数据:', response.data.length, '条');
       renderPolicyList(container, response.data);
