@@ -80,48 +80,41 @@ class LowSkyAIChat {
         <div class="ai-chat-input-area">
           <div class="ai-tool-mode-bar" id="ai-tool-mode-bar" style="display:none;"></div>
           <div class="ai-chat-input-wrapper">
-            <div class="ai-tool-menu-wrap">
-              <button class="ai-tool-btn" id="ai-tool-btn" title="选择工具模式">
-                <i class="fas fa-tools"></i>
-              </button>
-              <div class="ai-tool-menu" id="ai-tool-menu">
-                <div class="ai-tool-menu-item active" data-mode="auto">
-                  <i class="fas fa-magic"></i>
-                  <div>
-                    <div class="ai-tool-menu-title">默认模式</div>
-                    <div class="ai-tool-menu-desc">解答低空旅游相关信息</div>
+            <div class="ai-chat-input-container">
+              <textarea 
+                class="ai-chat-input" 
+                id="ai-chat-input" 
+                placeholder="有问题，尽管问，shift+enter换行"
+                rows="1"
+              ></textarea>
+              <div class="ai-chat-input-actions">
+                <button class="ai-tool-btn" id="ai-tool-btn" title="选择工具模式">
+                  <i class="fas fa-tools"></i>
+                </button>
+                <div class="ai-tool-menu" id="ai-tool-menu">
+                  <div class="ai-tool-menu-item active" data-mode="auto">
+                    <i class="fas fa-magic"></i>
+                    <div>
+                      <div class="ai-tool-menu-title">默认模式</div>
+                      <div class="ai-tool-menu-desc">解答低空旅游相关信息</div>
+                    </div>
+                  </div>
+                  <div class="ai-tool-menu-item" data-mode="db_only">
+                    <i class="fas fa-database"></i>
+                    <div>
+                      <div class="ai-tool-menu-title">数据库查询</div>
+                      <div class="ai-tool-menu-desc">查询系统数据库信息</div>
+                    </div>
                   </div>
                 </div>
-                <div class="ai-tool-menu-item" data-mode="db_only">
-                  <i class="fas fa-database"></i>
-                  <div>
-                    <div class="ai-tool-menu-title">数据库查询</div>
-                    <div class="ai-tool-menu-desc">查询系统数据库信息</div>
-                  </div>
-<!--                </div>-->
-<!--                <div class="ai-tool-menu-item" data-mode="web_only">-->
-<!--                  <i class="fas fa-globe"></i>-->
-<!--                  <div>-->
-<!--                    <div class="ai-tool-menu-title">联网搜索</div>-->
-<!--                    <div class="ai-tool-menu-desc">搜索互联网最新信息</div>-->
-<!--                  </div>-->
-                </div>
+                <button class="ai-chat-send" id="ai-chat-send">
+                  <i class="fas fa-arrow-up"></i>
+                </button>
+                <button class="ai-chat-stop" id="ai-chat-stop" style="display: none;">
+                  <i class="fas fa-stop"></i>
+                </button>
               </div>
             </div>
-            <textarea 
-              class="ai-chat-input" 
-              id="ai-chat-input" 
-              placeholder="请输入您的问题..."
-              rows="1"
-            ></textarea>
-            <button class="ai-chat-send" id="ai-chat-send">
-              <i class="fas fa-paper-plane"></i>
-              <span>发送</span>
-            </button>
-            <button class="ai-chat-stop" id="ai-chat-stop" style="display: none;">
-              <i class="fas fa-stop"></i>
-              <span>停止</span>
-            </button>
           </div>
         </div>
       </div>
@@ -220,7 +213,7 @@ class LowSkyAIChat {
     } else {
       this.toolBtn.className = 'ai-tool-btn';
       modeBar.style.display = 'none';
-      this.input.placeholder = '请输入您的问题...';
+      this.input.placeholder = '有问题，尽管问，shift+enter换行';
     }
   }
   
