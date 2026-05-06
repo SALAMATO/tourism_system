@@ -1282,6 +1282,7 @@
   let scrollDirection = 0; // 1 向下，-1 向上
   let disableSnap = false;
   let userHasInteracted = false;
+  let contentLoaded = false; // 标记内容是否已加载完成
 
   // 提前检测是否是返回页面（关键：在 load 之前执行）
   const nav = performance.getEntriesByType('navigation')[0];
@@ -1331,12 +1332,57 @@
     // 所有需要精确定位的区域（只选择 .section-block）
     const sections = Array.from(document.querySelectorAll('.section-block')).filter(Boolean);
 
-    // 首次进入页面，延迟启用 snap（800ms后）
+    // 首次进入页面，延迟启用 snap（等待内容加载完成）
     if (!disableSnap) {
+      // 监听所有动态内容容器的变化
+      const dynamicContainers = [
+        document.getElementById('nearby-destination-content'),
+        document.getElementById('managed-destination-content'),
+        document.getElementById('latest-news-content'),
+        document.getElementById('latest-policy-container')
+      ].filter(Boolean);
+      
+      let loadedCount = 0;
+      const totalContainers = dynamicContainers.length;
+      
+      // 检查是否所有内容已加载
+      function checkContentLoaded() {
+        loadedCount++;
+        if (loadedCount >= totalContainers) {
+          contentLoaded = true;
+          // 额外延迟 300ms 确保 DOM 完全渲染
+          setTimeout(() => {
+            disableSnap = false;
+            console.log('[Snap] 内容加载完成，启用吸附功能');
+          }, 300);
+        }
+      }
+      
+      // 为每个容器设置 MutationObserver 监听内容变化
+      dynamicContainers.forEach(container => {
+        const observer = new MutationObserver((mutations) => {
+          mutations.forEach((mutation) => {
+            if (mutation.addedNodes.length > 0) {
+              // 检查是否不再是 loading 状态
+              if (!container.querySelector('.loading')) {
+                observer.disconnect();
+                checkContentLoaded();
+              }
+            }
+          });
+        });
+        
+        observer.observe(container, { childList: true, subtree: true });
+      });
+      
+      // 备用方案：如果 3 秒后还没检测到变化，强制启用
       setTimeout(() => {
-        disableSnap = false;
-        console.log('[Snap] 延迟启用吸附功能');
-      }, 800);
+        if (!contentLoaded) {
+          contentLoaded = true;
+          disableSnap = false;
+          console.log('[Snap] 超时强制启用吸附功能');
+        }
+      }, 3000);
     }
 
     // 监听用户真实滚动行为（wheel事件）
@@ -1407,6 +1453,9 @@
       
       // 关键：只有用户真实交互后才允许 snap
       if (!userHasInteracted) return;
+      
+      // 关键：只有内容加载完成后才允许 snap
+      if (!contentLoaded && !disableSnap) return;
       
       const currentY = window.scrollY;
       
