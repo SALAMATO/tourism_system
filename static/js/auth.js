@@ -214,6 +214,7 @@ class AuthManager {
 updateMobileMenu() {
   const mobileMenu = document.querySelector('.mobile-menu');
   const mobileMenuOverlay = document.querySelector('.mobile-menu-overlay');
+  const aiAssistantWrapper = document.querySelector('.ai-assistant-wrapper');
   if (!mobileMenu || !mobileMenuOverlay) return;
 
   // 检查是否已存在关闭按钮
@@ -230,6 +231,22 @@ updateMobileMenu() {
       </svg>
     `;
     mobileMenuOverlay.insertBefore(closeBtn, mobileMenuOverlay.firstChild);
+    
+    // 绑定关闭按钮事件
+    closeBtn.addEventListener('click', () => {
+      mobileMenuOverlay.classList.remove('show');
+      const navbarToggle = document.getElementById('navbar-toggle');
+      if (navbarToggle) {
+        const icon = navbarToggle.querySelector('i');
+        icon.classList.remove('fa-times');
+        icon.classList.add('fa-bars');
+      }
+      // 显示AI按钮
+      if (aiAssistantWrapper) {
+        aiAssistantWrapper.style.display = 'flex';
+      }
+      document.body.style.overflow = '';
+    });
   }
 
   // 保留原有的导航链接 - 添加旅游目的地作为第一个选项

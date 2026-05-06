@@ -472,6 +472,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const mobileMenuOverlay = document.getElementById('mobile-menu-overlay');
   const mobileMenuClose = document.getElementById('mobile-menu-close');
   const navbar = document.querySelector('.navbar');
+  const aiAssistantWrapper = document.querySelector('.ai-assistant-wrapper');
   
   if (navbarToggle && mobileMenuOverlay) {
     // 切换菜单状态
@@ -492,6 +493,11 @@ document.addEventListener('DOMContentLoaded', function() {
       icon.classList.remove('fa-bars');
       icon.classList.add('fa-times');
       
+      // 隐藏AI按钮
+      if (aiAssistantWrapper) {
+        aiAssistantWrapper.style.display = 'none';
+      }
+      
       // 如果在Hero区域，给导航栏添加menu-open类
       if (navbar && navbar.classList.contains('hero-active')) {
         navbar.classList.add('menu-open');
@@ -510,6 +516,11 @@ document.addEventListener('DOMContentLoaded', function() {
       const icon = navbarToggle.querySelector('i');
       icon.classList.remove('fa-times');
       icon.classList.add('fa-bars');
+      
+      // 显示AI按钮
+      if (aiAssistantWrapper) {
+        aiAssistantWrapper.style.display = 'flex';
+      }
       
       // 移除menu-open类
       if (navbar) {
@@ -531,7 +542,23 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // 绑定点击事件
-    navbarToggle.addEventListener('click', toggleMenu);
+    navbarToggle.addEventListener('click', function() {
+      const isOpening = !mobileMenuOverlay.classList.contains('show');
+      
+      if (isOpening) {
+        // 隐藏AI按钮
+        if (aiAssistantWrapper) {
+          aiAssistantWrapper.style.display = 'none';
+        }
+        openMenu();
+      } else {
+        // 显示AI按钮
+        if (aiAssistantWrapper) {
+          aiAssistantWrapper.style.display = 'flex';
+        }
+        closeMenu();
+      }
+    });
     
     // 绑定关闭按钮点击事件
     if (mobileMenuClose) {
