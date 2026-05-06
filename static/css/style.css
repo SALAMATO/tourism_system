@@ -2351,12 +2351,18 @@ body {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* 最大化状态下的内容区域限制 - 仅限制消息区和输入区 */
+/* 内容区域 - 添加过渡效果 */
+.ai-chat-messages,
+.ai-chat-input-area {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 默认状态下的内容区域 */
 .ai-chat-container .ai-chat-messages,
 .ai-chat-container .ai-chat-input-area {
-  max-width: 100vw !important;
-  margin-left: 0vw !important;
-  margin-right: 0vw !important;
+  max-width: 100%;
+  margin-left: 0;
+  margin-right: 0;
 }
 
 .ai-chat-header {
