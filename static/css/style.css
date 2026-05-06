@@ -238,6 +238,12 @@ body {
   position: absolute;
   right: 20px;
   z-index: 11;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
 }
 
 .navbar-toggle i {
@@ -246,13 +252,22 @@ body {
 }
 
 .navbar-toggle:hover {
-  transform: scale(1.1);
+  background: rgba(0, 0, 0, 0.05);
+  transform: scale(1.05);
+}
+
+.navbar-toggle:active {
+  transform: scale(0.95);
 }
 
 /* Hero区域时汉堡按钮变白色 */
 .navbar.hero-active .navbar-toggle {
   color: rgba(255, 255, 255, 0.95);
   text-shadow: 0 1px 2px rgba(0,0,0,0.25);
+}
+
+.navbar.hero-active .navbar-toggle:hover {
+  background: rgba(255, 255, 255, 0.15);
 }
 
 /* 移动端菜单覆盖层 */
@@ -270,6 +285,8 @@ body {
   opacity: 0;
   transition: opacity 0.3s ease, backdrop-filter 0.3s ease;
   pointer-events: none;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .mobile-menu-overlay.show {
@@ -293,6 +310,9 @@ body {
   opacity: 0;
   transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), 
               opacity 0.3s ease;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .mobile-menu-overlay.show .mobile-menu {
@@ -312,6 +332,25 @@ body {
   opacity: 0;
   transform: translateX(-20px);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.mobile-menu-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--primary-color);
+  transform: scaleY(0);
+  transition: transform 0.3s ease;
+}
+
+.mobile-menu-item:hover::before,
+.mobile-menu-item:active::before {
+  transform: scaleY(1);
 }
 
 .mobile-menu-overlay.show .mobile-menu-item {
@@ -335,6 +374,7 @@ body {
 
 .mobile-menu-item:hover {
   background: rgba(0, 0, 0, 0.05);
+  padding-left: 45px;
 }
 
 .mobile-menu-item:active {
@@ -876,7 +916,27 @@ body {
   }
   
   .navbar-toggle {
-    display: block;
+    display: flex;
+  }
+  
+  /* 优化移动端导航栏布局 */
+  .navbar-container {
+    padding: 0 20px;
+  }
+  
+  .navbar-brand {
+    font-size: 18px;
+    left: 20px;
+  }
+  
+  #user-menu {
+    left: auto;
+    right: 70px;
+    transform: none;
+  }
+  
+  .ai-assistant-wrapper {
+    right: 20px;
   }
   
   .hero-section h1 {
@@ -897,6 +957,84 @@ body {
   
   .page-header h1 {
     font-size: 36px;
+  }
+  
+  /* 移动端菜单项优化 */
+  .mobile-menu-item {
+    padding: 18px 30px;
+    font-size: 18px;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  
+  .mobile-menu-item:hover {
+    padding-left: 35px;
+  }
+  
+  /* 触摸设备优化 */
+  @media (hover: none) and (pointer: coarse) {
+    .mobile-menu-item:hover {
+      padding-left: 30px;
+    }
+    
+    .navbar-toggle:hover {
+      background: transparent;
+      transform: none;
+    }
+    
+    .navbar-toggle:active {
+      background: rgba(0, 0, 0, 0.05);
+      transform: scale(0.95);
+    }
+  }
+}
+
+/* 超小屏幕优化 */
+@media (max-width: 480px) {
+  .navbar-container {
+    padding: 0 15px;
+  }
+  
+  .navbar-brand {
+    font-size: 16px;
+    left: 15px;
+  }
+  
+  .navbar-toggle {
+    right: 15px;
+    width: 40px;
+    height: 40px;
+  }
+  
+  #user-menu {
+    right: 60px;
+  }
+  
+  .ai-assistant-wrapper {
+    right: 15px;
+  }
+  
+  .mobile-menu-item {
+    padding: 16px 25px;
+    font-size: 16px;
+  }
+  
+  .mobile-menu-item:hover {
+    padding-left: 30px;
+  }
+  
+  /* 移动端字体优化 */
+  body {
+    font-size: 15px;
+  }
+  
+  /* 触摸反馈优化 */
+  * {
+    -webkit-tap-highlight-color: rgba(0, 113, 227, 0.1);
+  }
+  
+  button, a {
+    touch-action: manipulation;
   }
 }
 

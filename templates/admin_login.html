@@ -36,8 +36,24 @@
         <li><a href="{% url 'news' %}">新闻资讯</a></li>
         <li><a href="{% url 'community' %}">互动交流</a></li>
       </ul>
+      <button class="navbar-toggle" id="navbar-toggle">
+        <i class="fas fa-bars"></i>
+      </button>
     </div>
   </nav>
+
+  <!-- 移动端菜单覆盖层 -->
+  <div class="mobile-menu-overlay" id="mobile-menu-overlay">
+    <div class="mobile-menu">
+      <a href="{% url 'home' %}" class="mobile-menu-item">首页</a>
+      <a href="{% url 'destinations' %}" class="mobile-menu-item">旅游目的地</a>
+      <a href="{% url 'policies' %}" class="mobile-menu-item">政策法规</a>
+      <a href="{% url 'statistics' %}" class="mobile-menu-item">发展现状</a>
+      <a href="{% url 'safety' %}" class="mobile-menu-item">安全预警</a>
+      <a href="{% url 'news' %}" class="mobile-menu-item">新闻资讯</a>
+      <a href="{% url 'community' %}" class="mobile-menu-item">互动交流</a>
+    </div>
+  </div>
 
   <div class="page-header">
     <h1>🔐 管理员登录</h1>

@@ -473,62 +473,100 @@ document.addEventListener('DOMContentLoaded', function() {
   const navbar = document.querySelector('.navbar');
   
   if (navbarToggle && mobileMenuOverlay) {
-    navbarToggle.addEventListener('click', function() {
+    // 切换菜单状态
+    function toggleMenu() {
       const isOpening = !mobileMenuOverlay.classList.contains('show');
       
-      mobileMenuOverlay.classList.toggle('show');
-      const icon = navbarToggle.querySelector('i');
-      
       if (isOpening) {
-        // 打开菜单
-        icon.classList.remove('fa-bars');
-        icon.classList.add('fa-times');
-        
-        // 如果在Hero区域，给导航栏添加menu-open类
-        if (navbar && navbar.classList.contains('hero-active')) {
-          navbar.classList.add('menu-open');
-        }
+        openMenu();
       } else {
-        // 关闭菜单
-        icon.classList.remove('fa-times');
-        icon.classList.add('fa-bars');
-        
-        // 移除menu-open类
-        if (navbar) {
-          navbar.classList.remove('menu-open');
-        }
+        closeMenu();
       }
-    });
+    }
+    
+    // 打开菜单
+    function openMenu() {
+      mobileMenuOverlay.classList.add('show');
+      const icon = navbarToggle.querySelector('i');
+      icon.classList.remove('fa-bars');
+      icon.classList.add('fa-times');
+      
+      // 如果在Hero区域，给导航栏添加menu-open类
+      if (navbar && navbar.classList.contains('hero-active')) {
+        navbar.classList.add('menu-open');
+      }
+      
+      // 阻止背景滚动
+      document.body.style.overflow = 'hidden';
+      
+      // 添加键盘事件监听
+      document.addEventListener('keydown', handleEscKey);
+    }
+    
+    // 关闭菜单
+    function closeMenu() {
+      mobileMenuOverlay.classList.remove('show');
+      const icon = navbarToggle.querySelector('i');
+      icon.classList.remove('fa-times');
+      icon.classList.add('fa-bars');
+      
+      // 移除menu-open类
+      if (navbar) {
+        navbar.classList.remove('menu-open');
+      }
+      
+      // 恢复背景滚动
+      document.body.style.overflow = '';
+      
+      // 移除键盘事件监听
+      document.removeEventListener('keydown', handleEscKey);
+    }
+    
+    // 处理ESC键
+    function handleEscKey(e) {
+      if (e.key === 'Escape' || e.keyCode === 27) {
+        closeMenu();
+      }
+    }
+    
+    // 绑定点击事件
+    navbarToggle.addEventListener('click', toggleMenu);
     
     // 点击覆盖层关闭菜单
     mobileMenuOverlay.addEventListener('click', function(e) {
       if (e.target === mobileMenuOverlay) {
-        mobileMenuOverlay.classList.remove('show');
-        const icon = navbarToggle.querySelector('i');
-        icon.classList.remove('fa-times');
-        icon.classList.add('fa-bars');
-        
-        // 移除menu-open类
-        if (navbar) {
-          navbar.classList.remove('menu-open');
-        }
+        closeMenu();
       }
     });
     
-    // 点击菜单项关闭菜单
+    // 点击菜单项关闭菜单并添加触觉反馈
     document.querySelectorAll('.mobile-menu-item').forEach(item => {
       item.addEventListener('click', function() {
-        mobileMenuOverlay.classList.remove('show');
-        const icon = navbarToggle.querySelector('i');
-        icon.classList.remove('fa-times');
-        icon.classList.add('fa-bars');
-        
-        // 移除menu-open类
-        if (navbar) {
-          navbar.classList.remove('menu-open');
-        }
+        // 添加点击动画效果
+        this.style.transform = 'scale(0.98)';
+        setTimeout(() => {
+          this.style.transform = '';
+          closeMenu();
+        }, 150);
+      });
+      
+      // 添加触摸反馈
+      item.addEventListener('touchstart', function() {
+        this.style.background = 'rgba(0, 0, 0, 0.08)';
+      });
+      
+      item.addEventListener('touchend', function() {
+        this.style.background = '';
       });
     });
+    
+    // 防止菜单内部滚动时触发背景滚动
+    const mobileMenu = mobileMenuOverlay.querySelector('.mobile-menu');
+    if (mobileMenu) {
+      mobileMenu.addEventListener('touchmove', function(e) {
+        e.stopPropagation();
+      }, { passive: true });
+    }
   }
 });
 

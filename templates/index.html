@@ -814,30 +814,39 @@
     /* 响应式 */
     @media (max-width: 768px) {
       .hero-large h1 {
-        font-size: 40px;
+        font-size: 32px;
+        line-height: 1.2;
       }
       
       .hero-large .subtitle {
-        font-size: 18px;
+        font-size: 16px;
+        line-height: 1.5;
       }
       
       .hero-cta {
-        flex-direction: row;
-        align-items: center;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
       }
       
       .hero-cta .btn {
-        width: auto;
+        width: 100%;
         max-width: none;
-        padding: 12px 24px !important;
-        font-size: 17px !important;
+        padding: 14px 24px !important;
+        font-size: 16px !important;
+        text-align: center;
       }
       
       .hero-nav {
-        padding: 20px 20px 200px;
+        padding: 15px 15px 120px;
         flex-direction: column;
-        gap: 16px;
+        gap: 12px;
         height: auto;
+      }
+      
+      .hero-nav-item {
+        font-size: 14px;
+        padding: 10px 15px;
       }
       
       .hero-nav-item.center {
@@ -850,11 +859,11 @@
       }
       
       .hero-main-title {
-        font-size: 32px;
+        font-size: 28px;
       }
       
       .hero-sub-title {
-        font-size: 16px;
+        font-size: 14px;
       }
       
       .grid-section {
@@ -862,26 +871,86 @@
       }
       
       .material-container {
-        padding: 0 20px;
+        padding: 0 15px;
       }
       
       .destinations-showcase,
       .video-showcase,
       .intro-section {
-        padding-top: 60px;
-        padding-bottom: 60px;
+        padding-top: 40px;
+        padding-bottom: 40px;
       }
       
       .swiper-container {
-        padding: 0 20px;
+        padding: 0 15px;
       }
       
       .img-wrapper {
-        height: 400px;
+        height: 300px;
       }
       
       .hero-section {
-        height: 400px;
+        height: 300px;
+      }
+      
+      /* 移动端目的地模块优化 */
+      .homepage-destination-shell {
+        padding: 0 15px;
+      }
+      
+      .homepage-destination-heading h2 {
+        font-size: 24px;
+      }
+      
+      .homepage-destination-heading p {
+        font-size: 14px;
+      }
+      
+      .destination-explore-panel {
+        padding: 20px;
+        border-radius: 20px;
+      }
+    }
+    
+    /* 超小屏幕优化 */
+    @media (max-width: 480px) {
+      .hero-large h1 {
+        font-size: 28px;
+      }
+      
+      .hero-large .subtitle {
+        font-size: 14px;
+      }
+      
+      .hero-cta .btn {
+        padding: 12px 20px !important;
+        font-size: 15px !important;
+      }
+      
+      .hero-nav {
+        padding: 10px 10px 100px;
+      }
+      
+      .hero-nav-item {
+        font-size: 13px;
+        padding: 8px 12px;
+      }
+      
+      .img-wrapper {
+        height: 250px;
+      }
+      
+      .hero-section {
+        height: 250px;
+      }
+      
+      .homepage-destination-heading h2 {
+        font-size: 20px;
+      }
+      
+      .destination-explore-panel {
+        padding: 15px;
+        border-radius: 16px;
       }
     }
     
