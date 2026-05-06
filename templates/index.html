@@ -82,19 +82,17 @@
       flex-wrap: wrap;
     }
 
-    /* Hero下方的小字导航  */
+    /* Hero下方的小字导航 - 优化版 */
     .hero-nav {
       width: 100%;
       height: 120px;
       background: #fff;
-
       display: flex;
       align-items: center;
-
-      padding: 40px 64px 400px; /* 关键：左右留白 */
+      padding: 0 64px; /* 移除危险的 padding-bottom */
       box-sizing: border-box;
-
       position: relative;
+      margin-bottom: 80px; /* 用 margin 替代 padding 撑开空间 */
     }
 
     .hero-nav-item {
@@ -126,6 +124,22 @@
       left: 50%;
       transform: translateX(-50%);
       text-align: center;
+    }
+    
+    /* Apple 风格区块 - 统一高度规则 */
+    .section-block {
+      min-height: 100vh;
+      padding-top: 120px;
+      padding-bottom: 120px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    /* 模块间距 */
+    .section-block + .section-block {
+      margin-top: 80px;
     }
     
     .intro-section {
@@ -1025,7 +1039,7 @@
     </div>
 </div>
 
-<section class="homepage-destination-section" id="homepage-destinations">
+<section class="homepage-destination-section section-block" id="homepage-destinations">
   <div class="homepage-destination-shell">
     <div class="homepage-destination-module">
       <div class="homepage-destination-heading">
@@ -1052,7 +1066,7 @@
 </section>
 
       <!-- 推荐的视频链接展示 -->
-    <section class="video-showcase" id="video">
+    <section class="video-showcase section-block" id="video">
     <div class="header-area">
         <div class="recommend-tag">RECOMMEND</div>
         <div class="section-title">热门低空旅游视频</div>
@@ -1145,7 +1159,7 @@
 </section>
       
     <!-- 低空旅游介绍 -->
-    <section class="intro-section" id="intro">
+    <section class="intro-section section-block" id="intro">
       <h2 class="section-title">什么是低空旅游</h2>
       <p class="section-subtitle">低空旅游是指在低空空域（通常在3000米以下），依托通用航空器和低空飞行器所从事的旅游活动</p>
           
@@ -1189,7 +1203,7 @@
     </section>
     
     <!-- 最新资讯 -->
-    <section class="homepage-destination-section" id="latest-news-section">
+    <section class="homepage-destination-section section-block" id="latest-news-section">
       <div class="homepage-destination-shell">
         <div class="homepage-destination-module">
           <div id="latest-news-content">
@@ -1200,7 +1214,7 @@
     </section>
     
     <!-- 最新政策法规 -->
-    <section class="container" id="container">
+    <section class="container section-block" id="container">
       <h2 class="section-title">政策法规</h2>
       <p class="section-subtitle">了解低空旅游相关政策动态</p>
           
@@ -1314,12 +1328,8 @@
     const navbar = document.querySelector('.navbar');
     const navbarHeight = navbar ? navbar.offsetHeight : 48;
     
-    // 所有需要精确定位的区域（只声明一次）
-    const sections = [
-      document.querySelector('.hero-large'),
-      document.getElementById('homepage-destinations'),
-      document.getElementById('video')
-    ].filter(Boolean);
+    // 所有需要精确定位的区域（只选择 .section-block）
+    const sections = Array.from(document.querySelectorAll('.section-block')).filter(Boolean);
 
     // 首次进入页面，延迟启用 snap（800ms后）
     if (!disableSnap) {
