@@ -242,10 +242,13 @@ body {
   background: transparent;
   border: none;
   cursor: pointer;
-  z-index: 10003;  /* 高于菜单覆盖层(10000) */
+  z-index: 99999 !important;  /* 确保在所有元素之上 */
   padding: 0;
   flex-shrink: 0;
   -webkit-tap-highlight-color: transparent;
+  
+  /* 确保在菜单展开后仍然可见 */
+  pointer-events: auto;
 }
 
 /* 所有线统一绝对居中体系 - Apple核心技巧 */
@@ -348,6 +351,19 @@ body {
 .mobile-menu-overlay.show {
   opacity: 1;
   pointer-events: auto;
+}
+
+/* 菜单内的汉堡按钮（作为关闭按钮） */
+.mobile-menu-toggle {
+  display: none;  /* 默认隐藏，只在菜单展开时显示 */
+  position: fixed;
+  right: 20px;
+  top: 12px;
+  z-index: 10005;  /* 高于菜单覆盖层 */
+}
+
+.mobile-menu-overlay.show .mobile-menu-toggle {
+  display: block;  /* 菜单展开时显示 */
 }
 
 .mobile-menu {
@@ -1059,6 +1075,12 @@ body {
     padding: 80px 30px 30px;
   }
   
+  /* 菜单内关闭按钮的移动端适配 */
+  .mobile-menu-toggle {
+    right: 10px;
+    top: 12px;
+  }
+  
   .mobile-menu-item:hover {
     padding-left: 35px;
   }
@@ -1148,6 +1170,14 @@ body {
   
   .mobile-menu {
     padding: 80px 25px 30px;
+  }
+  
+  /* 小屏幕关闭按钮适配 */
+  .mobile-menu-toggle {
+    width: 40px;
+    height: 40px;
+    right: 10px;
+    top: 12px;
   }
   
   .mobile-menu-item:hover {

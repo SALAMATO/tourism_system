@@ -469,6 +469,7 @@ function showConfirm(options = {}) {
 // 初始化移动端汉堡菜单（Apple风格）
 document.addEventListener('DOMContentLoaded', function() {
   const navbarToggle = document.getElementById('navbar-toggle');
+  const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
   const mobileMenuOverlay = document.getElementById('mobile-menu-overlay');
   const navbar = document.querySelector('.navbar');
   const aiAssistantWrapper = document.querySelector('.ai-assistant-wrapper');
@@ -479,7 +480,9 @@ document.addEventListener('DOMContentLoaded', function() {
     function openMenu() {
       isOpen = true;
       
+      // 同步两个汉堡按钮的状态
       navbarToggle.classList.add('active');
+      if (mobileMenuToggle) mobileMenuToggle.classList.add('active');
       mobileMenuOverlay.classList.add('show');
       
       // 隐藏AI按钮
@@ -502,7 +505,9 @@ document.addEventListener('DOMContentLoaded', function() {
     function closeMenu() {
       isOpen = false;
       
+      // 同步两个汉堡按钮的状态
       navbarToggle.classList.remove('active');
+      if (mobileMenuToggle) mobileMenuToggle.classList.remove('active');
       mobileMenuOverlay.classList.remove('show');
       
       // 显示AI按钮
@@ -528,12 +533,19 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
     
-    // 点击汉堡按钮切换菜单
+    // 点击导航栏汉堡按钮打开菜单
     navbarToggle.addEventListener('click', function() {
       isOpen ? closeMenu() : openMenu();
     });
     
-    // 点击背景关闭（汉堡按钮区域除外）
+    // 点击菜单内的汉堡按钮关闭菜单
+    if (mobileMenuToggle) {
+      mobileMenuToggle.addEventListener('click', function() {
+        closeMenu();
+      });
+    }
+    
+    // 点击背景关闭
     mobileMenuOverlay.addEventListener('click', function(e) {
       if (e.target === mobileMenuOverlay) {
         closeMenu();
