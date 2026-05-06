@@ -215,38 +215,16 @@ updateMobileMenu() {
   const mobileMenu = document.querySelector('.mobile-menu');
   const mobileMenuOverlay = document.querySelector('.mobile-menu-overlay');
   const aiAssistantWrapper = document.querySelector('.ai-assistant-wrapper');
+  const navbarToggle = document.getElementById('navbar-toggle');
   if (!mobileMenu || !mobileMenuOverlay) return;
 
-  // 检查是否已存在关闭按钮
-  let closeBtn = mobileMenuOverlay.querySelector('.mobile-menu-close');
-  if (!closeBtn) {
-    // 创建关闭按钮
-    closeBtn = document.createElement('button');
-    closeBtn.className = 'mobile-menu-close';
-    closeBtn.id = 'mobile-menu-close';
-    closeBtn.innerHTML = `
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <line x1="18" y1="6" x2="6" y2="18"></line>
-        <line x1="6" y1="6" x2="18" y2="18"></line>
-      </svg>
+  // 更新汉堡按钮为Apple风格（三条线）
+  if (navbarToggle && !navbarToggle.querySelector('span')) {
+    navbarToggle.innerHTML = `
+      <span></span>
+      <span></span>
+      <span></span>
     `;
-    mobileMenuOverlay.insertBefore(closeBtn, mobileMenuOverlay.firstChild);
-    
-    // 绑定关闭按钮事件
-    closeBtn.addEventListener('click', () => {
-      mobileMenuOverlay.classList.remove('show');
-      const navbarToggle = document.getElementById('navbar-toggle');
-      if (navbarToggle) {
-        const icon = navbarToggle.querySelector('i');
-        icon.classList.remove('fa-times');
-        icon.classList.add('fa-bars');
-      }
-      // 显示AI按钮
-      if (aiAssistantWrapper) {
-        aiAssistantWrapper.style.display = 'flex';
-      }
-      document.body.style.overflow = '';
-    });
   }
 
   // 保留原有的导航链接 - 添加旅游目的地作为第一个选项

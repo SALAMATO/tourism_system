@@ -466,32 +466,21 @@ function showConfirm(options = {}) {
   });
 }
 
-// 初始化移动端汉堡菜单（所有页面通用）
+// 初始化移动端汉堡菜单（Apple风格）
 document.addEventListener('DOMContentLoaded', function() {
   const navbarToggle = document.getElementById('navbar-toggle');
   const mobileMenuOverlay = document.getElementById('mobile-menu-overlay');
-  const mobileMenuClose = document.getElementById('mobile-menu-close');
   const navbar = document.querySelector('.navbar');
   const aiAssistantWrapper = document.querySelector('.ai-assistant-wrapper');
   
   if (navbarToggle && mobileMenuOverlay) {
-    // 切换菜单状态
-    function toggleMenu() {
-      const isOpening = !mobileMenuOverlay.classList.contains('show');
-      
-      if (isOpening) {
-        openMenu();
-      } else {
-        closeMenu();
-      }
-    }
+    let isOpen = false;
     
-    // 打开菜单
     function openMenu() {
+      isOpen = true;
+      
+      navbarToggle.classList.add('active');
       mobileMenuOverlay.classList.add('show');
-      const icon = navbarToggle.querySelector('i');
-      icon.classList.remove('fa-bars');
-      icon.classList.add('fa-times');
       
       // 隐藏AI按钮
       if (aiAssistantWrapper) {
@@ -503,19 +492,18 @@ document.addEventListener('DOMContentLoaded', function() {
         navbar.classList.add('menu-open');
       }
       
-      // 阻止背景滚动
+      // 锁滚动（Apple标准）
       document.body.style.overflow = 'hidden';
       
       // 添加键盘事件监听
       document.addEventListener('keydown', handleEscKey);
     }
     
-    // 关闭菜单
     function closeMenu() {
+      isOpen = false;
+      
+      navbarToggle.classList.remove('active');
       mobileMenuOverlay.classList.remove('show');
-      const icon = navbarToggle.querySelector('i');
-      icon.classList.remove('fa-times');
-      icon.classList.add('fa-bars');
       
       // 显示AI按钮
       if (aiAssistantWrapper) {
@@ -527,79 +515,39 @@ document.addEventListener('DOMContentLoaded', function() {
         navbar.classList.remove('menu-open');
       }
       
-      // 恢复背景滚动
+      // 恢复滚动
       document.body.style.overflow = '';
       
       // 移除键盘事件监听
       document.removeEventListener('keydown', handleEscKey);
     }
     
-    // 处理ESC键
     function handleEscKey(e) {
       if (e.key === 'Escape' || e.keyCode === 27) {
         closeMenu();
       }
     }
     
-    // 绑定点击事件
+    // 点击汉堡按钮切换菜单
     navbarToggle.addEventListener('click', function() {
-      const isOpening = !mobileMenuOverlay.classList.contains('show');
-      
-      if (isOpening) {
-        // 隐藏AI按钮
-        if (aiAssistantWrapper) {
-          aiAssistantWrapper.style.display = 'none';
-        }
-        openMenu();
-      } else {
-        // 显示AI按钮
-        if (aiAssistantWrapper) {
-          aiAssistantWrapper.style.display = 'flex';
-        }
-        closeMenu();
-      }
+      isOpen ? closeMenu() : openMenu();
     });
     
-    // 绑定关闭按钮点击事件
-    if (mobileMenuClose) {
-      mobileMenuClose.addEventListener('click', closeMenu);
-    }
-    
-    // 点击覆盖层关闭菜单
+    // 点击背景关闭（汉堡按钮区域除外）
     mobileMenuOverlay.addEventListener('click', function(e) {
       if (e.target === mobileMenuOverlay) {
         closeMenu();
       }
     });
     
-    // 点击菜单项关闭菜单并添加触觉反馈
+    // 点击菜单项关闭菜单
     document.querySelectorAll('.mobile-menu-item').forEach(item => {
       item.addEventListener('click', function() {
-        // 添加点击动画效果
-        this.style.opacity = '0.4';
         setTimeout(() => {
-          this.style.opacity = '';
           closeMenu();
         }, 150);
       });
-      
-      // 添加触摸反馈
-      item.addEventListener('touchstart', function() {
-        this.style.opacity = '0.6';
-      });
-      
-      item.addEventListener('touchend', function() {
-        this.style.opacity = '';
-      });
     });
-    
-    // 防止菜单内部滚动时触发背景滚动
-    const mobileMenu = mobileMenuOverlay.querySelector('.mobile-menu');
-    if (mobileMenu) {
-      mobileMenu.addEventListener('touchmove', function(e) {
-        e.stopPropagation();
-      }, { passive: true });
-    }
   }
 });
 
