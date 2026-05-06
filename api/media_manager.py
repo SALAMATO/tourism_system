@@ -82,7 +82,7 @@ class MediaFileManager:
             return None
 
     @staticmethod
-    def save_file_with_deduplication(uploaded_file, upload_to='media-destination/'):
+    def save_file_with_deduplication(uploaded_file, upload_to='destination/'):
         """
         保存文件并进行哈希去重
         
@@ -208,7 +208,7 @@ class MediaFileManager:
         
         # 获取所有上传目录中的文件
         upload_dirs = [
-            os.path.join(settings.MEDIA_ROOT, 'media-destination'),
+            os.path.join(settings.MEDIA_ROOT, 'destination'),
         ]
         
         cleaned_count = 0

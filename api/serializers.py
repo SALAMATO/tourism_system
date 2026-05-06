@@ -136,7 +136,7 @@ class DestinationSerializer(serializers.ModelSerializer):
             uploaded_file = validated_data.pop('cover_image')
             media_file, _ = MediaFileManager.save_file_with_deduplication(
                 uploaded_file, 
-                upload_to='media-destination/'
+                upload_to='destination/'
             )
             validated_data['cover_image'] = media_file.file_path
         
@@ -147,7 +147,7 @@ class DestinationSerializer(serializers.ModelSerializer):
                 uploaded_file = validated_data.pop(field_name)
                 media_file, _ = MediaFileManager.save_file_with_deduplication(
                     uploaded_file,
-                    upload_to='media-destination/'
+                    upload_to='destination/'
                 )
                 validated_data[field_name] = media_file.file_path
         
@@ -178,7 +178,7 @@ class DestinationSerializer(serializers.ModelSerializer):
                 # 保存新文件
                 media_file, _ = MediaFileManager.save_file_with_deduplication(
                     new_cover,
-                    upload_to='media-destination/'
+                    upload_to='destination/'
                 )
                 validated_data['cover_image'] = media_file.file_path
             elif not new_cover:
@@ -212,7 +212,7 @@ class DestinationSerializer(serializers.ModelSerializer):
                     # 保存新文件
                     media_file, _ = MediaFileManager.save_file_with_deduplication(
                         new_image,
-                        upload_to='media-destination/'
+                        upload_to='destination/'
                     )
                     validated_data[field_name] = media_file.file_path
                 elif not new_image:

@@ -437,7 +437,7 @@ state = CharField(max_length=100, blank=True, null=True)
 country = CharField(max_length=100, default='中国')
 is_domestic = BooleanField(default=True)
 description = TextField()
-cover_image = ImageField(upload_to='media-destination/', blank=True, null=True)
+cover_image = ImageField(upload_to='destination/', blank=True, null=True)
 gallery_image_1~4 = ImageField(...)  # 4张展示图片
 category = CharField(max_length=100)
 price_range = CharField(max_length=100)
@@ -592,7 +592,7 @@ tourism_system/
 ├── media/                             # 媒体文件上传目录
 │   ├── avatar/                        # 用户头像
 │   ├── destination/                   # 目的地图片
-│   ├── media-destination/             # 目的地展示图片
+│   ├── destination/             # 目的地展示图片
 │   ├── news/                          # 新闻图片
 │   ├── policy/                        # 政策图片
 │   ├── safety/                        # 安全图片
