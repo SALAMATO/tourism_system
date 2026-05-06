@@ -154,11 +154,19 @@ function renderNews(container, newsItems) {
           <div class="news-card-content">
             <div class="news-category-badge">${escapeHtml(item.category || '新闻资讯')}</div>
             <h3 class="news-card-title">${escapeHtml(item.title)}</h3>
-            <div class="news-card-meta">
-              <span>
+            <div class="news-card-meta" 
+                 style="display:flex;justify-content:space-between;align-items:center;width:100%;">
+              
+              <span style="display:flex;align-items:center;gap:6px;">
                 <i class="fas fa-clock"></i>
                 ${formatTime(item.publish_date)}
               </span>
+            
+              <span style="display:flex;align-items:center;gap:6px;">
+                <i class="fas fa-eye"></i>
+                ${item.views || 0} 浏览
+              </span>
+            
             </div>
           </div>
         </div>

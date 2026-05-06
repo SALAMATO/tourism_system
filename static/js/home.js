@@ -1,4 +1,3 @@
-// 首页逻辑 - v20260506 (修改为显示政策法规)
 
 document.addEventListener('DOMContentLoaded', () => {
   const destinationContainer = document.getElementById('destinations-container');
