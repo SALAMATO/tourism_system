@@ -473,8 +473,9 @@ document.addEventListener('DOMContentLoaded', function() {
   const mobileMenuOverlay = document.getElementById('mobile-menu-overlay');
   const navbar = document.querySelector('.navbar');
   const aiAssistantWrapper = document.querySelector('.ai-assistant-wrapper');
+  const mobileAiBtn = document.querySelector('.mobile-ai-btn');
   
-  console.log('汉堡菜单初始化:', { navbarToggle, mobileMenuOverlay });
+  console.log('汉堡菜单初始化:', { navbarToggle, mobileMenuOverlay, mobileAiBtn });
   
   if (navbarToggle && mobileMenuOverlay) {
     let isOpen = false;
@@ -488,9 +489,14 @@ document.addEventListener('DOMContentLoaded', function() {
       if (mobileMenuToggle) mobileMenuToggle.classList.add('active');
       mobileMenuOverlay.classList.add('show');
       
-      // 隐藏AI按钮
+      // 隐藏桌面端AI按钮
       if (aiAssistantWrapper) {
         aiAssistantWrapper.style.display = 'none';
+      }
+      
+      // 隐藏移动端AI图标按钮
+      if (mobileAiBtn) {
+        mobileAiBtn.classList.add('menu-hidden');
       }
       
       // 如果在Hero区域，给导航栏添加menu-open类
@@ -514,9 +520,14 @@ document.addEventListener('DOMContentLoaded', function() {
       if (mobileMenuToggle) mobileMenuToggle.classList.remove('active');
       mobileMenuOverlay.classList.remove('show');
       
-      // 显示AI按钮
+      // 显示桌面端AI按钮
       if (aiAssistantWrapper) {
         aiAssistantWrapper.style.display = 'flex';
+      }
+      
+      // 显示移动端AI图标按钮（移除隐藏类）
+      if (mobileAiBtn) {
+        mobileAiBtn.classList.remove('menu-hidden');
       }
       
       // 移除menu-open类

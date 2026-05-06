@@ -32,11 +32,11 @@ class LowSkyAIChat {
     const navbar = document.querySelector('.navbar-container');
     if (!navbar) return;
     
-    // 创建AI助手包装器
+    // 创建AI助手包装器（桌面端）
     const wrapper = document.createElement('div');
     wrapper.className = 'ai-assistant-wrapper';
     
-    // 创建AI助手按钮
+    // 创建AI助手按钮（桌面端 - 带文字）
     const btn = document.createElement('button');
     btn.className = 'ai-assistant-btn';
     btn.innerHTML = '<img src="/static/images/AI-icon.png" alt="AI" style="width: 24px; height: 24px; margin-right: 8px;"><span>LowSkyAI</span>';
@@ -44,6 +44,14 @@ class LowSkyAIChat {
     
     wrapper.appendChild(btn);
     navbar.appendChild(wrapper);
+    
+    // 创建移动端AI图标按钮（只显示图标）
+    const mobileBtn = document.createElement('button');
+    mobileBtn.className = 'mobile-ai-btn';
+    mobileBtn.innerHTML = '<img src="/static/images/AI-icon.png" alt="AI">';
+    mobileBtn.onclick = () => this.openChat();
+    
+    navbar.appendChild(mobileBtn);
   }
   
   createChatModal() {

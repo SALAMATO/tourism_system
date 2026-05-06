@@ -1051,6 +1051,35 @@ body {
     display: none;
   }
   
+  /* 移动端AI图标按钮 - 只显示图标 */
+  .mobile-ai-btn {
+    display: flex;
+    position: fixed;
+    right: 60px;
+    top: 12px;
+    width: 44px;
+    height: 44px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    z-index: 99998;
+    padding: 0;
+    align-items: center;
+    justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  .mobile-ai-btn img {
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
+  }
+  
+  /* 菜单打开时隐藏移动端AI按钮 */
+  .mobile-ai-btn.menu-hidden {
+    display: none !important;
+  }
+  
   .navbar-toggle {
     display: block;
     right: 10px;
@@ -1184,6 +1213,19 @@ body {
   
   .ai-assistant-wrapper {
     display: none;
+  }
+  
+  /* 超小屏幕AI图标按钮 */
+  .mobile-ai-btn {
+    display: flex;
+    right: 56px;
+    width: 40px;
+    height: 40px;
+  }
+  
+  .mobile-ai-btn img {
+    width: 24px;
+    height: 24px;
   }
   
   .mobile-menu-item {
