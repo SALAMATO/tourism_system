@@ -90,8 +90,7 @@ body {
   box-shadow: none !important;
 }
 
-/* Hero区域展开菜单时，导航栏文字变回黑色 */
-.navbar.hero-active.menu-open .navbar-brand,
+/* Hero区域展开菜单时，导航栏文字变回黑色（品牌文字除外） */
 .navbar.hero-active.menu-open .navbar-menu a,
 .navbar.hero-active.menu-open .navbar-toggle {
   color: var(--text-primary) !important;
