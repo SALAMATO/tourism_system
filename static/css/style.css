@@ -202,6 +202,24 @@ body {
   background: rgba(255, 255, 255, 0.3);
 }
 
+/* AI图标深色模式支持 */
+.ai-icon-light {
+  display: none;
+}
+
+.ai-icon-dark {
+  display: block;
+}
+
+/* Hero区域时使用浅色图标（白色） */
+.navbar.hero-active .ai-icon-light {
+  display: block;
+}
+
+.navbar.hero-active .ai-icon-dark {
+  display: none;
+}
+
 .navbar-brand {
   font-size: 21px;
   font-weight: 600;

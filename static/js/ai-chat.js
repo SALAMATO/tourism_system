@@ -39,7 +39,11 @@ class LowSkyAIChat {
     // 创建AI助手按钮（桌面端 - 带文字）
     const btn = document.createElement('button');
     btn.className = 'ai-assistant-btn';
-    btn.innerHTML = '<img src="/static/images/AI-icon.png" alt="AI" style="width: 24px; height: 24px; margin-right: 8px;"><span>LowSkyAI</span>';
+    btn.innerHTML = `
+      <img src="/static/images/AI-icon.png" alt="AI" class="ai-icon-light" style="width: 24px; height: 24px; margin-right: 8px;">
+      <img src="/static/images/AI-icon-Black.png" alt="AI" class="ai-icon-dark" style="width: 24px; height: 24px; margin-right: 8px;">
+      <span>LowSkyAI</span>
+    `;
     btn.onclick = () => this.openChat();
     
     wrapper.appendChild(btn);
@@ -48,7 +52,10 @@ class LowSkyAIChat {
     // 创建移动端AI图标按钮（只显示图标）
     const mobileBtn = document.createElement('button');
     mobileBtn.className = 'mobile-ai-btn';
-    mobileBtn.innerHTML = '<img src="/static/images/AI-icon.png" alt="AI">';
+    mobileBtn.innerHTML = `
+      <img src="/static/images/AI-icon.png" alt="AI" class="ai-icon-light">
+      <img src="/static/images/AI-icon-Black.png" alt="AI" class="ai-icon-dark">
+    `;
     mobileBtn.onclick = () => this.openChat();
     
     navbar.appendChild(mobileBtn);
