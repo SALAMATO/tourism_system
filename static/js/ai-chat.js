@@ -13,6 +13,7 @@ class LowSkyAIChat {
     this.isGenerating = false;
     this.abortController = null;
     this.toolMode = 'auto'; // 'auto' | 'db_only' | 'web_only'
+    this.isMaximized = false; // 记住最大化状态
     
     this.init();
   }
@@ -260,6 +261,18 @@ class LowSkyAIChat {
   }
   
   openChat() {
+    // 恢复上次最大化状态（仅桌面端）
+    if (window.innerWidth > 768) {
+      const savedMaximized = localStorage.getItem('ai-chat-maximized');
+      if (savedMaximized === 'true') {
+        this.isMaximized = true;
+        const container = this.modal.querySelector('.ai-chat-container');
+        const maximizeBtn = this.modal.querySelector('.ai-chat-maximize svg');
+        container.classList.add('maximized');
+        maximizeBtn.innerHTML = '<rect x="3" y="1" width="6" height="6" fill="none" stroke="currentColor" stroke-width="1"/><rect x="1" y="3" width="6" height="6" fill="none" stroke="currentColor" stroke-width="1"/>';
+      }
+    }
+    
     this.modal.classList.add('show');
     this.isOpen = true;
     this.input.focus();
@@ -268,6 +281,13 @@ class LowSkyAIChat {
   closeChat() {
     if (this.isGenerating) {
       this.stopGeneration();
+    }
+    
+    // 保存当前最大化状态（仅桌面端）
+    if (window.innerWidth > 768) {
+      const container = this.modal.querySelector('.ai-chat-container');
+      this.isMaximized = container.classList.contains('maximized');
+      localStorage.setItem('ai-chat-maximized', this.isMaximized.toString());
     }
     
     // 先移除show类触发关闭动画
