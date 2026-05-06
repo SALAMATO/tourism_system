@@ -1334,55 +1334,36 @@
 
     // 首次进入页面，延迟启用 snap（等待内容加载完成）
     if (!disableSnap) {
-      // 监听所有动态内容容器的变化
-      const dynamicContainers = [
-        document.getElementById('nearby-destination-content'),
-        document.getElementById('managed-destination-content'),
-        document.getElementById('latest-news-content'),
-        document.getElementById('latest-policy-container')
-      ].filter(Boolean);
+      let loadedModules = new Set();
+      const requiredModules = ['destinations', 'news', 'policy'];
       
-      let loadedCount = 0;
-      const totalContainers = dynamicContainers.length;
-      
-      // 检查是否所有内容已加载
-      function checkContentLoaded() {
-        loadedCount++;
-        if (loadedCount >= totalContainers) {
+      // 监听所有模块的加载完成事件
+      window.addEventListener('homepageContentLoaded', (event) => {
+        const moduleName = event.detail;
+        loadedModules.add(moduleName);
+        console.log(`[Snap] 模块 ${moduleName} 加载完成`);
+        
+        // 检查是否所有必需模块都已加载
+        const allLoaded = requiredModules.every(mod => loadedModules.has(mod));
+        
+        if (allLoaded && !contentLoaded) {
           contentLoaded = true;
-          // 额外延迟 300ms 确保 DOM 完全渲染
+          // 额外延迟 200ms 确保 DOM 完全渲染
           setTimeout(() => {
             disableSnap = false;
-            console.log('[Snap] 内容加载完成，启用吸附功能');
-          }, 300);
+            console.log('[Snap] 所有内容加载完成，启用吸附功能');
+          }, 200);
         }
-      }
-      
-      // 为每个容器设置 MutationObserver 监听内容变化
-      dynamicContainers.forEach(container => {
-        const observer = new MutationObserver((mutations) => {
-          mutations.forEach((mutation) => {
-            if (mutation.addedNodes.length > 0) {
-              // 检查是否不再是 loading 状态
-              if (!container.querySelector('.loading')) {
-                observer.disconnect();
-                checkContentLoaded();
-              }
-            }
-          });
-        });
-        
-        observer.observe(container, { childList: true, subtree: true });
       });
       
-      // 备用方案：如果 3 秒后还没检测到变化，强制启用
+      // 备用方案：如果 5 秒后还没加载完成，强制启用
       setTimeout(() => {
         if (!contentLoaded) {
           contentLoaded = true;
           disableSnap = false;
-          console.log('[Snap] 超时强制启用吸附功能');
+          console.log(`[Snap] 超时强制启用吸附功能（已加载: ${Array.from(loadedModules).join(', ')}）`);
         }
-      }, 3000);
+      }, 5000);
     }
 
     // 监听用户真实滚动行为（wheel事件）

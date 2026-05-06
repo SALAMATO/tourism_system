@@ -44,10 +44,14 @@ async function loadHomepageDestinationModules() {
     } else {
       managedContainer.innerHTML = '<div class="loading"><div>暂无推荐内容</div></div>';
     }
+    
+    // 触发加载完成事件
+    window.dispatchEvent(new CustomEvent('homepageContentLoaded', { detail: 'destinations' }));
   } catch (error) {
     console.error('加载首页目的地模块失败:', error);
     nearbyContainer.innerHTML = '<div class="loading"><div>加载失败，请稍后重试</div></div>';
     managedContainer.innerHTML = '<div class="loading"><div>加载失败，请稍后重试</div></div>';
+    window.dispatchEvent(new CustomEvent('homepageContentLoaded', { detail: 'destinations' }));
   }
 }
 
@@ -216,9 +220,13 @@ async function loadLatestNewsList() {
       console.log('[home-new] 没有获取到资讯数据');
       container.innerHTML = '<div class="loading"><div>暂无最新资讯</div></div>';
     }
+    
+    // 触发加载完成事件
+    window.dispatchEvent(new CustomEvent('homepageContentLoaded', { detail: 'news' }));
   } catch (error) {
     console.error('[home-new] 加载最新资讯失败:', error);
     showError(container);
+    window.dispatchEvent(new CustomEvent('homepageContentLoaded', { detail: 'news' }));
   }
 }
 
@@ -295,9 +303,13 @@ async function loadLatestPolicy() {
       console.log('[home-new] 没有获取到政策法规数据');
       container.innerHTML = '<div class="loading"><div>暂无政策法规</div></div>';
     }
+    
+    // 触发加载完成事件
+    window.dispatchEvent(new CustomEvent('homepageContentLoaded', { detail: 'policy' }));
   } catch (error) {
     console.error('[home-new] 加载政策法规失败:', error);
     showError(container);
+    window.dispatchEvent(new CustomEvent('homepageContentLoaded', { detail: 'policy' }));
   }
 }
 
