@@ -69,7 +69,12 @@ AdminApp.Modules.News = {
             formData.append('content', (window.WangEditorHelper && window.WangEditorHelper.editorInstances['news-content']) 
                 ? window.WangEditorHelper.getContent('news-content') 
                 : document.getElementById('news-content').value);
-            formData.append('tags', JSON.stringify(tags));
+            
+            // 正确处理tags数组 - 为每个标签添加一个单独的字段
+            tags.forEach((tag, index) => {
+                formData.append(`tags`, tag);
+            });
+            
             formData.append('publish_date', publishDate);
             
             // 处理封面图片
