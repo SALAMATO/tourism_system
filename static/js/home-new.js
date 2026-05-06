@@ -131,7 +131,7 @@ function renderHomepageDestinationModule(type, destinations, container, userCity
         ${itemsHtml}
       </div>
       <div style="text-align: center; margin-top: 32px;">
-        <a href="/destinations/" class="btn btn-secondary destination-more-btn">查看更多目的地</a>
+        <a href="/destinations/" class="btn btn-primary destination-more-btn">查看更多目的地</a>
       </div>
     </div>
   `;
@@ -271,7 +271,7 @@ function renderNewsListModule(container, newsItems) {
         ${itemsHtml}
       </div>
       <div style="text-align: center; margin-top: 32px;">
-        <a href="/news/" class="btn btn-secondary destination-more-btn">查看更多资讯</a>
+        <a href="/news/" class="btn btn-primary destination-more-btn">查看更多资讯</a>
       </div>
     </div>
   `;
