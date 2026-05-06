@@ -2451,8 +2451,8 @@ body {
 .ai-chat-container.maximized .ai-chat-messages,
 .ai-chat-container.maximized .ai-chat-input-area {
   max-width: 50vw !important;
-  margin-left: auto !important;
-  margin-right: auto !important;
+  margin-left: 25vw !important;
+  margin-right: 25vw !important;
 }
 
 @keyframes maximizeIn {
