@@ -474,10 +474,13 @@ document.addEventListener('DOMContentLoaded', function() {
   const navbar = document.querySelector('.navbar');
   const aiAssistantWrapper = document.querySelector('.ai-assistant-wrapper');
   
+  console.log('汉堡菜单初始化:', { navbarToggle, mobileMenuOverlay });
+  
   if (navbarToggle && mobileMenuOverlay) {
     let isOpen = false;
     
     function openMenu() {
+      console.log('打开菜单');
       isOpen = true;
       
       // 同步两个汉堡按钮的状态
@@ -503,6 +506,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function closeMenu() {
+      console.log('关闭菜单');
       isOpen = false;
       
       // 同步两个汉堡按钮的状态
@@ -534,32 +538,37 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // 点击导航栏汉堡按钮打开菜单
-    navbarToggle.addEventListener('click', function() {
+    navbarToggle.addEventListener('click', function(e) {
+      console.log('汉堡按钮被点击', { isOpen, active: navbarToggle.classList.contains('active') });
+      e.preventDefault();
+      e.stopPropagation();
       isOpen ? closeMenu() : openMenu();
     });
     
-    // 点击菜单内的汉堡按钮关闭菜单
-    if (mobileMenuToggle) {
-      mobileMenuToggle.addEventListener('click', function() {
-        closeMenu();
-      });
-    }
-    
-    // 点击背景关闭
+    // 点击菜单内的汉堡按钮关闭菜单（使用事件委托，避免被重新渲染影响）
     mobileMenuOverlay.addEventListener('click', function(e) {
-      if (e.target === mobileMenuOverlay) {
+      // 点击关闭按钮
+      if (e.target.closest('.mobile-menu-toggle')) {
+        console.log('点击了关闭按钮');
         closeMenu();
+        return;
       }
-    });
-    
-    // 点击菜单项关闭菜单
-    document.querySelectorAll('.mobile-menu-item').forEach(item => {
-      item.addEventListener('click', function() {
+      // 点击菜单项
+      if (e.target.closest('.mobile-menu-item')) {
+        console.log('点击了菜单项');
         setTimeout(() => {
           closeMenu();
         }, 150);
-      });
+        return;
+      }
+      // 点击背景
+      if (e.target === mobileMenuOverlay) {
+        console.log('点击了背景');
+        closeMenu();
+      }
     });
+  } else {
+    console.error('汉堡菜单元素未找到:', { navbarToggle, mobileMenuOverlay });
   }
 });
 

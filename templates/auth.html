@@ -125,13 +125,21 @@
         <span style="font-family: 'Font Awesome 6 Free'; font-weight: 900;">&#xf5b0;</span> 低空旅游信息管理系统
       </a>
       <button class="navbar-toggle" id="navbar-toggle">
-        <i class="fas fa-bars"></i>
+        <span></span>
+        <span></span>
+        <span></span>
       </button>
     </div>
   </nav>
 
   <!-- 移动端菜单覆盖层 -->
   <div class="mobile-menu-overlay" id="mobile-menu-overlay">
+    <!-- 汉堡按钮移至此处，菜单展开时作为关闭按钮 -->
+    <button class="navbar-toggle mobile-menu-toggle" id="mobile-menu-toggle">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
     <div class="mobile-menu">
       <a href="{% url 'home' %}" class="mobile-menu-item">首页</a>
       <a href="{% url 'destinations' %}" class="mobile-menu-item">旅游目的地</a>

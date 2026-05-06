@@ -227,6 +227,20 @@ updateMobileMenu() {
     `;
   }
 
+  // 确保菜单内的关闭按钮存在
+  let mobileMenuToggle = mobileMenuOverlay.querySelector('.mobile-menu-toggle');
+  if (!mobileMenuToggle) {
+    mobileMenuToggle = document.createElement('button');
+    mobileMenuToggle.className = 'navbar-toggle mobile-menu-toggle';
+    mobileMenuToggle.id = 'mobile-menu-toggle';
+    mobileMenuToggle.innerHTML = `
+      <span></span>
+      <span></span>
+      <span></span>
+    `;
+    mobileMenuOverlay.insertBefore(mobileMenuToggle, mobileMenuOverlay.firstChild);
+  }
+
   // 保留原有的导航链接 - 添加旅游目的地作为第一个选项
   const navLinks = `
     <a href="/destinations/" class="mobile-menu-item">旅游目的地</a>
