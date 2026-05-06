@@ -975,6 +975,11 @@ body {
   100% { transform: rotate(360deg); }
 }
 
+/* 移动端AI图标按钮 - 默认隐藏，只在移动端显示 */
+.mobile-ai-btn {
+  display: none;
+}
+
 /* 响应式设计 */
 @media (max-width: 768px) {
   .navbar-menu {
@@ -1055,7 +1060,7 @@ body {
   .mobile-ai-btn {
     display: flex;
     position: fixed;
-    right: 60px;
+    right: 74px; /* 汉堡按钮(10px) + 间距(20px) + 按钮宽度(44px) */
     top: 12px;
     width: 44px;
     height: 44px;
@@ -1218,7 +1223,7 @@ body {
   /* 超小屏幕AI图标按钮 */
   .mobile-ai-btn {
     display: flex;
-    right: 56px;
+    right: 66px; /* 汉堡按钮(10px) + 间距(16px) + 按钮宽度(40px) */
     width: 40px;
     height: 40px;
   }
