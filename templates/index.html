@@ -1261,7 +1261,22 @@
   </footer>
   
 <script>
-  // 使用 sessionStorage 保存滚动位置，让浏览器自动处理恢复
+  // ===== 全局状态变量（在 DOMContentLoaded 之前定义）=====
+  let isAutoScrolling = false;
+  let scrollTimeout = null;
+  let lastScrollY = window.scrollY;
+  let scrollDirection = 0; // 1 向下，-1 向上
+  let disableSnap = false;
+  let userHasInteracted = false;
+
+  // 提前检测是否是返回页面（关键：在 load 之前执行）
+  const nav = performance.getEntriesByType('navigation')[0];
+  if (nav && nav.type === 'back_forward') {
+    disableSnap = true;
+    console.log('[Snap] 检测到返回页面，禁用吸附');
+  }
+
+  // 使用 sessionStorage 保存滚动位置
   (function() {
     const SCROLL_POSITION_KEY = 'homepage_scroll_position';
     
@@ -1273,9 +1288,6 @@
           const currentPosition = window.pageYOffset || document.documentElement.scrollTop;
           sessionStorage.setItem(SCROLL_POSITION_KEY, currentPosition);
           console.log('[首页] 点击卡片，保存滚动位置:', currentPosition);
-          
-          // 标记页面即将离开，禁用自动吸附
-          window.__isNavigatingAway = true;
         });
       });
     });
@@ -1297,30 +1309,63 @@
     },
   });
 
-  // ===== 精确滚动控制系统 =====
+  // ===== Apple 风格滚动控制系统 =====
   document.addEventListener('DOMContentLoaded', function() {
     const navbar = document.querySelector('.navbar');
     const navbarHeight = navbar ? navbar.offsetHeight : 48;
     
-    // 所有需要精确定位的区域
+    // 所有需要精确定位的区域（只声明一次）
     const sections = [
       document.querySelector('.hero-large'),
       document.getElementById('homepage-destinations'),
       document.getElementById('video')
-    ].filter(el => el !== null);
+    ].filter(Boolean);
 
-    // 平滑滚动到指定区域
-    function scrollToSection(targetElement) {
-      if (!targetElement) return;
+    // 首次进入页面，延迟启用 snap（800ms后）
+    if (!disableSnap) {
+      setTimeout(() => {
+        disableSnap = false;
+        console.log('[Snap] 延迟启用吸附功能');
+      }, 800);
+    }
+
+    // 监听用户真实滚动行为（wheel事件）
+    window.addEventListener('wheel', () => {
+      userHasInteracted = true;
+    }, { once: true });
+
+    // 找到"下一个目标区块"（Apple关键逻辑：不找最近，而是找方向上的下一个）
+    function getTargetSection(currentY, direction) {
+      if (direction > 0) {
+        // 向下滚：找下面第一个 section
+        return sections.find(sec => sec.offsetTop > currentY + 50);
+      } else {
+        // 向上滚：找上面最后一个 section
+        return [...sections].reverse().find(sec => sec.offsetTop < currentY - 50);
+      }
+    }
+
+    // 平滑滚动（带严格锁）
+    function scrollToSection(el) {
+      if (!el) return;
       
-      // 计算目标位置（元素的offsetTop就是正确位置）
-      const targetPosition = targetElement.offsetTop;
+      isAutoScrolling = true;
       
-      // 平滑滚动
       window.scrollTo({
-        top: targetPosition,
+        top: el.offsetTop,
         behavior: 'smooth'
       });
+      
+      // 使用 requestAnimationFrame 更精确地控制锁定时间
+      let start = Date.now();
+      function check() {
+        if (Date.now() - start > 800) {
+          isAutoScrolling = false;
+        } else {
+          requestAnimationFrame(check);
+        }
+      }
+      check();
     }
 
     // 处理所有锚点链接点击（包括hero-nav和按钮）
@@ -1345,76 +1390,37 @@
       });
     });
 
-    // 鼠标滚轮精确定位 - 优化版
-    let isScrolling = false;
-    let scrollTimeout;
-    let lastScrollPosition = window.pageYOffset;
-    let isPageLoading = true; // 标记页面是否正在加载
-    let hasRestoredFromBack = false; // 标记是否已经从返回恢复
-    
-    // 检测是否是页面返回（通过performance.navigation或performance.getEntriesByType）
-    window.addEventListener('load', function() {
-      // 检查是否是从其他页面返回
-      const perfEntries = performance.getEntriesByType('navigation');
-      if (perfEntries.length > 0 && perfEntries[0].type === 'back_forward') {
-        console.log('[首页] 检测到从详情页返回');
-        hasRestoredFromBack = true;
-        // 返回后2秒内禁用自动吸附，让用户有机会手动滚动
-        setTimeout(function() {
-          hasRestoredFromBack = false;
-          console.log('[首页] 启用自动吸附功能');
-        }, 2000);
-      } else {
-        // 正常加载，延迟500ms启用自动吸附
-        setTimeout(function() {
-          isPageLoading = false;
-          console.log('[首页] 启用自动吸附功能');
-        }, 500);
-      }
-    });
-
-    window.addEventListener('scroll', function() {
-      // 如果页面正在加载、即将离开、或刚从返回恢复，不执行自动吸附
-      if (isPageLoading || window.__isNavigatingAway || hasRestoredFromBack) return;
+    // 核心监听（Apple风格）
+    window.addEventListener('scroll', () => {
+      if (disableSnap) return;
+      if (isAutoScrolling) return;
       
-      const currentScrollPosition = window.pageYOffset;
+      // 关键：只有用户真实交互后才允许 snap
+      if (!userHasInteracted) return;
       
-      // 清除之前的定时器
+      const currentY = window.scrollY;
+      
+      // 判断方向
+      scrollDirection = currentY > lastScrollY ? 1 : -1;
+      lastScrollY = currentY;
+      
       clearTimeout(scrollTimeout);
       
-      // 设置新的定时器，在滚动停止后执行
-      scrollTimeout = setTimeout(function() {
-        if (isScrolling) return;
+      // 关键：只在"滚动停止后"处理
+      scrollTimeout = setTimeout(() => {
+        const target = getTargetSection(currentY, scrollDirection);
         
-        // 获取当前滚动位置
-        const scrollPosition = window.pageYOffset;
+        if (!target) return;
         
-        // 找到最接近的section
-        let closestSection = null;
-        let minDistance = Infinity;
+        const distance = Math.abs(target.offsetTop - currentY);
         
-        sections.forEach(section => {
-          const sectionTop = section.offsetTop;
-          const distance = Math.abs(scrollPosition - sectionTop);
-          
-          if (distance < minDistance) {
-            minDistance = distance;
-            closestSection = section;
-          }
-        });
+        // Apple风格阈值（非常关键）
+        if (distance < 80) return;      // 太近不吸附
+        if (distance > window.innerHeight * 0.7) return; // 太远不跳
         
-        // 如果距离小于150px，自动吸附到该section
-        if (closestSection && minDistance < 150 && minDistance > 20) {
-          isScrolling = true;
-          scrollToSection(closestSection);
-          
-          setTimeout(() => {
-            isScrolling = false;
-          }, 1000);
-        }
-      }, 200); // 滚动停止200ms后执行
-      
-      lastScrollPosition = currentScrollPosition;
+        scrollToSection(target);
+        
+      }, 180); // 滚动停止判断（Apple一般在100~200ms之间）
     });
 
     // ===== 视频模块交互 =====
@@ -1523,7 +1529,7 @@
 <script src="{% static 'js/api.js' %}"></script>
 <script src="{% static 'js/auth.js' %}"></script>
 <script src="{% static 'js/auth-modal.js' %}"></script>
-<script src="{% static 'js/ai-chat.js' %}?v=20260310?v=20260310"></script>
+<script src="{% static 'js/ai-chat.js' %}?v=20260310"></script>
 <script src="{% static 'js/home.js' %}?v=2026050602"></script>
 <script src="{% static 'js/home-new.js' %}?v=2026050602"></script>
 </body>
