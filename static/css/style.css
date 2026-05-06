@@ -248,7 +248,7 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* 三条线基础 */
+/* 所有线统一绝对居中体系 - Apple核心技巧 */
 .navbar-toggle span {
   position: absolute;
   left: 10px;
@@ -256,28 +256,32 @@ body {
   height: 2px;
   background: var(--text-primary);
   border-radius: 2px;
+  
+  /* 统一居中到按钮中心 */
+  top: 50%;
   transform-origin: center;
+  
   will-change: transform, opacity;
   backface-visibility: hidden;
   
   /* Apple 风格 easing */
   transition:
     transform 420ms cubic-bezier(0.2, 0.8, 0.2, 1),
-    opacity 180ms ease;
+    opacity 200ms ease;
 }
 
-/* 初始位置 */
+/* 用偏移变量控制三条线（不是用top定位） */
 .navbar-toggle span:nth-child(1) { 
-  top: 14px;
+  transform: translateY(calc(-50% - 7px));
   transition-delay: 40ms;
 }
 
 .navbar-toggle span:nth-child(2) { 
-  top: 21px;
+  transform: translateY(-50%);
 }
 
 .navbar-toggle span:nth-child(3) { 
-  top: 28px;
+  transform: translateY(calc(-50% + 7px));
   transition-delay: 40ms;
 }
 
@@ -287,25 +291,26 @@ body {
 }
 
 /* ========== ACTIVE X 状态 ==========
-   Apple级错峰动画
+   纯transform动画，不改变layout
+   围绕中心点旋转
 ====================================== */
 
-/* 上线  右上斜（先动） */
+/* 上线  右上斜 */
 .navbar-toggle.active span:nth-child(1) {
-  transform: translateY(7px) rotate(45deg);
+  transform: translateY(-50%) rotate(45deg);
   transition-delay: 0ms;
 }
 
-/* 中线  消失（稍快触发） */
+/* 中线  消失 */
 .navbar-toggle.active span:nth-child(2) {
   opacity: 0;
-  transform: scaleX(0.2);
+  transform: scaleX(0.2) translateY(-50%);
   transition-delay: 20ms;
 }
 
-/* 下线  左上斜（先动） */
+/* 下线  左上斜 */
 .navbar-toggle.active span:nth-child(3) {
-  transform: translateY(-7px) rotate(-45deg);
+  transform: translateY(-50%) rotate(-45deg);
   transition-delay: 0ms;
 }
 
@@ -965,30 +970,35 @@ body {
     height: 44px;
   }
   
+  /* 使用transform居中体系，不使用top定位 */
+  .navbar-toggle span {
+    top: 50%;
+  }
+  
   .navbar-toggle span:nth-child(1) {
-    top: 14px;
+    transform: translateY(calc(-50% - 7px));
   }
   
   .navbar-toggle span:nth-child(2) {
-    top: 21px;
+    transform: translateY(-50%);
   }
   
   .navbar-toggle span:nth-child(3) {
-    top: 28px;
+    transform: translateY(calc(-50% + 7px));
   }
   
   /* active 状态X变形 - Apple级错峰动画 */
   .navbar-toggle.active span:nth-child(1) {
-    transform: translateY(7px) rotate(45deg);
+    transform: translateY(-50%) rotate(45deg);
   }
   
   .navbar-toggle.active span:nth-child(2) {
     opacity: 0;
-    transform: scaleX(0.2);
+    transform: scaleX(0.2) translateY(-50%);
   }
   
   .navbar-toggle.active span:nth-child(3) {
-    transform: translateY(-7px) rotate(-45deg);
+    transform: translateY(-50%) rotate(-45deg);
   }
   
   /* 优化移动端导航栏布局 */
@@ -1091,30 +1101,35 @@ body {
     height: 40px;
   }
   
+  /* 小屏幕使用transform居中体系 */
+  .navbar-toggle span {
+    top: 50%;
+  }
+  
   .navbar-toggle span:nth-child(1) {
-    top: 10px;
+    transform: translateY(calc(-50% - 6px));
   }
   
   .navbar-toggle span:nth-child(2) {
-    top: 17px;
+    transform: translateY(-50%);
   }
   
   .navbar-toggle span:nth-child(3) {
-    top: 24px;
+    transform: translateY(calc(-50% + 6px));
   }
   
   /* active 状态X变形 - Apple级错峰动画（小屏幕） */
   .navbar-toggle.active span:nth-child(1) {
-    transform: translateY(7px) rotate(45deg);
+    transform: translateY(-50%) rotate(45deg);
   }
   
   .navbar-toggle.active span:nth-child(2) {
     opacity: 0;
-    transform: scaleX(0.2);
+    transform: scaleX(0.2) translateY(-50%);
   }
   
   .navbar-toggle.active span:nth-child(3) {
-    transform: translateY(-7px) rotate(-45deg);
+    transform: translateY(-50%) rotate(-45deg);
   }
   
   #user-menu {
