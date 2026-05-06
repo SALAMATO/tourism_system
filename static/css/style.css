@@ -203,21 +203,34 @@ body {
 }
 
 /* AI图标深色模式支持 */
+/* 桌面端：始终显示浅色图标 */
 .ai-icon-light {
-  display: none;
+  display: block;
 }
 
 .ai-icon-dark {
-  display: block;
-}
-
-/* Hero区域时使用浅色图标（白色） */
-.navbar.hero-active .ai-icon-light {
-  display: block;
-}
-
-.navbar.hero-active .ai-icon-dark {
   display: none;
+}
+
+/* 移动端：根据导航栏状态切换图标 */
+@media (max-width: 768px) {
+  /* 默认状态：显示深色图标 */
+  .ai-icon-light {
+    display: none;
+  }
+  
+  .ai-icon-dark {
+    display: block;
+  }
+  
+  /* Hero区域：显示浅色图标 */
+  .navbar.hero-active .ai-icon-light {
+    display: block;
+  }
+  
+  .navbar.hero-active .ai-icon-dark {
+    display: none;
+  }
 }
 
 .navbar-brand {
