@@ -2348,6 +2348,7 @@ body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .ai-chat-header {
@@ -2443,8 +2444,6 @@ body {
   max-height: 100vh !important;
   max-width: 100vw !important;
   border-radius: 0 !important;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  animation: maximizeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* 最大化状态下的内容区域限制 - 仅限制消息区和输入区 */
@@ -2455,20 +2454,6 @@ body {
   margin-right: 25vw !important;
 }
 
-@keyframes maximizeIn {
-  from {
-    transform: scale(0.95);
-    opacity: 0.8;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
-.ai-chat-container:not(.maximized) {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
 
 .ai-chat-messages {
   flex: 1;
