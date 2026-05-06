@@ -2339,7 +2339,7 @@ body {
 
 .ai-chat-container {
   width: 50vw;
-  max-width: 50vw;
+  max-width: 40vw;
   height: 80vh;
   max-height: 700px;
   background: #ffffff;
@@ -2349,6 +2349,14 @@ body {
   flex-direction: column;
   overflow: hidden;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 最大化状态下的内容区域限制 - 仅限制消息区和输入区 */
+.ai-chat-container .ai-chat-messages,
+.ai-chat-container .ai-chat-input-area {
+  max-width: 100vw !important;
+  margin-left: 0vw !important;
+  margin-right: 0vw !important;
 }
 
 .ai-chat-header {
