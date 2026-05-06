@@ -127,6 +127,16 @@ AdminApp.Modules.News = {
         if (uploadBox) uploadBox.style.display = 'block';
         if (preview) preview.style.display = 'none';
         
+        // 重置发布日期为今天
+        const dateInput = document.getElementById('news-date');
+        if (dateInput) {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            dateInput.value = `${year}-${month}-${day}`;
+        }
+        
         const titleEl = document.querySelector('#news-module .card-title');
         if (titleEl) titleEl.textContent = '发布新闻';
         
@@ -152,6 +162,17 @@ AdminApp.Modules.News = {
             
             const authorInput = document.getElementById('news-author');
             if (authorInput) authorInput.value = news.author || '';
+            
+            // 设置发布日期
+            const dateInput = document.getElementById('news-date');
+            if (dateInput && news.publish_date) {
+                // 将ISO日期格式转换为 YYYY-MM-DD 格式
+                const publishDate = new Date(news.publish_date);
+                const year = publishDate.getFullYear();
+                const month = String(publishDate.getMonth() + 1).padStart(2, '0');
+                const day = String(publishDate.getDate()).padStart(2, '0');
+                dateInput.value = `${year}-${month}-${day}`;
+            }
             
             // 设置内容到textarea（如果编辑器未初始化）
             const contentTextarea = document.getElementById('news-content');
@@ -205,6 +226,16 @@ AdminApp.Modules.News = {
             AdminApp.saveToCache('news-title', news.title || '');
             AdminApp.saveToCache('news-category', news.category || '');
             AdminApp.saveToCache('news-author', news.author || '');
+            
+            // 缓存发布日期
+            if (news.publish_date) {
+                const publishDate = new Date(news.publish_date);
+                const year = publishDate.getFullYear();
+                const month = String(publishDate.getMonth() + 1).padStart(2, '0');
+                const day = String(publishDate.getDate()).padStart(2, '0');
+                AdminApp.saveToCache('news-date', `${year}-${month}-${day}`);
+            }
+            
             AdminApp.saveToCache('news-content', news.content || '');
             AdminApp.saveToCache('news-tags', (news.tags || []).join(','));
             
