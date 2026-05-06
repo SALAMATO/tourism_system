@@ -2832,11 +2832,46 @@ body {
     display: none;
   }
   
+  /* 移动端AI聊天窗口 - 完全覆盖页面 */
+  .ai-chat-modal {
+    top: 0 !important; /* 从页面最顶部开始 */
+    padding-top: 0 !important; /* 移除padding */
+    align-items: stretch !important; /* 拉伸填充 */
+  }
+  
   .ai-chat-container {
-    width: 100%;
-    height: 100vh;
-    max-height: 100vh;
-    border-radius: 0;
+    width: 100% !important;
+    height: 100vh !important; /* 完整视口高度 */
+    max-height: 100vh !important;
+    max-width: 100% !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+  }
+  
+  /* 移动端内容区域铺满 */
+  .ai-chat-container .ai-chat-messages,
+  .ai-chat-container .ai-chat-input-area {
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+  
+  /* 移动端头部样式优化 */
+  .ai-chat-header {
+    padding: 12px 16px;
+  }
+  
+  .ai-chat-header h3 {
+    font-size: 16px;
+  }
+  
+  .ai-chat-header h3 img {
+    width: 20px !important;
+    height: 20px !important;
+  }
+  
+  .ai-chat-messages {
+    padding: 16px;
   }
   
   .ai-message-content {
