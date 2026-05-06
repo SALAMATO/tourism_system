@@ -470,6 +470,7 @@ function showConfirm(options = {}) {
 document.addEventListener('DOMContentLoaded', function() {
   const navbarToggle = document.getElementById('navbar-toggle');
   const mobileMenuOverlay = document.getElementById('mobile-menu-overlay');
+  const mobileMenuClose = document.getElementById('mobile-menu-close');
   const navbar = document.querySelector('.navbar');
   
   if (navbarToggle && mobileMenuOverlay) {
@@ -532,6 +533,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // 绑定点击事件
     navbarToggle.addEventListener('click', toggleMenu);
     
+    // 绑定关闭按钮点击事件
+    if (mobileMenuClose) {
+      mobileMenuClose.addEventListener('click', closeMenu);
+    }
+    
     // 点击覆盖层关闭菜单
     mobileMenuOverlay.addEventListener('click', function(e) {
       if (e.target === mobileMenuOverlay) {
@@ -543,20 +549,20 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.mobile-menu-item').forEach(item => {
       item.addEventListener('click', function() {
         // 添加点击动画效果
-        this.style.transform = 'scale(0.98)';
+        this.style.opacity = '0.4';
         setTimeout(() => {
-          this.style.transform = '';
+          this.style.opacity = '';
           closeMenu();
         }, 150);
       });
       
       // 添加触摸反馈
       item.addEventListener('touchstart', function() {
-        this.style.background = 'rgba(0, 0, 0, 0.08)';
+        this.style.opacity = '0.6';
       });
       
       item.addEventListener('touchend', function() {
-        this.style.background = '';
+        this.style.opacity = '';
       });
     });
     

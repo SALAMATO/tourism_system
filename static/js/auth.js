@@ -213,7 +213,24 @@ class AuthManager {
 
 updateMobileMenu() {
   const mobileMenu = document.querySelector('.mobile-menu');
-  if (!mobileMenu) return;
+  const mobileMenuOverlay = document.querySelector('.mobile-menu-overlay');
+  if (!mobileMenu || !mobileMenuOverlay) return;
+
+  // 检查是否已存在关闭按钮
+  let closeBtn = mobileMenuOverlay.querySelector('.mobile-menu-close');
+  if (!closeBtn) {
+    // 创建关闭按钮
+    closeBtn = document.createElement('button');
+    closeBtn.className = 'mobile-menu-close';
+    closeBtn.id = 'mobile-menu-close';
+    closeBtn.innerHTML = `
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    `;
+    mobileMenuOverlay.insertBefore(closeBtn, mobileMenuOverlay.firstChild);
+  }
 
   // 保留原有的导航链接 - 添加旅游目的地作为第一个选项
   const navLinks = `
