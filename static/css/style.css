@@ -2367,23 +2367,82 @@ body {
   gap: 10px;
 }
 
+.ai-chat-controls {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.ai-chat-minimize,
+.ai-chat-maximize,
 .ai-chat-close {
   background: transparent;
   border: none;
   color: white;
-  font-size: 28px;
   cursor: pointer;
-  width: 36px;
+  width: 46px;
   height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
-  transition: all 0.3s;
+  transition: all 0.15s;
+  padding: 0;
+}
+
+.ai-chat-minimize svg,
+.ai-chat-maximize svg,
+.ai-chat-close svg {
+  width: 10px;
+  height: 10px;
+  fill: currentColor;
+  stroke: currentColor;
+  stroke-width: 1;
+}
+
+.ai-tool-btn svg {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+  stroke-width: 2;
+  fill: none;
+}
+
+.ai-chat-send svg,
+.ai-chat-stop svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  stroke-width: 2;
+  fill: none;
+}
+
+.ai-chat-stop svg {
+  fill: currentColor;
+  stroke: none;
+}
+
+.ai-chat-minimize:hover,
+.ai-chat-maximize:hover {
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .ai-chat-close:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.ai-chat-minimize:active,
+.ai-chat-maximize:active,
+.ai-chat-close:active {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* 最大化状态 */
+.ai-chat-container.maximized {
+  width: 100vw !important;
+  height: 100vh !important;
+  max-height: 100vh !important;
+  border-radius: 0 !important;
+  transition: all 0.2s ease;
 }
 
 .ai-chat-messages {
@@ -2697,10 +2756,13 @@ body {
   color: var(--text-secondary);
 }
 
-.ai-welcome-message i {
+.ai-welcome-message svg {
   font-size: 48px;
   color: #667eea;
   margin-bottom: 16px;
+  stroke: #667eea;
+  stroke-width: 2;
+  fill: none;
 }
 
 .ai-welcome-message h4 {
@@ -2755,6 +2817,12 @@ body {
   
   .ai-message-content {
     max-width: 85%;
+  }
+  
+  /* 移动端隐藏最小化和最大化按钮 */
+  .ai-chat-minimize,
+  .ai-chat-maximize {
+    display: none;
   }
   
   .ai-chat-input-area {
@@ -2997,16 +3065,17 @@ body {
   background: rgba(0, 113, 227, 0.08);
 }
 
-.ai-tool-menu-item i {
-  width: 20px;
-  text-align: center;
-  font-size: 15px;
-  color: var(--text-secondary);
+.ai-tool-menu-item svg {
+  width: 16px;
+  height: 16px;
+  stroke: var(--text-secondary);
+  stroke-width: 2;
+  fill: none;
   flex-shrink: 0;
 }
 
-.ai-tool-menu-item.active i {
-  color: var(--primary-color);
+.ai-tool-menu-item.active svg {
+  stroke: var(--primary-color);
 }
 
 .ai-tool-menu-title {
@@ -3053,9 +3122,15 @@ body {
   border: 1px solid rgba(52, 199, 89, 0.2);
 }
 
-.ai-tool-mode-bar i {
+.ai-tool-mode-bar i,
+.ai-tool-mode-bar svg {
   flex-shrink: 0;
   font-size: 13px;
+  width: 13px;
+  height: 13px;
+  stroke: currentColor;
+  stroke-width: 2;
+  fill: none;
 }
 
 /* ===== Apple 风格多选框（Checkbox Group） ===== */

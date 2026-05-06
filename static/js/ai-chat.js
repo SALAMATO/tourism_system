@@ -68,11 +68,30 @@ class LowSkyAIChat {
       <div class="ai-chat-container">
         <div class="ai-chat-header">
           <h3><img src="/static/images/AI-icon.png" alt="AI" style="width: 24px; height: 24px; margin-right: 8px;"> LowSkyAI 智能助手</h3>
-          <button class="ai-chat-close">&times;</button>
+          <div class="ai-chat-controls">
+            <button class="ai-chat-minimize" title="最小化">
+              <svg width="10" height="1" viewBox="0 0 10 1">
+                <rect width="10" height="1" fill="currentColor"/>
+              </svg>
+            </button>
+            <button class="ai-chat-maximize" title="最大化">
+              <svg width="10" height="10" viewBox="0 0 10 10">
+                <rect x="1" y="1" width="8" height="8" fill="none" stroke="currentColor" stroke-width="1"/>
+              </svg>
+            </button>
+            <button class="ai-chat-close" title="关闭">
+              <svg width="10" height="10" viewBox="0 0 10 10">
+                <line x1="0" y1="0" x2="10" y2="10" stroke="currentColor" stroke-width="1"/>
+                <line x1="10" y1="0" x2="0" y2="10" stroke="currentColor" stroke-width="1"/>
+              </svg>
+            </button>
+          </div>
         </div>
         <div class="ai-chat-messages" id="ai-chat-messages">
           <div class="ai-welcome-message">
-            <i class="fas fa-plane-departure"></i>
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M2 12h5l2-9 4 18 2-9h5"/>
+            </svg>
             <h4>欢迎使用 LowSkyAI</h4>
             <p>我是您的低空旅游智能助手<br>可以为您解答低空旅游相关问题、推荐目的地、解释政策法规等</p>
           </div>
@@ -90,18 +109,26 @@ class LowSkyAIChat {
               <div class="ai-chat-input-actions">
                 <div class="ai-tool-menu-wrap">
                   <button class="ai-tool-btn" id="ai-tool-btn" title="选择工具模式">
-                    <i class="fas fa-tools"></i>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+                    </svg>
                   </button>
                   <div class="ai-tool-menu" id="ai-tool-menu">
                     <div class="ai-tool-menu-item active" data-mode="auto">
-                      <i class="fas fa-magic"></i>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
+                      </svg>
                       <div>
                         <div class="ai-tool-menu-title">默认模式</div>
                         <div class="ai-tool-menu-desc">解答低空旅游相关信息</div>
                       </div>
                     </div>
                     <div class="ai-tool-menu-item" data-mode="db_only">
-                      <i class="fas fa-database"></i>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <ellipse cx="12" cy="5" rx="9" ry="3"/>
+                        <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+                        <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+                      </svg>
                       <div>
                         <div class="ai-tool-menu-title">数据库查询</div>
                         <div class="ai-tool-menu-desc">查询系统数据库信息</div>
@@ -110,10 +137,15 @@ class LowSkyAIChat {
                   </div>
                 </div>
                 <button class="ai-chat-send" id="ai-chat-send">
-                  <i class="fas fa-arrow-up"></i>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="m5 12 7-7 7 7"/>
+                    <path d="M12 19V5"/>
+                  </svg>
                 </button>
                 <button class="ai-chat-stop" id="ai-chat-stop" style="display: none;">
-                  <i class="fas fa-stop"></i>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <rect x="6" y="6" width="12" height="12" rx="1"/>
+                  </svg>
                 </button>
               </div>
             </div>
@@ -137,6 +169,14 @@ class LowSkyAIChat {
     // 关闭按钮
     const closeBtn = this.modal.querySelector('.ai-chat-close');
     closeBtn.onclick = () => this.closeChat();
+    
+    // 最小化按钮 - 直接关闭对话框
+    const minimizeBtn = this.modal.querySelector('.ai-chat-minimize');
+    minimizeBtn.onclick = () => this.closeChat();
+    
+    // 最大化/还原按钮
+    const maximizeBtn = this.modal.querySelector('.ai-chat-maximize');
+    maximizeBtn.onclick = () => this.toggleMaximize();
     
     // 点击背景关闭
     this.modal.onclick = (e) => {
@@ -204,13 +244,13 @@ class LowSkyAIChat {
       this.toolBtn.className = 'ai-tool-btn active mode-db';
       modeBar.style.display = 'flex';
       modeBar.className = 'ai-tool-mode-bar mode-db';
-      modeBar.innerHTML = '<i class="fas fa-database"></i>&nbsp; <strong>数据库查询</strong> &mdash; 查询低空旅游信息管理系统数据，可询问旅游目的地、政策法规、统计数据、安全预警、新闻资讯等信息';
+      modeBar.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>&nbsp; <strong>数据库查询</strong> &mdash; 查询低空旅游信息管理系统数据，可询问旅游目的地、政策法规、统计数据、安全预警、新闻资讯等信息';
       this.input.placeholder = '例如：最近有哪些安全隐患？各地区游客数量排名？评分最高的目的地？';
     } else if (mode === 'web_only') {
       this.toolBtn.className = 'ai-tool-btn active mode-web';
       modeBar.style.display = 'flex';
       modeBar.className = 'ai-tool-mode-bar mode-web';
-      modeBar.innerHTML = '<i class="fas fa-globe"></i>&nbsp; <strong>联网搜索</strong> &mdash; 搜索互联网最新信息';
+      modeBar.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>&nbsp; <strong>联网搜索</strong> &mdash; 搜索互联网最新信息';
       this.input.placeholder = '例如：2026年低空经济最新政策？最新行业动态？';
     } else {
       this.toolBtn.className = 'ai-tool-btn';
@@ -231,6 +271,34 @@ class LowSkyAIChat {
     }
     this.modal.classList.remove('show');
     this.isOpen = false;
+    
+    // 清除最小化和最大化状态
+    const container = this.modal.querySelector('.ai-chat-container');
+    container.classList.remove('minimized', 'maximized');
+    
+    // 重置最大化按钮图标
+    const maximizeBtn = this.modal.querySelector('.ai-chat-maximize svg');
+    maximizeBtn.innerHTML = '<rect x="1" y="1" width="8" height="8" fill="none" stroke="currentColor" stroke-width="1"/>';
+  }
+  
+  minimizeChat() {
+    // 此方法已不再使用，最小化现在直接关闭对话框
+    this.closeChat();
+  }
+  
+  toggleMaximize() {
+    const container = this.modal.querySelector('.ai-chat-container');
+    const maximizeBtn = this.modal.querySelector('.ai-chat-maximize svg');
+    
+    if (container.classList.contains('maximized')) {
+      // 还原 - 单个方框
+      container.classList.remove('maximized');
+      maximizeBtn.innerHTML = '<rect x="1" y="1" width="8" height="8" fill="none" stroke="currentColor" stroke-width="1"/>';
+    } else {
+      // 最大化 - 层叠方框
+      container.classList.add('maximized');
+      maximizeBtn.innerHTML = '<rect x="3" y="1" width="6" height="6" fill="none" stroke="currentColor" stroke-width="1"/><rect x="1" y="3" width="6" height="6" fill="none" stroke="currentColor" stroke-width="1"/>';
+    }
   }
   
   stopGeneration() {
