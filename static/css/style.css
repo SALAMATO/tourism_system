@@ -360,10 +360,14 @@ body {
   right: 20px;
   top: 12px;
   z-index: 10005;  /* 高于菜单覆盖层 */
+  opacity: 0;  /* 完全透明 */
+  pointer-events: none;  /* 不响应点击 */
 }
 
 .mobile-menu-overlay.show .mobile-menu-toggle {
   display: block;  /* 菜单展开时显示 */
+  opacity: 1;  /* 可见 */
+  pointer-events: auto;  /* 响应点击 */
 }
 
 .mobile-menu {

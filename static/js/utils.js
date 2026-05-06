@@ -545,10 +545,10 @@ document.addEventListener('DOMContentLoaded', function() {
       isOpen ? closeMenu() : openMenu();
     });
     
-    // 点击菜单内的汉堡按钮关闭菜单（使用事件委托，避免被重新渲染影响）
+    // 点击菜单覆盖层的事件处理
     mobileMenuOverlay.addEventListener('click', function(e) {
-      // 点击关闭按钮
-      if (e.target.closest('.mobile-menu-toggle')) {
+      // 点击菜单内的关闭按钮（mobile-menu-toggle）
+      if (e.target.closest('.mobile-menu-toggle') && mobileMenuOverlay.classList.contains('show')) {
         console.log('点击了关闭按钮');
         closeMenu();
         return;
