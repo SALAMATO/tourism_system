@@ -88,22 +88,24 @@ class LowSkyAIChat {
                 rows="1"
               ></textarea>
               <div class="ai-chat-input-actions">
-                <button class="ai-tool-btn" id="ai-tool-btn" title="选择工具模式">
-                  <i class="fas fa-tools"></i>
-                </button>
-                <div class="ai-tool-menu" id="ai-tool-menu">
-                  <div class="ai-tool-menu-item active" data-mode="auto">
-                    <i class="fas fa-magic"></i>
-                    <div>
-                      <div class="ai-tool-menu-title">默认模式</div>
-                      <div class="ai-tool-menu-desc">解答低空旅游相关信息</div>
+                <div class="ai-tool-menu-wrap">
+                  <button class="ai-tool-btn" id="ai-tool-btn" title="选择工具模式">
+                    <i class="fas fa-tools"></i>
+                  </button>
+                  <div class="ai-tool-menu" id="ai-tool-menu">
+                    <div class="ai-tool-menu-item active" data-mode="auto">
+                      <i class="fas fa-magic"></i>
+                      <div>
+                        <div class="ai-tool-menu-title">默认模式</div>
+                        <div class="ai-tool-menu-desc">解答低空旅游相关信息</div>
+                      </div>
                     </div>
-                  </div>
-                  <div class="ai-tool-menu-item" data-mode="db_only">
-                    <i class="fas fa-database"></i>
-                    <div>
-                      <div class="ai-tool-menu-title">数据库查询</div>
-                      <div class="ai-tool-menu-desc">查询系统数据库信息</div>
+                    <div class="ai-tool-menu-item" data-mode="db_only">
+                      <i class="fas fa-database"></i>
+                      <div>
+                        <div class="ai-tool-menu-title">数据库查询</div>
+                        <div class="ai-tool-menu-desc">查询系统数据库信息</div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -202,7 +204,7 @@ class LowSkyAIChat {
       this.toolBtn.className = 'ai-tool-btn active mode-db';
       modeBar.style.display = 'flex';
       modeBar.className = 'ai-tool-mode-bar mode-db';
-      modeBar.innerHTML = '<i class="fas fa-database"></i>&nbsp; <strong>数据库查询</strong> &mdash; 查询低空旅游信息管理系统数据，可询问政策法规、统计数据、安全预警、新闻资讯等信息';
+      modeBar.innerHTML = '<i class="fas fa-database"></i>&nbsp; <strong>数据库查询</strong> &mdash; 查询低空旅游信息管理系统数据，可询问旅游目的地、政策法规、统计数据、安全预警、新闻资讯等信息';
       this.input.placeholder = '例如：最近有哪些安全隐患？各地区游客数量排名？评分最高的目的地？';
     } else if (mode === 'web_only') {
       this.toolBtn.className = 'ai-tool-btn active mode-web';
