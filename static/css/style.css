@@ -2855,6 +2855,15 @@ body {
   height: auto;
 }
 
+/* 新闻详情页封面图片 - 4:3比例 */
+.news-detail-cover-image {
+  width: 100%;
+  aspect-ratio: 4/3;
+  object-fit: cover;
+  border-radius: 12px;
+  display: block;
+}
+
 /* 图片本身 */
 .image-preview-item img {
   width: 100%;

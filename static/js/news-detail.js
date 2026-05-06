@@ -47,7 +47,7 @@ function renderNewsDetail(container, news) {
       ${news.cover_image ? `
         <div style="margin-bottom: 30px;">
           <img src="${escapeHtml(news.cover_image)}" alt="${escapeHtml(news.title)}" 
-               style="width: 100%; border-radius: 12px; max-height: 500px; object-fit: cover;">
+               class="news-detail-cover-image">
         </div>
       ` : ''}
       
