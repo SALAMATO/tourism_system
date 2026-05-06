@@ -1261,6 +1261,26 @@
   </footer>
   
 <script>
+  // 使用 sessionStorage 保存滚动位置，让浏览器自动处理恢复
+  (function() {
+    const SCROLL_POSITION_KEY = 'homepage_scroll_position';
+    
+    // 监听所有卡片链接点击，立即保存滚动位置
+    document.addEventListener('DOMContentLoaded', function() {
+      const detailLinks = document.querySelectorAll('a[href*="detail.html"]');
+      detailLinks.forEach(function(link) {
+        link.addEventListener('click', function() {
+          const currentPosition = window.pageYOffset || document.documentElement.scrollTop;
+          sessionStorage.setItem(SCROLL_POSITION_KEY, currentPosition);
+          console.log('[首页] 点击卡片，保存滚动位置:', currentPosition);
+          
+          // 标记页面即将离开，禁用自动吸附
+          window.__isNavigatingAway = true;
+        });
+      });
+    });
+  })();
+
   var swiper = new Swiper(".mySwiper", {
     slidesPerView: "auto",
     centeredSlides: true,
@@ -1329,8 +1349,20 @@
     let isScrolling = false;
     let scrollTimeout;
     let lastScrollPosition = window.pageYOffset;
+    let isPageLoading = true; // 标记页面是否正在加载
+    
+    // 页面加载完成后，延迟启用自动吸附功能
+    window.addEventListener('load', function() {
+      setTimeout(function() {
+        isPageLoading = false;
+        console.log('[首页] 启用自动吸附功能');
+      }, 500); // 延迟500ms启用，让浏览器先完成滚动位置恢复
+    });
 
     window.addEventListener('scroll', function() {
+      // 如果页面正在加载或即将离开，不执行自动吸附
+      if (isPageLoading || window.__isNavigatingAway) return;
+      
       const currentScrollPosition = window.pageYOffset;
       
       // 清除之前的定时器
