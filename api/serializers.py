@@ -251,10 +251,70 @@ class NewsSerializer(serializers.ModelSerializer):
         child=serializers.CharField(),
         required=False
     )
+    cover_image = serializers.ImageField(required=False, allow_null=True)
+    cover_image_url = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = News
         fields = '__all__'
+
+    def get_cover_image_url(self, obj):
+        request = self.context.get('request')
+        if not obj.cover_image:
+            return ''
+        url = obj.cover_image.url
+        return request.build_absolute_uri(url) if request else url
+
+    def create(self, validated_data):
+        """创建新闻时使用媒体文件管理器处理封面图片"""
+        # 处理封面图片
+        if 'cover_image' in validated_data and validated_data['cover_image']:
+            uploaded_file = validated_data.pop('cover_image')
+            media_file, _ = MediaFileManager.save_file_with_deduplication(
+                uploaded_file,
+                upload_to='news/'
+            )
+            validated_data['cover_image'] = media_file.file_path
+        
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        """更新新闻时处理封面图片的引用计数"""
+        from django.core.files.uploadedfile import UploadedFile
+        
+        # 处理封面图片
+        if 'cover_image' in validated_data:
+            new_cover = validated_data['cover_image']
+            old_cover = instance.cover_image
+            
+            # 如果是新上传的文件
+            if isinstance(new_cover, UploadedFile):
+                # 释放旧文件引用
+                if old_cover:
+                    try:
+                        from .models import MediaFile
+                        media_file = MediaFile.objects.get(file_path=str(old_cover), is_deleted=False)
+                        MediaFileManager.release_file_reference(media_file)
+                    except MediaFile.DoesNotExist:
+                        pass
+                
+                # 保存新文件
+                media_file, _ = MediaFileManager.save_file_with_deduplication(
+                    new_cover,
+                    upload_to='news/'
+                )
+                validated_data['cover_image'] = media_file.file_path
+            elif not new_cover:
+                # 如果清空了图片
+                if old_cover:
+                    try:
+                        from .models import MediaFile
+                        media_file = MediaFile.objects.get(file_path=str(old_cover), is_deleted=False)
+                        MediaFileManager.release_file_reference(media_file)
+                    except MediaFile.DoesNotExist:
+                        pass
+        
+        return super().update(instance, validated_data)
 
 
 class SafetyAlertSerializer(serializers.ModelSerializer):

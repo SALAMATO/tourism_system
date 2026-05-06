@@ -56,10 +56,43 @@
           <label class="form-label">标签（用逗号分隔）</label>
           <input type="text" id="news-tags" class="form-input" placeholder="低空旅游,行业发展">
         </div>
-        <div class="form-group">
-          <label class="form-label">封面图片URL（选填）</label>
-          <input type="url" id="news-cover" class="form-input" placeholder="https://...">
+      </div>
+
+      <!-- 封面图片上传 -->
+      <div class="form-group">
+        <label class="form-label">封面图片（选填）</label>
+        <div class="image-upload-wrapper" id="news-cover-upload-wrapper">
+          <!-- 上传框 -->
+          <div class="image-upload-box" id="news-cover-upload-box">
+            <i class="fas fa-cloud-upload-alt image-upload-icon"></i>
+            <div class="image-upload-title">点击上传封面图片</div>
+            <div class="image-upload-desc">支持 JPG、PNG 格式，建议尺寸 1200x800</div>
+            <input type="file" id="news-cover-image" class="image-upload-input" accept="image/*">
+          </div>
+          
+          <!-- 预览卡片（上传后显示，覆盖上传框） -->
+          <div id="news-cover-preview" style="display:none; position: relative;">
+            <div class="image-preview-item" style="cursor: zoom-in;" onclick="openImageZoom('news-cover-preview-img')">
+              <!-- 右上角操作按钮 -->
+              <div class="image-top-actions" onclick="event.stopPropagation()">
+                <button type="button" class="image-edit-btn" onclick="AdminApp.Modules.News.editCoverImage()" title="修改图片">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button type="button" class="image-remove-btn" onclick="AdminApp.Modules.News.removeCoverImage()" title="删除图片">
+                  <i class="fas fa-trash-alt"></i>
+                </button>
+              </div>
+              <div class="image-preview-image-wrapper">
+                <img id="news-cover-preview-img" src="" alt="封面预览">
+              </div>
+            </div>
+            <div class="image-preview-footer">
+              <div class="image-file-name" id="news-cover-file-name"></div>
+            </div>
+          </div>
         </div>
+        <input type="hidden" id="news-existing-cover-image">
+        <div style="margin-top: 8px; font-size: 13px; color: var(--text-secondary);">不上传图片时，前端将使用统一的默认占位风格。</div>
       </div>
       
       <div class="form-group">

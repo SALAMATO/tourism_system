@@ -33,6 +33,21 @@ AdminApp.Modules.News = {
         if (deleteBtn) {
             deleteBtn.addEventListener('click', () => this.deleteCurrentNews());
         }
+        
+        // 封面图片上传框点击事件
+        const uploadBox = document.getElementById('news-cover-upload-box');
+        if (uploadBox) {
+            uploadBox.addEventListener('click', () => {
+                const input = document.getElementById('news-cover-image');
+                if (input) input.click();
+            });
+        }
+        
+        // 封面图片预览
+        const coverInput = document.getElementById('news-cover-image');
+        if (coverInput) {
+            coverInput.addEventListener('change', () => this.previewCoverImage());
+        }
     },
     
     async submitForm() {
@@ -46,30 +61,35 @@ AdminApp.Modules.News = {
             const dateValue = document.getElementById('news-date').value;
             const publishDate = dateValue ? new Date(dateValue).toISOString() : new Date().toISOString();
             
-            const data = {
-                title: document.getElementById('news-title').value,
-                category: document.getElementById('news-category').value,
-                author: document.getElementById('news-author').value,
-                cover_image: document.getElementById('news-cover').value || '',
-                content: (window.WangEditorHelper && window.WangEditorHelper.editorInstances['news-content']) 
-                    ? window.WangEditorHelper.getContent('news-content') 
-                    : document.getElementById('news-content').value,
-                tags: tags,
-                publish_date: publishDate,
-            };
+            // 使用 FormData 支持文件上传
+            const formData = new FormData();
+            formData.append('title', document.getElementById('news-title').value);
+            formData.append('category', document.getElementById('news-category').value);
+            formData.append('author', document.getElementById('news-author').value);
+            formData.append('content', (window.WangEditorHelper && window.WangEditorHelper.editorInstances['news-content']) 
+                ? window.WangEditorHelper.getContent('news-content') 
+                : document.getElementById('news-content').value);
+            formData.append('tags', JSON.stringify(tags));
+            formData.append('publish_date', publishDate);
             
-            console.log('提交新闻数据:', data);
+            // 处理封面图片
+            const coverInput = document.getElementById('news-cover-image');
+            const coverFile = coverInput.files && coverInput.files[0];
+            if (coverFile) {
+                formData.append('cover_image', coverFile);
+            }
+            
+            console.log('提交新闻数据');
             
             if (this.currentEditingId) {
                 // 保留原有的发布日期和浏览次数
                 if (this.currentEditingData) {
-                    data.publish_date = this.currentEditingData.publish_date;
-                    data.views = this.currentEditingData.views;
+                    formData.append('views', this.currentEditingData.views);
                 }
-                await api.updateNews(this.currentEditingId, data);
+                await api.updateNews(this.currentEditingId, formData);
                 showNotification('新闻修改成功', 'success');
             } else {
-                await api.createNews(data);
+                await api.createNews(formData);
                 showNotification('新闻发布成功', 'success');
             }
             
@@ -89,6 +109,19 @@ AdminApp.Modules.News = {
         this.currentEditingId = null;
         this.currentEditingData = null;
         
+        // 重置封面图片
+        const preview = document.getElementById('news-cover-preview');
+        const previewImage = document.getElementById('news-cover-preview-img');
+        const fileNameEl = document.getElementById('news-cover-file-name');
+        const uploadBox = document.getElementById('news-cover-upload-box');
+        const coverInput = document.getElementById('news-cover-image');
+        
+        if (coverInput) coverInput.value = '';
+        if (previewImage) previewImage.src = '';
+        if (fileNameEl) fileNameEl.textContent = '';
+        if (uploadBox) uploadBox.style.display = 'block';
+        if (preview) preview.style.display = 'none';
+        
         const titleEl = document.querySelector('#news-module .card-title');
         if (titleEl) titleEl.textContent = '发布新闻';
         
@@ -105,15 +138,48 @@ AdminApp.Modules.News = {
             this.currentEditingId = id;
             this.currentEditingData = news;
             
-            document.getElementById('news-title').value = news.title || '';
-            document.getElementById('news-category').value = news.category || '';
-            document.getElementById('news-author').value = news.author || '';
-            document.getElementById('news-cover').value = news.cover_image || '';
+            // 安全地设置表单字段值
+            const titleInput = document.getElementById('news-title');
+            if (titleInput) titleInput.value = news.title || '';
+            
+            const categorySelect = document.getElementById('news-category');
+            if (categorySelect) categorySelect.value = news.category || '';
+            
+            const authorInput = document.getElementById('news-author');
+            if (authorInput) authorInput.value = news.author || '';
             
             // 设置内容到textarea（如果编辑器未初始化）
-            document.getElementById('news-content').value = news.content || '';
+            const contentTextarea = document.getElementById('news-content');
+            if (contentTextarea) {
+                contentTextarea.value = news.content || '';
+            }
             
-            document.getElementById('news-tags').value = (news.tags || []).join(',');
+            const tagsInput = document.getElementById('news-tags');
+            if (tagsInput) {
+                tagsInput.value = (news.tags || []).join(',');
+            }
+            
+            // 封面图片
+            const preview = document.getElementById('news-cover-preview');
+            const previewImage = document.getElementById('news-cover-preview-img');
+            const fileNameEl = document.getElementById('news-cover-file-name');
+            const uploadBox = document.getElementById('news-cover-upload-box');
+            const coverUrl = news.cover_image_url || news.cover_image || '';
+            
+            if (previewImage) previewImage.src = coverUrl;
+            if (fileNameEl && coverUrl) {
+                const fileName = coverUrl.split('/').pop();
+                fileNameEl.textContent = fileName || '已上传图片';
+            }
+            
+            // 如果有图片，隐藏上传框，显示预览；否则显示上传框
+            if (coverUrl) {
+                if (uploadBox) uploadBox.style.display = 'none';
+                if (preview) preview.style.display = 'block';
+            } else {
+                if (uploadBox) uploadBox.style.display = 'block';
+                if (preview) preview.style.display = 'none';
+            }
             
             const titleEl = document.querySelector('#news-module .card-title');
             if (titleEl) titleEl.textContent = '编辑新闻';
@@ -125,15 +191,25 @@ AdminApp.Modules.News = {
             if (deleteBtn) deleteBtn.style.display = 'inline-block';
             
             // 滚动到新闻资讯管理区域
-            document.getElementById('news-module').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            const moduleEl = document.getElementById('news-module');
+            if (moduleEl) {
+                moduleEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
             
             // 缓存所有表单数据
             AdminApp.saveToCache('news-title', news.title || '');
             AdminApp.saveToCache('news-category', news.category || '');
             AdminApp.saveToCache('news-author', news.author || '');
-            AdminApp.saveToCache('news-cover', news.cover_image || '');
             AdminApp.saveToCache('news-content', news.content || '');
             AdminApp.saveToCache('news-tags', (news.tags || []).join(','));
+            
+            // 缓存图片状态
+            if (coverUrl) {
+                AdminApp.saveToCache('news-cover-has-image', true);
+                const fileName = coverUrl.split('/').pop();
+                AdminApp.saveToCache('news-cover-file-name', fileName || '已上传图片');
+            }
+            
             console.log('✨ 已缓存新闻编辑数据');
             
             // 自动初始化富文本编辑器
@@ -210,6 +286,51 @@ AdminApp.Modules.News = {
             console.error('删除新闻失败:', error);
             showNotification('删除失败：' + error.message, 'error');
         }
+    },
+    
+    // ==================== 封面图片操作 ====================
+    
+    previewCoverImage() {
+        const input = document.getElementById('news-cover-image');
+        const uploadBox = document.getElementById('news-cover-upload-box');
+        const preview = document.getElementById('news-cover-preview');
+        const previewImage = document.getElementById('news-cover-preview-img');
+        const fileNameEl = document.getElementById('news-cover-file-name');
+        const file = input.files && input.files[0];
+        
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = event => {
+            previewImage.src = event.target.result;
+            if (fileNameEl) {
+                fileNameEl.textContent = file.name;
+            }
+            // 隐藏上传框，显示预览
+            if (uploadBox) uploadBox.style.display = 'none';
+            if (preview) preview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    },
+    
+    editCoverImage() {
+        const input = document.getElementById('news-cover-image');
+        if (input) input.click();
+    },
+    
+    removeCoverImage() {
+        const input = document.getElementById('news-cover-image');
+        const uploadBox = document.getElementById('news-cover-upload-box');
+        const preview = document.getElementById('news-cover-preview');
+        const previewImage = document.getElementById('news-cover-preview-img');
+        const fileNameEl = document.getElementById('news-cover-file-name');
+        
+        if (input) input.value = '';
+        if (previewImage) previewImage.src = '';
+        if (fileNameEl) fileNameEl.textContent = '';
+        // 显示上传框，隐藏预览
+        if (uploadBox) uploadBox.style.display = 'block';
+        if (preview) preview.style.display = 'none';
     },
     
     async loadNewsList() {

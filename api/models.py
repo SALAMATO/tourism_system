@@ -193,7 +193,7 @@ class News(models.Model):
     title = models.CharField(max_length=200, verbose_name='新闻标题')
     category = models.CharField(max_length=100, verbose_name='分类')
     author = models.CharField(max_length=100, verbose_name='作者')
-    cover_image = models.URLField(blank=True, null=True, verbose_name='封面图片')
+    cover_image = models.ImageField(upload_to='news/', blank=True, null=True, verbose_name='封面图片')
     content = models.TextField(verbose_name='新闻内容')
     publish_date = models.DateTimeField(verbose_name='发布日期')
     views = models.IntegerField(default=0, verbose_name='浏览次数')
@@ -209,6 +209,21 @@ class News(models.Model):
 
     def __str__(self):
         return self.title
+
+
+# 信号处理器：在删除News时释放文件引用
+@receiver(post_delete, sender=News)
+def news_post_delete(sender, instance, **kwargs):
+    """当News被删除时，释放封面图片文件引用"""
+    from .media_manager import MediaFileManager
+    
+    # 释放封面图片
+    if instance.cover_image:
+        try:
+            media_file = MediaFile.objects.get(file_path=str(instance.cover_image), is_deleted=False)
+            MediaFileManager.release_file_reference(media_file)
+        except MediaFile.DoesNotExist:
+            pass
 
 
 class SafetyAlert(models.Model):
