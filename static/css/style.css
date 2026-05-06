@@ -2331,10 +2331,13 @@ body {
   z-index: 10000;
   align-items: center;
   justify-content: center;
+  opacity: 0;
+  transition: opacity var(--apple-med) var(--apple-ease);
 }
 
 .ai-chat-modal.show {
   display: flex;
+  opacity: 1;
 }
 
 .ai-chat-container {
@@ -2349,6 +2352,13 @@ body {
   flex-direction: column;
   overflow: hidden;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: scale(0.95) translateY(20px);
+  opacity: 0;
+}
+
+.ai-chat-modal.show .ai-chat-container {
+  transform: scale(1) translateY(0);
+  opacity: 1;
 }
 
 /* 内容区域 - 添加过渡效果 */
@@ -2846,6 +2856,11 @@ body {
     max-width: 100% !important;
     border-radius: 0 !important;
     margin: 0 !important;
+    transform: translateY(100%); /* 从底部滑入 */
+  }
+  
+  .ai-chat-modal.show .ai-chat-container {
+    transform: translateY(0); /* 滑入到正常位置 */
   }
   
   /* 移动端内容区域铺满 */

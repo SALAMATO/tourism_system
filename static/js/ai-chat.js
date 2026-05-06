@@ -269,16 +269,21 @@ class LowSkyAIChat {
     if (this.isGenerating) {
       this.stopGeneration();
     }
+    
+    // 先移除show类触发关闭动画
     this.modal.classList.remove('show');
     this.isOpen = false;
     
-    // 清除最小化和最大化状态
-    const container = this.modal.querySelector('.ai-chat-container');
-    container.classList.remove('minimized', 'maximized');
-    
-    // 重置最大化按钮图标
-    const maximizeBtn = this.modal.querySelector('.ai-chat-maximize svg');
-    maximizeBtn.innerHTML = '<rect x="1" y="1" width="8" height="8" fill="none" stroke="currentColor" stroke-width="1"/>';
+    // 等待动画完成后再清理状态（350ms与CSS动画时间一致）
+    setTimeout(() => {
+      // 清除最小化和最大化状态
+      const container = this.modal.querySelector('.ai-chat-container');
+      container.classList.remove('minimized', 'maximized');
+      
+      // 重置最大化按钮图标
+      const maximizeBtn = this.modal.querySelector('.ai-chat-maximize svg');
+      maximizeBtn.innerHTML = '<rect x="1" y="1" width="8" height="8" fill="none" stroke="currentColor" stroke-width="1"/>';
+    }, 350);
   }
   
   minimizeChat() {
