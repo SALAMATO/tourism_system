@@ -2847,7 +2847,8 @@ body {
 }
 
 /* 封面图片容器 - 4:3比例 */
-#destination-cover-preview .image-preview-image-wrapper {
+#destination-cover-preview .image-preview-image-wrapper,
+#news-cover-preview .image-preview-image-wrapper {
   aspect-ratio: 4/3;
   min-height: auto;
   max-height: none;
