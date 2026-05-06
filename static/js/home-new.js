@@ -197,33 +197,37 @@ function renderDestinations(container, destinations) {
   container.innerHTML = html;
 }
 
-// 加载最新新闻
+// 加载最新政策法规
 async function loadLatestNews() {
-  const container = document.getElementById('latest-news-container');
+  const container = document.getElementById('latest-policy-container');
   
   try {
     showLoading(container);
-    const response = await api.getNews({ limit: 3, sort: '-created_at' });
+    console.log('[home-new] 开始加载政策法规...');
+    const response = await api.getPolicies({ limit: 3, sort: '-created_at' });
+    console.log('[home-new] API响应:', response);
     
     if (response.data && response.data.length > 0) {
-      renderNewsList(container, response.data);
+      console.log('[home-new] 获取到政策法规数据:', response.data.length, '条');
+      renderPolicyList(container, response.data);
     } else {
-      container.innerHTML = '<div class="loading"><div>暂无新闻资讯</div></div>';
+      console.log('[home-new] 没有获取到政策法规数据');
+      container.innerHTML = '<div class="loading"><div>暂无政策法规</div></div>';
     }
   } catch (error) {
-    console.error('加载新闻失败:', error);
+    console.error('[home-new] 加载政策法规失败:', error);
     showError(container);
   }
 }
 
-// 渲染新闻列表
-function renderNewsList(container, newsItems) {
-  const html = newsItems.map(item => `
-    <div class="list-item" onclick="location.href='news-detail.html?id=${item.id}'">
+// 渲染政策法规列表
+function renderPolicyList(container, policyItems) {
+  const html = policyItems.map(item => `
+    <div class="list-item" onclick="location.href='policy-detail.html?id=${item.id}'">
       <h3>${escapeHtml(item.title)}</h3>
       <div class="list-item-meta">
-        <span><i class="fas fa-tag"></i> ${escapeHtml(item.category || '未分类')}</span>
-        <span><i class="fas fa-user"></i> ${escapeHtml(item.author || '未知')}</span>
+        <span><i class="fas fa-tag"></i> ${escapeHtml(item.level || '未分类')}</span>
+        <span><i class="fas fa-building"></i> ${escapeHtml(item.department || '未知')}</span>
         <span><i class="fas fa-calendar"></i> ${formatDate(item.publish_date)}</span>
         <span><i class="fas fa-eye"></i> ${item.views || 0} 次浏览</span>
       </div>
