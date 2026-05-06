@@ -1350,18 +1350,32 @@
     let scrollTimeout;
     let lastScrollPosition = window.pageYOffset;
     let isPageLoading = true; // 标记页面是否正在加载
+    let hasRestoredFromBack = false; // 标记是否已经从返回恢复
     
-    // 页面加载完成后，延迟启用自动吸附功能
+    // 检测是否是页面返回（通过performance.navigation或performance.getEntriesByType）
     window.addEventListener('load', function() {
-      setTimeout(function() {
-        isPageLoading = false;
-        console.log('[首页] 启用自动吸附功能');
-      }, 500); // 延迟500ms启用，让浏览器先完成滚动位置恢复
+      // 检查是否是从其他页面返回
+      const perfEntries = performance.getEntriesByType('navigation');
+      if (perfEntries.length > 0 && perfEntries[0].type === 'back_forward') {
+        console.log('[首页] 检测到从详情页返回');
+        hasRestoredFromBack = true;
+        // 返回后2秒内禁用自动吸附，让用户有机会手动滚动
+        setTimeout(function() {
+          hasRestoredFromBack = false;
+          console.log('[首页] 启用自动吸附功能');
+        }, 2000);
+      } else {
+        // 正常加载，延迟500ms启用自动吸附
+        setTimeout(function() {
+          isPageLoading = false;
+          console.log('[首页] 启用自动吸附功能');
+        }, 500);
+      }
     });
 
     window.addEventListener('scroll', function() {
-      // 如果页面正在加载或即将离开，不执行自动吸附
-      if (isPageLoading || window.__isNavigatingAway) return;
+      // 如果页面正在加载、即将离开、或刚从返回恢复，不执行自动吸附
+      if (isPageLoading || window.__isNavigatingAway || hasRestoredFromBack) return;
       
       const currentScrollPosition = window.pageYOffset;
       
