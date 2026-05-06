@@ -45,13 +45,17 @@ async function loadHomepageDestinationModules() {
       managedContainer.innerHTML = '<div class="loading"><div>暂无推荐内容</div></div>';
     }
     
-    // 触发加载完成事件
-    window.dispatchEvent(new CustomEvent('homepageContentLoaded', { detail: 'destinations' }));
+    // 触发周边模块加载完成事件
+    window.dispatchEvent(new CustomEvent('homepageContentLoaded', { detail: 'nearby' }));
+    
+    // 触发精选模块加载完成事件
+    window.dispatchEvent(new CustomEvent('homepageContentLoaded', { detail: 'featured' }));
   } catch (error) {
     console.error('加载首页目的地模块失败:', error);
     nearbyContainer.innerHTML = '<div class="loading"><div>加载失败，请稍后重试</div></div>';
     managedContainer.innerHTML = '<div class="loading"><div>加载失败，请稍后重试</div></div>';
-    window.dispatchEvent(new CustomEvent('homepageContentLoaded', { detail: 'destinations' }));
+    window.dispatchEvent(new CustomEvent('homepageContentLoaded', { detail: 'nearby' }));
+    window.dispatchEvent(new CustomEvent('homepageContentLoaded', { detail: 'featured' }));
   }
 }
 

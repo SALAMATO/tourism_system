@@ -1039,28 +1039,20 @@
     </div>
 </div>
 
-<section class="homepage-destination-section section-block" id="homepage-destinations">
+<!-- 周边低空旅行 - 独立模块 -->
+<section class="homepage-destination-section section-block" id="nearby-destinations">
   <div class="homepage-destination-shell">
-    <div class="homepage-destination-module">
-      <div class="homepage-destination-heading">
-        <div>
-
-        </div>
-      </div>
-      <div id="nearby-destination-content">
-        <div class="loading"><div class="spinner"></div><div>正在加载周边低空旅行...</div></div>
-      </div>
+    <div id="nearby-destination-content">
+      <div class="loading"><div class="spinner"></div><div>正在加载周边低空旅行...</div></div>
     </div>
+  </div>
+</section>
 
-    <div class="homepage-destination-module">
-      <div class="homepage-destination-heading">
-        <div>
-
-        </div>
-      </div>
-      <div id="managed-destination-content">
-        <div class="loading"><div class="spinner"></div><div>正在加载推荐目的地...</div></div>
-      </div>
+<!-- 精选低空旅行 - 独立模块 -->
+<section class="homepage-destination-section section-block" id="featured-destinations">
+  <div class="homepage-destination-shell">
+    <div id="managed-destination-content">
+      <div class="loading"><div class="spinner"></div><div>正在加载推荐目的地...</div></div>
     </div>
   </div>
 </section>
@@ -1335,7 +1327,7 @@
     // 首次进入页面，延迟启用 snap（等待内容加载完成）
     if (!disableSnap) {
       let loadedModules = new Set();
-      const requiredModules = ['destinations', 'news', 'policy'];
+      const requiredModules = ['nearby', 'featured', 'news', 'policy'];
       
       // 监听所有模块的加载完成事件
       window.addEventListener('homepageContentLoaded', (event) => {
