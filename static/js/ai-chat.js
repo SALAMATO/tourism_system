@@ -363,8 +363,16 @@ class LowSkyAIChat {
         this.isResizing = true;
         this.resizeDirection = handle.dataset.direction;
         
-        // 记录初始状态
+        // 获取当前的实际渲染尺寸（包括CSS限制后的尺寸）
         const rect = container.getBoundingClientRect();
+        
+        // 先设置当前的实际尺寸，避免清除max限制时跳变
+        container.style.width = rect.width + 'px';
+        container.style.height = rect.height + 'px';
+        container.style.left = rect.left + 'px';
+        container.style.top = rect.top + 'px';
+        
+        // 记录初始状态（使用设置后的值）
         this.resizeStartX = e.clientX;
         this.resizeStartY = e.clientY;
         this.resizeStartWidth = rect.width;
