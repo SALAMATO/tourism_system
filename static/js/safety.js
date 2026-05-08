@@ -110,7 +110,6 @@ async function showAlertDetail(alertId) {
         
         <div class="list-item-meta" style="margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--border-color);">
           <span><i class="fas fa-layer-group"></i> ${escapeHtml(alert.category || '未分类')}</span>
-          <span><i class="fas fa-calendar"></i> ${formatDate(alert.report_date)}</span>
           <span><i class="fas fa-info-circle"></i> ${escapeHtml(alert.status || '待处理')}</span>
           <span><i class="fas fa-calendar-plus"></i> 创建时间: ${formatDateTime(alert.created_at)}</span>
           <span><i class="fas fa-calendar-check"></i> 更新时间: ${formatDateTime(alert.updated_at)}</span>
