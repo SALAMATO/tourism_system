@@ -845,8 +845,17 @@ class LowSkyAIChat {
   parseMarkdown(text) {
     if (!text) return '';
     
+    // 先保护HTML标签（如<a>标签），避免被转义
+    const htmlTags = [];
+    let protectedText = text.replace(/<[^>]+>/g, (match) => {
+      // 使用不会与Markdown语法冲突的占位符格式
+      const placeholder = `%%HTMLTAG${htmlTags.length}%%`;
+      htmlTags.push(match);
+      return placeholder;
+    });
+    
     // 转义HTML特殊字符
-    let html = text
+    let html = protectedText
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;');
@@ -896,8 +905,30 @@ class LowSkyAIChat {
     // 处理分隔线
     html = html.replace(/^[-*_]{3,}$/gm, '<hr>');
     
+    // 先恢复HTML标签，再处理表格（避免占位符被表格解析破坏）
+    if (htmlTags.length > 0) {
+      console.log('恢复HTML标签:', htmlTags);
+      console.log('恢复前的HTML片段:', html.substring(0, 500));
+    }
+    htmlTags.forEach((tag, i) => {
+      const placeholder = `%%HTMLTAG${i}%%`;
+      const beforeReplace = html;
+      html = html.replace(placeholder, tag);
+      if (html !== beforeReplace) {
+        console.log(`已替换 ${placeholder} -> ${tag}`);
+      } else {
+        console.warn(`未找到 ${placeholder}`);
+      }
+    });
+    console.log('恢复后的HTML片段:', html.substring(0, 500));
+    
     // 处理Markdown表格（管道符分隔）
     html = this.parseMarkdownTables(html);
+    
+    // 表格解析后，再次尝试恢复可能遗漏的HTML标签占位符
+    htmlTags.forEach((tag, i) => {
+      html = html.replace(`%%HTMLTAG${i}%%`, tag);
+    });
     
     // 处理换行
     html = html.replace(/\n\n/g, '</p><p>');
@@ -1067,3 +1098,104 @@ window.addEventListener('DOMContentLoaded', () => {
     window.aiChat.clearHistory();
   }
 });
+
+/**
+ * 显示安全预警详情弹窗
+ * @param {number} alertId - 安全预警ID
+ */
+async function showSafetyAlertDetail(alertId) {
+  try {
+    // 调用API获取安全预警详情
+    const response = await fetch(`/api/safety-alerts/${alertId}/`);
+    
+    if (!response.ok) {
+      throw new Error('获取安全预警详情失败');
+    }
+    
+    const data = await response.json();
+    
+    // 创建弹窗内容
+    const modalContent = `
+      <div class="safety-alert-detail-modal">
+        <div class="safety-alert-detail-header">
+          <h3>${data.title}</h3>
+          <button class="safety-alert-close" onclick="closeSafetyAlertModal()">&times;</button>
+        </div>
+        <div class="safety-alert-detail-body">
+          <div class="safety-alert-info">
+            <div class="info-row">
+              <span class="info-label">风险等级：</span>
+              <span class="risk-level risk-${data.risk_level === '高' ? 'high' : data.risk_level === '中' ? 'medium' : 'low'}">
+                ${data.risk_level}
+              </span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">隐患类别：</span>
+              <span>${data.category}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">报告日期：</span>
+              <span>${data.report_date}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">状态：</span>
+              <span class="status-${data.status === '已解决' ? 'resolved' : data.status === '处理中' ? 'processing' : 'pending'}">
+                ${data.status}
+              </span>
+            </div>
+          </div>
+          
+          ${data.description ? `
+          <div class="detail-section">
+            <h4>问题描述</h4>
+            <p>${data.description}</p>
+          </div>
+          ` : ''}
+          
+          ${data.prevention ? `
+          <div class="detail-section">
+            <h4>预防措施</h4>
+            <p>${data.prevention}</p>
+          </div>
+          ` : ''}
+          
+          ${data.emergency_plan ? `
+          <div class="detail-section">
+            <h4>应急预案</h4>
+            <p>${data.emergency_plan}</p>
+          </div>
+          ` : ''}
+        </div>
+      </div>
+    `;
+    
+    // 创建遮罩层
+    const overlay = document.createElement('div');
+    overlay.className = 'safety-alert-overlay';
+    overlay.id = 'safety-alert-overlay';
+    overlay.innerHTML = modalContent;
+    overlay.onclick = (e) => {
+      if (e.target === overlay) {
+        closeSafetyAlertModal();
+      }
+    };
+    
+    document.body.appendChild(overlay);
+    document.body.style.overflow = 'hidden'; // 禁止背景滚动
+    
+  } catch (error) {
+    console.error('获取安全预警详情失败:', error);
+    alert('获取安全预警详情失败，请稍后重试');
+  }
+}
+
+/**
+ * 关闭安全预警详情弹窗
+ */
+function closeSafetyAlertModal() {
+  const overlay = document.getElementById('safety-alert-overlay');
+  if (overlay) {
+    overlay.remove();
+    document.body.style.overflow = ''; // 恢复滚动
+  }
+}

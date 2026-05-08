@@ -133,6 +133,7 @@ class SQLDatabaseChain:
 10. 地理位置查询可以使用china_cities表（如果存在）关联destinations表的city字段，获取经纬度进行距离计算
 11. 【重要】查询 news 表时，绝对不要 SELECT content 字段，只查询 id, title, category, author, publish_date, views 等元数据字段
 12. 【重要】查询 policies 表时，也尽量不要 SELECT content 字段，除非用户明确要求查看政策全文
+13. 【重要】查询 safety_alerts 表时，绝对不要 SELECT description、prevention、emergency_plan 字段，只查询 id, title, risk_level, category, report_date, status 等元数据字段
 """)
         human_msg = HumanMessage(content=f"用户问题：{question}")
 
@@ -253,6 +254,24 @@ class SQLDatabaseChain:
       | [无人机飞行管理条例](/policies/policy-detail.html?id=2) | 省级 | 安全管理 | 省政府 | 2026-02-15 |
 
       点击标题可查看完整政策内容
+      ```
+
+11. 【安全预警特殊处理】
+    - 如果查询结果包含 safety_alerts 表的数据，绝对不要展示 description、prevention、emergency_plan 字段
+    - 在表格中只显示：标题、风险等级、隐患类别、报告日期、状态
+    - 标题必须使用 JavaScript 弹窗链接格式，调用 showSafetyAlertDetail(ID值) 函数
+    - 链接格式：<a href="javascript:void(0)" onclick="showSafetyAlertDetail(ID值)">标题文本</a>
+    - 在表格后添加提示：“点击标题可查看详情、预防措施和应急预案”
+    - 示例格式：
+      ```
+      以下是相关的安全隐患预警：
+
+      | 标题 | 风险等级 | 隐患类别 | 报告日期 | 状态 |
+      | --- | --- | --- | --- | --- |
+      | <a href="javascript:void(0)" onclick="showSafetyAlertDetail(1)">某景区直升机起降点风速超标</a> | 高 | 气象条件 | 2026-05-01 | 处理中 |
+      | <a href="javascript:void(0)" onclick="showSafetyAlertDetail(2)">无人机禁飞区违规飞行</a> | 中 | 违规操作 | 2026-04-28 | 待处理 |
+
+      点击标题可查看详情、预防措施和应急预案
       ```
 
 请严格按照以上格式要求回答，确保表格规范美观。
