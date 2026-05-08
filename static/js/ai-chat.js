@@ -114,12 +114,12 @@ class LowSkyAIChat {
             <div class="ai-quick-queries">
               <div class="ai-quick-query-title">您可以问我：</div>
               <div class="ai-quick-query-list">
-                <button class="ai-quick-query-item" data-question="查询旅游地">
+                <button class="ai-quick-query-item" data-question="查询旅游目的地">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="12" cy="12" r="10"/>
                     <path d="m9 12 2 2 4-4"/>
                   </svg>
-                  <span>查询旅游地</span>
+                  <span>查询旅游目的地</span>
                 </button>
                 <button class="ai-quick-query-item" data-question="查询政策法规">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
