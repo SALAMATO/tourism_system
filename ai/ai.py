@@ -284,11 +284,6 @@ Be professional and friendly."""
                     if content:
                         content_parts.append(content)
                         
-                        # 检测工具调用（支持多种格式）
-                        if "[TOOL:" in content or "[调用工具:" in content or "参数:" in content:
-                            tool_calls_detected = True
-                            continue  # 不输出工具调用标记
-                        
                         # 累积内容
                         accumulated_content += content
                         
@@ -313,6 +308,10 @@ Be professional and friendly."""
             
             # 完整回复
             full_response = "".join(content_parts)
+            
+            # 检测是否有工具调用
+            if "[TOOL:" in full_response or "[调用工具:" in full_response:
+                tool_calls_detected = True
             
             # 执行工具调用并输出结果
             if self.tools and tool_calls_detected:
