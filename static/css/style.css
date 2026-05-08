@@ -2970,6 +2970,63 @@ body {
   line-height: 1.6;
 }
 
+/* 快速查询区域 */
+.ai-quick-queries {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  display: none; /* 默认隐藏，只在 db_only 模式显示 */
+}
+
+.ai-quick-query-title {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+  font-weight: 500;
+}
+
+.ai-quick-query-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.ai-quick-query-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+  color: var(--text-primary);
+  text-align: left;
+  width: 100%;
+}
+
+.ai-quick-query-item:hover {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-color: transparent;
+  color: white;
+  transform: translateX(4px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.ai-quick-query-item:hover svg {
+  stroke: white;
+}
+
+.ai-quick-query-item svg {
+  flex-shrink: 0;
+  stroke: #667eea;
+  transition: stroke 0.2s ease;
+}
+
 /* 移动端响应式 */
 @media (max-width: 768px) {
   .navbar-menu {

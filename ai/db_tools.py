@@ -391,6 +391,8 @@ class DatabaseQueryTool:
     def query(self, question: str) -> str:
         """
         主入口：自然语言 → SQL → 执行 → 整理回答
+        
+        支持语义相似度匹配，意思相近的问题可以共享缓存
 
         用法：
             tool = DatabaseQueryTool(llm_config={...})
@@ -402,24 +404,46 @@ class DatabaseQueryTool:
             from django.utils import timezone
             from datetime import timedelta
             
-            # 生成问题哈希
-            cache_key = hashlib.md5(question.encode('utf-8')).hexdigest()
+            # 1. 生成标准化问题（用于语义匹配）
+            normalized_question = self._normalize_question(question)
             
-            # 1. 先检查内存缓存（最快）
-            if cache_key in self._cache:
-                cached_result, cached_time = self._cache[cache_key]
+            # 2. 生成精确哈希（用于精确匹配）
+            exact_hash = hashlib.md5(question.encode('utf-8')).hexdigest()
+            
+            # 3. 生成语义哈希（用于相似问题匹配）
+            semantic_hash = hashlib.md5(normalized_question.encode('utf-8')).hexdigest()
+            
+            print(f"📝 原始问题: {question}")
+            print(f"🔧 标准化后: {normalized_question}")
+            
+            # 4. 先检查内存缓存（精确匹配）
+            if exact_hash in self._cache:
+                cached_result, cached_time = self._cache[exact_hash]
                 if time.time() - cached_time < self._cache_ttl:
-                    return f"{cached_result}\n\n*(来自内存缓存)*"
+                    return cached_result
             
-            # 2. 检查数据库缓存（持久化）
+            # 5. 检查数据库缓存（先精确匹配，再语义匹配）
             if self._db_cache_enabled:
                 try:
                     from api.models import AICache
-                    print(f"🔍 正在查询数据库缓存...")
+                    
+                    # 5.1 尝试精确匹配
+                    print(f"🔍 正在查询数据库缓存（精确匹配）...")
                     db_cache = AICache.objects.filter(
-                        question_hash=cache_key,
+                        question_hash=exact_hash,
                         is_valid=True
                     ).first()
+                    
+                    # 5.2 如果精确匹配失败，尝试语义匹配
+                    if not db_cache:
+                        print(f"🔍 精确匹配未找到，尝试语义匹配...")
+                        db_cache = AICache.objects.filter(
+                            question_hash=semantic_hash,
+                            is_valid=True
+                        ).first()
+                        
+                        if db_cache:
+                            print(f"✅ 语义匹配成功！原问题: '{db_cache.question}'")
                     
                     if db_cache and not db_cache.is_expired():
                         # 命中数据库缓存
@@ -427,10 +451,14 @@ class DatabaseQueryTool:
                         db_cache.hit_count += 1
                         db_cache.save(update_fields=['hit_count'])
                         
-                        # 同时更新内存缓存
-                        self._cache[cache_key] = (db_cache.answer, time.time())
+                        # 同时更新内存缓存（使用精确哈希）
+                        self._cache[exact_hash] = (db_cache.answer, time.time())
                         
-                        return f"{db_cache.answer}\n\n*(来自数据库缓存)*"
+                        # 如果是语义匹配，也缓存语义哈希
+                        if exact_hash != semantic_hash:
+                            self._cache[semantic_hash] = (db_cache.answer, time.time())
+                        
+                        return db_cache.answer
                     else:
                         if db_cache:
                             print(f"⚠️ 数据库缓存已过期")
@@ -441,34 +469,37 @@ class DatabaseQueryTool:
                     import traceback
                     traceback.print_exc()
             
-            # 3. 缓存未命中，执行实际查询
+            # 6. 缓存未命中，执行实际查询
             chain = self._get_chain()
             result = chain.run(question)
             
-            # 4. 分析涉及的表名（用于后续缓存失效）
+            # 7. 分析涉及的表名（用于后续缓存失效）
             tables_involved = self._extract_tables_from_question(question)
             
-            # 5. 存入内存缓存
-            self._cache[cache_key] = (result, time.time())
+            # 8. 存入内存缓存（同时存储精确和语义哈希）
+            self._cache[exact_hash] = (result, time.time())
+            if exact_hash != semantic_hash:
+                self._cache[semantic_hash] = (result, time.time())
             
-            # 6. 存入数据库缓存
+            # 9. 存入数据库缓存（使用语义哈希作为主键）
             if self._db_cache_enabled:
                 try:
                     from api.models import AICache
                     expires_at = timezone.now() + timedelta(seconds=self._db_cache_ttl)
                     
                     print(f"💾 正在保存缓存到数据库...")
-                    print(f"   - 问题: {question[:50]}...")
+                    print(f"   - 原始问题: {question[:50]}...")
+                    print(f"   - 标准化问题: {normalized_question[:50]}...")
                     print(f"   - 表名: {tables_involved}")
                     print(f"   - 过期时间: {expires_at}")
                     
                     cache_entry = AICache.objects.create(
-                        question_hash=cache_key,
-                        question=question[:500],  # 限制长度
+                        question_hash=semantic_hash,  # 使用语义哈希
+                        question=question[:500],  # 保存原始问题
                         answer=result,
                         query_type='db_query',
                         tables_involved=tables_involved,
-                        cache_key=f"db_query:{cache_key}",
+                        cache_key=f"db_query:{semantic_hash}",
                         is_valid=True,
                         hit_count=0,
                         expires_at=expires_at
@@ -480,7 +511,7 @@ class DatabaseQueryTool:
                     import traceback
                     traceback.print_exc()
             
-            # 7. 清理过期内存缓存
+            # 10. 清理过期内存缓存
             self._cleanup_cache()
             
             return result
@@ -505,13 +536,13 @@ class DatabaseQueryTool:
         tables = []
         question_lower = question.lower()
         
-        # 关键词映射到表名
+        # 关键词映射到表名（包括简洁的查询指令）
         table_keywords = {
-            'destinations': ['目的地', '旅游', '景点', 'destination', 'travel'],
-            'policies': ['政策', '法规', 'policy', 'regulation'],
-            'news': ['新闻', '资讯', '消息', 'news'],
-            'safety_alerts': ['安全', '隐患', '预警', 'safety', 'alert'],
-            'statistics': ['统计', '数据', '游客数量', '航班', 'statistics'],
+            'destinations': ['目的地', '旅游', '景点', 'destination', 'travel', '旅游地'],
+            'policies': ['政策', '法规', 'policy', 'regulation', '政策法规'],
+            'news': ['新闻', '资讯', '消息', 'news', '新闻资讯'],
+            'safety_alerts': ['安全', '隐患', '预警', 'safety', 'alert', '安全预警'],
+            'statistics': ['统计', '数据', '游客数量', '航班', 'statistics', '统计数据'],
             'messages': ['留言', '评论', '反馈', 'message'],
         }
         
@@ -520,6 +551,100 @@ class DatabaseQueryTool:
                 tables.append(table_name)
         
         return tables
+    
+    def _normalize_question(self, question: str) -> str:
+        """
+        标准化问题，将语义相近的问题转换为相同的形式
+        
+        例如：
+        - "有哪些热门旅游目的地？" → "热门 旅游 目的地"
+        - "热门的旅游地有哪些？" → "热门 旅游 目的地"
+        - "推荐一些旅游景点" → "推荐 旅游 景点"
+        
+        策略：
+        1. 去除标点符号和语气词
+        2. 提取关键名词和动词
+        3. 同义词归一化
+        4. 按字母顺序排序（确保顺序不影响匹配）
+        """
+        import re
+        
+        # 1. 转小写
+        normalized = question.lower()
+        
+        # 2. 去除标点符号
+        normalized = re.sub(r'[\s\uff0c\u3001\uff1f\uff01\u3002\uff0c]', ' ', normalized)
+        
+        # 3. 去除语气词和助词（保留“查询”作为关键词）
+        stop_words = [
+            '的', '了', '吗', '呢', '吧', '啊', '呀', '哦', '嘛',
+            '有', '哪些', '什么', '怎么', '如何', '请问', '帮我',
+            '一下', '一些', '几个', '多少', '有没有'
+        ]
+        for word in stop_words:
+            normalized = normalized.replace(word, ' ')
+        
+        # 4. 同义词归一化
+        synonyms = {
+            # 简洁查询指令（直接映射到表名）
+            '查询旅游地': '旅游目的地',
+            '查询政策法规': '政策',
+            '查询统计数据': '统计',
+            '查询安全预警': '安全',
+            '查询新闻资讯': '新闻',
+            
+            # 旅游目的地相关
+            '旅游地': '旅游目的地',
+            '旅行地': '旅游目的地',
+            '景点': '旅游目的地',
+            '景区': '旅游目的地',
+            '游玩': '旅游',
+            '游玩地': '旅游目的地',
+            
+            # 查询动词
+            '查询': '查',
+            '查找': '查',
+            '搜索': '查',
+            '找': '查',
+            '看看': '查',
+            
+            # 形容词
+            '热门': '热门',
+            '流行': '热门',
+            '火爆': '热门',
+            '受欢迎': '热门',
+            
+            # 政策相关
+            '规定': '政策',
+            '条例': '政策',
+            '办法': '政策',
+            '通知': '政策',
+            
+            # 新闻相关
+            '资讯': '新闻',
+            '消息': '新闻',
+            '动态': '新闻',
+            
+            # 安全相关
+            '危险': '安全',
+            '风险': '安全',
+            '隐患': '安全',
+            '预警': '安全',
+        }
+        
+        for synonym, standard in synonyms.items():
+            normalized = normalized.replace(synonym, standard)
+        
+        # 5. 分词并去重（简单实现：按空格分割）
+        words = [w.strip() for w in normalized.split() if w.strip()]
+        
+        # 6. 去重并按字母顺序排序
+        unique_words = sorted(set(words))
+        
+        # 7. 重新组合
+        normalized = ' '.join(unique_words)
+        
+        return normalized
 
     def get_schema_summary(self) -> str:
         """返回数据库表结构描述字符串"""
