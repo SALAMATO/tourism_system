@@ -202,30 +202,6 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.CreateModel(
-            name='AICache',
-            fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('question_hash', models.CharField(db_index=True, max_length=64, unique=True, verbose_name='问题哈希值(MD5)')),
-                ('question', models.TextField(verbose_name='原始问题')),
-                ('answer', models.TextField(verbose_name='AI回答结果')),
-                ('query_type', models.CharField(default='db_query', help_text='db_query: 数据库查询, web_search: 网络搜索, general: 通用对话', max_length=50, verbose_name='查询类型')),
-                ('tables_involved', models.JSONField(blank=True, default=list, help_text='记录查询涉及的表名，用于数据变更时清除相关缓存', verbose_name='涉及的数据库表')),
-                ('cache_key', models.CharField(db_index=True, help_text='用于快速查找和清除缓存的标识符', max_length=200, verbose_name='缓存键')),
-                ('is_valid', models.BooleanField(default=True, verbose_name='是否有效')),
-                ('hit_count', models.IntegerField(default=0, verbose_name='命中次数')),
-                ('expires_at', models.DateTimeField(verbose_name='过期时间')),
-                ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='创建时间')),
-                ('updated_at', models.DateTimeField(auto_now=True, verbose_name='更新时间')),
-            ],
-            options={
-                'verbose_name': 'AI查询缓存',
-                'verbose_name_plural': 'AI查询缓存',
-                'db_table': 'ai_cache',
-                'ordering': ['-created_at'],
-                'indexes': [models.Index(fields=['query_type', 'is_valid'], name='ai_cache_query_t_7ef4ed_idx'), models.Index(fields=['cache_key'], name='ai_cache_cache_k_a15c8b_idx')],
-            },
-        ),
-        migrations.CreateModel(
             name='Message',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
