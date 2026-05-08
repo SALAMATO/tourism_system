@@ -242,6 +242,7 @@ Be professional and friendly."""
         accumulated_content = ""  # 累积的完整内容
         last_output_length = 0  # 上次输出的长度
         tool_calls_detected = False
+        tool_execution_started = False  # 标记工具执行是否开始
         
         try:
             # Initialize OpenAI client for Alibaba Cloud
@@ -304,18 +305,26 @@ Be professional and friendly."""
                     yield "\n\n"  # 添加分隔
                     for tool_name, params in tool_calls:
                         try:
+                            # 显示工具执行状态提示
+                            status_msg = f"\n🔍 正在执行 {self._get_tool_display_name(tool_name)}...\n"
+                            yield status_msg
+                            
                             # 如果是get_user_location工具，传递request对象
                             if tool_name == 'get_user_location' and request:
                                 result = self.tools.execute_tool(tool_name, request=request)
                             else:
                                 result = self.tools.execute_tool(tool_name, **params)
+                            
                             if result and not result.startswith("暂无"):
                                 # 格式化工具结果后逐段输出
                                 formatted_result = display_handler.format_output(result)
                                 for result_chunk in display_handler.stream_formatted_output(formatted_result):
                                     yield result_chunk
+                            else:
+                                yield "\n(未找到相关信息)\n"
                         except Exception as e:
-                            pass  # Silently ignore errors
+                            error_msg = f"\n⚠️ {self._get_tool_display_name(tool_name)}执行失败，请稍后重试\n"
+                            yield error_msg
             
             # 保存到历史（过滤工具标记）
             final_content = display_handler.filter_tool_calls(full_response)
@@ -466,6 +475,23 @@ Be professional and friendly."""
     
     def _call_anthropic(self, message: str, config: AIModelConfig, stream: bool) -> Dict[str, Any]:
         return {"success": False, "error": "Claude interface not implemented"}
+    
+    def _get_tool_display_name(self, tool_name: str) -> str:
+        """获取工具的友好显示名称"""
+        tool_names = {
+            'search_web': '网络搜索',
+            'get_policies': '政策查询',
+            'get_news': '新闻查询',
+            'get_statistics': '统计数据查询',
+            'get_safety_alerts': '安全预警查询',
+            'search_site_content': '站内搜索',
+            'db_query': '数据库查询',
+            'get_destinations': '目的地查询',
+            'search_destinations': '目的地搜索',
+            'get_user_location': '位置获取',
+            'get_current_time': '时间获取',
+        }
+        return tool_names.get(tool_name, tool_name)
     
     def clear_history(self):
         """Clear conversation history"""

@@ -10,6 +10,8 @@ LangChain SQL 数据库查询工具
 
 from pathlib import Path
 from typing import Optional
+import hashlib
+import time
 
 
 # ── 数据库表结构说明（供 AI 生成 SQL 时参考） ────────────────────────────
@@ -282,6 +284,9 @@ class DatabaseQueryTool:
     def __init__(self, llm_config: Optional[dict] = None):
         self.llm_config = llm_config or {}
         self._chain: Optional[SQLDatabaseChain] = None
+        # 简单缓存：{question_hash: (result, timestamp)}
+        self._cache: dict = {}
+        self._cache_ttl = 300  # 缓存有效期5分钟
 
     def _get_chain(self) -> SQLDatabaseChain:
         """懒加载：首次调用时创建 SQLDatabaseChain"""
@@ -314,10 +319,35 @@ class DatabaseQueryTool:
             result = tool.query("最近有哪些安全隐患？")
         """
         try:
+            # 检查缓存
+            cache_key = hashlib.md5(question.encode('utf-8')).hexdigest()
+            if cache_key in self._cache:
+                cached_result, cached_time = self._cache[cache_key]
+                if time.time() - cached_time < self._cache_ttl:
+                    return f"{cached_result}\n\n*(来自缓存)*"
+            
             chain = self._get_chain()
-            return chain.run(question)
+            result = chain.run(question)
+            
+            # 存入缓存
+            self._cache[cache_key] = (result, time.time())
+            
+            # 清理过期缓存
+            self._cleanup_cache()
+            
+            return result
         except Exception as e:
             return f"[数据库查询失败] {str(e)}"
+    
+    def _cleanup_cache(self):
+        """清理过期缓存"""
+        current_time = time.time()
+        expired_keys = [
+            key for key, (_, timestamp) in self._cache.items()
+            if current_time - timestamp >= self._cache_ttl
+        ]
+        for key in expired_keys:
+            del self._cache[key]
 
     def get_schema_summary(self) -> str:
         """返回数据库表结构描述字符串"""

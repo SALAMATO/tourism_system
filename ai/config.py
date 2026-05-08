@@ -2,10 +2,12 @@
 阿里云百炼API配置
 所有模型参数统一在此处管理，方便集中修改。
 """
+import os
 
 # ── API 基础配置 ──────────────────────────────────────────────────────
-QIANWEN_API_KEY = "sk-fd5060ca16c74de99e5e9fd06a56a0bd"
-QIANWEN_BASE_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1"
+# 优先从环境变量读取，支持生产环境安全配置
+QIANWEN_API_KEY = os.getenv('QIANWEN_API_KEY', "sk-fd5060ca16c74de99e5e9fd06a56a0bd")
+QIANWEN_BASE_URL = os.getenv('QIANWEN_BASE_URL', "https://dashscope.aliyuncs.com/compatible-mode/v1")
 
 # ── 可用模型列表 ───────────────────────────────────────────────────────
 AVAILABLE_MODELS = {
