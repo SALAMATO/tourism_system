@@ -186,13 +186,6 @@ class LowSkyAIChat {
     const maximizeBtn = this.modal.querySelector('.ai-chat-maximize');
     maximizeBtn.onclick = () => this.toggleMaximize();
     
-    // 点击背景关闭
-    this.modal.onclick = (e) => {
-      if (e.target === this.modal) {
-        this.closeChat();
-      }
-    };
-    
     // 发送按钮
     this.sendBtn.onclick = () => this.sendMessage();
     

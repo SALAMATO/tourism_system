@@ -2332,6 +2332,7 @@ body {
   justify-content: center;
   opacity: 0;
   transition: opacity var(--apple-med) var(--apple-ease);
+  pointer-events: none;
 }
 
 .ai-chat-modal.show {
@@ -2355,6 +2356,7 @@ body {
   opacity: 0;
   position: absolute;
   cursor: default;
+  pointer-events: auto;
 }
 
 .ai-chat-modal.show .ai-chat-container {
