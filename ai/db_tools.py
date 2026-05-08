@@ -661,15 +661,16 @@ class DatabaseQueryTool:
             '查询统计数据': '统计',
             '查询安全预警': '安全',
             '查询新闻资讯': '新闻',
-            '查询目的地': '旅游目的地',
-            '查询旅游目的地': '旅游目的地',
+            '查询旅游目的地': '旅游目的地',  # ✅ 完整匹配，优先于下面的规则
+            # 注意：不要添加 '查询目的地' 这样的规则，会导致 "查询旅游目的地" 被错误替换
+            
+            # 单独的查询动词 + 单独的名词（用于处理 "查询 政策" 这种有空格的情况）
             '查询政策': '政策',
             '查询新闻': '新闻',
             '查询统计': '统计',
             '查询安全': '安全',
             
-            # 旅游目的地相关
-            '旅游目的地': '旅游目的地',  # 保持不变
+            # 旅游目的地相关（这些不会与上面的规则冲突）
             '旅游地': '旅游目的地',
             '旅行地': '旅游目的地',
             '旅游景点': '旅游目的地',
@@ -677,7 +678,7 @@ class DatabaseQueryTool:
             '景点': '旅游目的地',
             '景区': '旅游目的地',
             '游玩地': '旅游目的地',
-            '目的地': '旅游目的地',
+            # 注意：不要添加 '目的地': '旅游目的地'，会导致 "旅游目的地" 被重复替换
             
             # 查询动词（统一替换为空，后续会被清理）
             '查找': '',
@@ -718,17 +719,38 @@ class DatabaseQueryTool:
         # 按key长度降序排序，确保长短语优先匹配
         sorted_synonyms = sorted(synonyms.items(), key=lambda x: len(x[0]), reverse=True)
         
+        # 调试模式：打印替换过程
+        # print(f"\n🔧 开始同义词替换: '{normalized}'")
+        
         for synonym, standard in sorted_synonyms:
             if synonym in normalized:
+                old_normalized = normalized
                 normalized = normalized.replace(synonym, standard)
+                # 只在发生变化时打印（用于调试）
+                # if old_normalized != normalized:
+                #     print(f"   替换: '{synonym}' → '{standard}'")
+                #     print(f"   结果: '{old_normalized}' → '{normalized}'")
+        
+        # print(f"✅ 同义词替换完成: '{normalized}'\n")
         
         # 4. 去除语气词和助词（在同义词替换之后）
+        # 注意：只去除独立的停用词，不破坏已标准化的核心词汇
         stop_words = [
-            '的', '了', '吗', '呢', '吧', '啊', '呀', '哦', '嘛',
-            '有', '哪些', '什么', '怎么', '如何', '请问', '帮我',
+            '了', '吗', '呢', '吧', '啊', '呀', '哦', '嘛',
+            '哪些', '什么', '怎么', '如何', '请问', '帮我',
             '一下', '一些', '几个', '多少', '有没有'
         ]
+        
+        # 先处理多字停用词（避免破坏单字）
         for word in stop_words:
+            if len(word) > 1:  # 只处理长度>1的停用词
+                normalized = normalized.replace(word, ' ')
+        
+        # 对于单字停用词，使用更智能的方式：只在它们是独立词时才去除
+        # 这里我们采用简单策略：不单独去除'的'、'有'等常见单字
+        # 因为它们可能是核心词汇的一部分（如"旅游目的地"中的"的"）
+        single_char_stops = ['了', '吗', '呢', '吧', '啊', '呀', '哦', '嘛']
+        for word in single_char_stops:
             normalized = normalized.replace(word, ' ')
         
         # 5. 清理多余空格
