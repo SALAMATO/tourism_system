@@ -431,6 +431,7 @@ class DatabaseQueryTool:
                     
                     # 5.1 第一级：精确匹配（question_hash）
                     print(f"🔍 正在查询数据库缓存（精确匹配）...")
+                    print(f"   - exact_hash: {exact_hash}")
                     db_cache = AICache.objects.filter(
                         question_hash=exact_hash,
                         is_valid=True
@@ -442,6 +443,7 @@ class DatabaseQueryTool:
                     # 5.2 第二级：标准化问题匹配（normalized_question）
                     if not db_cache and normalized_question:
                         print(f"🔍 精确匹配未找到，尝试标准化问题匹配...")
+                        print(f"   - normalized_question: '{normalized_question}'")
                         db_cache = AICache.objects.filter(
                             normalized_question=normalized_question,
                             is_valid=True
@@ -450,9 +452,10 @@ class DatabaseQueryTool:
                         if db_cache:
                             print(f"✅ 标准化问题匹配成功！原问题: '{db_cache.question}'")
                     
-                    # 5.3 第三级：语义哈希匹配（semantic_hash）
+                    # 5.3 第三级：语义哈希匹配（使用 semantic_hash 查询 question_hash 字段）
                     if not db_cache:
                         print(f"🔍 标准化问题未找到，尝试语义哈希匹配...")
+                        print(f"   - semantic_hash: {semantic_hash}")
                         db_cache = AICache.objects.filter(
                             question_hash=semantic_hash,
                             is_valid=True
@@ -482,6 +485,9 @@ class DatabaseQueryTool:
                         # 缓存不存在、已过期或无效
                         if db_cache:
                             print(f"⚠️ 数据库缓存已过期或无效，将更新缓存")
+                            print(f"   - 缓存ID: {db_cache.id}")
+                            print(f"   - 过期时间: {db_cache.expires_at}")
+                            print(f"   - 当前时间: {timezone.now()}")
                         else:
                             print(f"ℹ️  数据库缓存未找到")
                 except Exception as e:
@@ -501,7 +507,7 @@ class DatabaseQueryTool:
             if exact_hash != semantic_hash:
                 self._cache[semantic_hash] = (result, time.time())
             
-            # 9. 存入数据库缓存（使用语义哈希作为主键）
+            # 9. 存入数据库缓存（使用精确哈希作为主键）
             if self._db_cache_enabled:
                 try:
                     from api.models import AICache
@@ -510,19 +516,22 @@ class DatabaseQueryTool:
                     print(f"💾 正在保存缓存到数据库...")
                     print(f"   - 原始问题: {question[:50]}...")
                     print(f"   - 标准化问题: {normalized_question[:50] if normalized_question else 'None'}...")
+                    print(f"   - exact_hash: {exact_hash}")
+                    print(f"   - semantic_hash: {semantic_hash}")
                     print(f"   - 表名: {tables_involved}")
                     print(f"   - 过期时间: {expires_at}")
                     
                     # 使用 get_or_create 避免 UNIQUE 约束冲突
+                    # 优先使用 exact_hash 作为唯一键，确保相同问题能精确匹配
                     cache_entry, created = AICache.objects.get_or_create(
-                        question_hash=semantic_hash,  # 使用语义哈希作为唯一键
+                        question_hash=exact_hash,  # 使用精确哈希作为唯一键
                         defaults={
                             'question': question[:500],  # 保存原始问题
                             'normalized_question': normalized_question[:500] if normalized_question else None,  # 保存标准化问题
                             'answer': result,
                             'query_type': 'db_query',
                             'tables_involved': tables_involved,
-                            'cache_key': f"db_query:{semantic_hash}",
+                            'cache_key': f"db_query:{exact_hash}",
                             'is_valid': True,
                             'hit_count': 0,
                             'expires_at': expires_at
@@ -536,7 +545,7 @@ class DatabaseQueryTool:
                         cache_entry.answer = result
                         cache_entry.query_type = 'db_query'
                         cache_entry.tables_involved = tables_involved
-                        cache_entry.cache_key = f"db_query:{semantic_hash}"
+                        cache_entry.cache_key = f"db_query:{exact_hash}"
                         cache_entry.is_valid = True
                         cache_entry.hit_count = 0  # 重置命中次数
                         cache_entry.expires_at = expires_at
@@ -544,6 +553,36 @@ class DatabaseQueryTool:
                         print(f"✅ 缓存已更新，ID: {cache_entry.id}")
                     else:
                         print(f"✅ 缓存保存成功，ID: {cache_entry.id}")
+                        
+                        # 如果 exact_hash 和 semantic_hash 不同，也保存一份 semantic_hash 的缓存
+                        # 这样可以通过语义哈希进行模糊匹配
+                        if exact_hash != semantic_hash:
+                            try:
+                                semantic_cache, semantic_created = AICache.objects.get_or_create(
+                                    question_hash=semantic_hash,
+                                    defaults={
+                                        'question': question[:500],
+                                        'normalized_question': normalized_question[:500] if normalized_question else None,
+                                        'answer': result,
+                                        'query_type': 'db_query',
+                                        'tables_involved': tables_involved,
+                                        'cache_key': f"db_query:{semantic_hash}",
+                                        'is_valid': True,
+                                        'hit_count': 0,
+                                        'expires_at': expires_at
+                                    }
+                                )
+                                if semantic_created:
+                                    print(f"✅ 语义哈希缓存保存成功，ID: {semantic_cache.id}")
+                                else:
+                                    # 更新现有语义哈希缓存
+                                    semantic_cache.answer = result
+                                    semantic_cache.expires_at = expires_at
+                                    semantic_cache.is_valid = True
+                                    semantic_cache.save()
+                                    print(f"✅ 语义哈希缓存已更新，ID: {semantic_cache.id}")
+                            except Exception as e:
+                                print(f"⚠️ 语义哈希缓存保存失败: {e}")
                 except Exception as e:
                     print(f"❌ 数据库缓存保存失败: {e}")
                     import traceback
@@ -603,15 +642,15 @@ class DatabaseQueryTool:
         1. 去除标点符号和语气词
         2. 同义词归一化（长短语优先）
         3. 提取关键名词和动词
-        4. 按字母顺序排序（确保顺序不影响匹配）
+        4. 保持原始顺序（不按字母排序，避免中文乱序）
         """
         import re
         
         # 1. 转小写
         normalized = question.lower()
         
-        # 2. 去除标点符号
-        normalized = re.sub(r'[\s\uff0c\u3001\uff1f\uff01\u3002\uff0c]', ' ', normalized)
+        # 2. 去除标点符号（替换为空格，便于后续分词）
+        normalized = re.sub(r'[\uff0c\u3001\uff1f\uff01\u3002\uff0c]', ' ', normalized)
         
         # 3. 同义词归一化（重要：长短语优先，避免短词先替换导致长词无法匹配）
         # 按长度降序排列，确保长短语先被替换
@@ -691,14 +730,14 @@ class DatabaseQueryTool:
         for word in stop_words:
             normalized = normalized.replace(word, ' ')
         
-        # 5. 分词并去重（简单实现：按空格分割）
-        words = [w.strip() for w in normalized.split() if w.strip()]
+        # 5. 清理多余空格
+        normalized = re.sub(r'\s+', ' ', normalized).strip()
         
-        # 6. 去重并按字母顺序排序
-        unique_words = sorted(set(words))
-        
-        # 7. 重新组合
-        normalized = ' '.join(unique_words)
+        # 6. 如果标准化后为空或太短，返回原始问题的简化版
+        if not normalized or len(normalized) < 2:
+            # 只保留中文字符和英文字母
+            simplified = re.sub(r'[^\u4e00-\u9fa5a-zA-Z0-9]', '', question)
+            return simplified[:50] if simplified else question[:50]
         
         return normalized
 
