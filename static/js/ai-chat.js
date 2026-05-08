@@ -333,7 +333,7 @@ class LowSkyAIChat {
     document.addEventListener('mouseup', () => {
       if (this.isDragging) {
         this.isDragging = false;
-        header.style.cursor = 'move';
+        header.style.cursor = 'default';
         // 移除拖拽类，恢复过渡动画
         container.classList.remove('dragging');
       }
