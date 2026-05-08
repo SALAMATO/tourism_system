@@ -445,6 +445,7 @@ class DatabaseQueryTool:
                         if db_cache:
                             print(f"✅ 语义匹配成功！原问题: '{db_cache.question}'")
                     
+                    # 5.3 检查缓存是否有效且未过期
                     if db_cache and not db_cache.is_expired():
                         # 命中数据库缓存
                         print(f"✅ 数据库缓存命中！ID: {db_cache.id}, 已命中{db_cache.hit_count}次")
@@ -460,8 +461,11 @@ class DatabaseQueryTool:
                         
                         return db_cache.answer
                     else:
+                        # 缓存不存在、已过期或无效
                         if db_cache:
-                            print(f"⚠️ 数据库缓存已过期")
+                            print(f"⚠️ 数据库缓存已过期或无效，将更新缓存")
+                            # 可选：删除过期缓存，避免累积
+                            # db_cache.delete()
                         else:
                             print(f"ℹ️  数据库缓存未找到")
                 except Exception as e:
@@ -493,19 +497,35 @@ class DatabaseQueryTool:
                     print(f"   - 表名: {tables_involved}")
                     print(f"   - 过期时间: {expires_at}")
                     
-                    cache_entry = AICache.objects.create(
-                        question_hash=semantic_hash,  # 使用语义哈希
-                        question=question[:500],  # 保存原始问题
-                        answer=result,
-                        query_type='db_query',
-                        tables_involved=tables_involved,
-                        cache_key=f"db_query:{semantic_hash}",
-                        is_valid=True,
-                        hit_count=0,
-                        expires_at=expires_at
+                    # 使用 get_or_create 避免 UNIQUE 约束冲突
+                    cache_entry, created = AICache.objects.get_or_create(
+                        question_hash=semantic_hash,  # 使用语义哈希作为唯一键
+                        defaults={
+                            'question': question[:500],  # 保存原始问题
+                            'answer': result,
+                            'query_type': 'db_query',
+                            'tables_involved': tables_involved,
+                            'cache_key': f"db_query:{semantic_hash}",
+                            'is_valid': True,
+                            'hit_count': 0,
+                            'expires_at': expires_at
+                        }
                     )
                     
-                    print(f"✅ 缓存保存成功，ID: {cache_entry.id}")
+                    if not created:
+                        # 如果记录已存在，更新它
+                        cache_entry.question = question[:500]
+                        cache_entry.answer = result
+                        cache_entry.query_type = 'db_query'
+                        cache_entry.tables_involved = tables_involved
+                        cache_entry.cache_key = f"db_query:{semantic_hash}"
+                        cache_entry.is_valid = True
+                        cache_entry.hit_count = 0  # 重置命中次数
+                        cache_entry.expires_at = expires_at
+                        cache_entry.save()
+                        print(f"✅ 缓存已更新，ID: {cache_entry.id}")
+                    else:
+                        print(f"✅ 缓存保存成功，ID: {cache_entry.id}")
                 except Exception as e:
                     print(f"❌ 数据库缓存保存失败: {e}")
                     import traceback
@@ -563,8 +583,8 @@ class DatabaseQueryTool:
         
         策略：
         1. 去除标点符号和语气词
-        2. 提取关键名词和动词
-        3. 同义词归一化
+        2. 同义词归一化（长短语优先）
+        3. 提取关键名词和动词
         4. 按字母顺序排序（确保顺序不影响匹配）
         """
         import re
@@ -575,38 +595,42 @@ class DatabaseQueryTool:
         # 2. 去除标点符号
         normalized = re.sub(r'[\s\uff0c\u3001\uff1f\uff01\u3002\uff0c]', ' ', normalized)
         
-        # 3. 去除语气词和助词（保留“查询”作为关键词）
-        stop_words = [
-            '的', '了', '吗', '呢', '吧', '啊', '呀', '哦', '嘛',
-            '有', '哪些', '什么', '怎么', '如何', '请问', '帮我',
-            '一下', '一些', '几个', '多少', '有没有'
-        ]
-        for word in stop_words:
-            normalized = normalized.replace(word, ' ')
-        
-        # 4. 同义词归一化
+        # 3. 同义词归一化（重要：长短语优先，避免短词先替换导致长词无法匹配）
+        # 按长度降序排列，确保长短语先被替换
         synonyms = {
-            # 简洁查询指令（直接映射到表名）
+            # 简洁查询指令（直接映射到表名）- 最长，优先匹配
             '查询旅游地': '旅游目的地',
             '查询政策法规': '政策',
             '查询统计数据': '统计',
             '查询安全预警': '安全',
             '查询新闻资讯': '新闻',
+            '查询目的地': '旅游目的地',
+            '查询政策': '政策',
+            '查询新闻': '新闻',
+            '查询统计': '统计',
+            '查询安全': '安全',
             
             # 旅游目的地相关
+            '旅游目的地': '旅游目的地',  # 保持不变
             '旅游地': '旅游目的地',
             '旅行地': '旅游目的地',
+            '旅游景点': '旅游目的地',
+            '旅游景区': '旅游目的地',
             '景点': '旅游目的地',
             '景区': '旅游目的地',
-            '游玩': '旅游',
             '游玩地': '旅游目的地',
+            '目的地': '旅游目的地',
             
             # 查询动词
-            '查询': '查',
             '查找': '查',
             '搜索': '查',
-            '找': '查',
+            '查询': '查',
             '看看': '查',
+            '找': '查',
+            
+            # 旅游相关
+            '游玩': '旅游',
+            '旅行': '旅游',
             
             # 形容词
             '热门': '热门',
@@ -619,6 +643,7 @@ class DatabaseQueryTool:
             '条例': '政策',
             '办法': '政策',
             '通知': '政策',
+            '法规': '政策',
             
             # 新闻相关
             '资讯': '新闻',
@@ -632,8 +657,21 @@ class DatabaseQueryTool:
             '预警': '安全',
         }
         
-        for synonym, standard in synonyms.items():
-            normalized = normalized.replace(synonym, standard)
+        # 按key长度降序排序，确保长短语优先匹配
+        sorted_synonyms = sorted(synonyms.items(), key=lambda x: len(x[0]), reverse=True)
+        
+        for synonym, standard in sorted_synonyms:
+            if synonym in normalized:
+                normalized = normalized.replace(synonym, standard)
+        
+        # 4. 去除语气词和助词（在同义词替换之后）
+        stop_words = [
+            '的', '了', '吗', '呢', '吧', '啊', '呀', '哦', '嘛',
+            '有', '哪些', '什么', '怎么', '如何', '请问', '帮我',
+            '一下', '一些', '几个', '多少', '有没有'
+        ]
+        for word in stop_words:
+            normalized = normalized.replace(word, ' ')
         
         # 5. 分词并去重（简单实现：按空格分割）
         words = [w.strip() for w in normalized.split() if w.strip()]
