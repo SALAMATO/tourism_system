@@ -572,22 +572,33 @@ class LowSkyAIChat {
       // 计算目标位置
       let targetLeft, targetTop, targetWidth, targetHeight;
       
-      if (this.savedWindowState) {
+      // 如果保存了位置信息（非空字符串），则使用保存的位置
+      if (this.savedWindowState && this.savedWindowState.left) {
         // 有保存的位置，直接使用
         targetLeft = this.savedWindowState.left;
         targetTop = this.savedWindowState.top;
         targetWidth = this.savedWindowState.width || '';
         targetHeight = this.savedWindowState.height || '';
       } else {
-        // 没有保存的位置（首次打开），计算居中位置
+        // 没有保存的位置（首次打开或未拖拽过），计算居中位置
         const viewportWidth = window.innerWidth;
         const viewportHeight = window.innerHeight;
-        const defaultWidth = Math.min(viewportWidth * 0.5, viewportWidth * 0.4);
-        const defaultHeight = Math.min(viewportHeight * 0.8, 700);
-        targetLeft = (viewportWidth - defaultWidth) / 2 + 'px';
-        targetTop = (viewportHeight - defaultHeight) / 2 + 'px';
-        targetWidth = '';
-        targetHeight = '';
+        
+        // 如果有保存的尺寸，使用保存的尺寸；否则使用默认尺寸
+        if (this.savedWindowState && this.savedWindowState.width) {
+          targetWidth = this.savedWindowState.width;
+          targetHeight = this.savedWindowState.height;
+        } else {
+          targetWidth = '';
+          targetHeight = '';
+        }
+        
+        // 计算居中位置（基于目标尺寸或默认尺寸）
+        const finalWidth = targetWidth ? parseFloat(targetWidth) : Math.min(viewportWidth * 0.5, viewportWidth * 0.4);
+        const finalHeight = targetHeight ? parseFloat(targetHeight) : Math.min(viewportHeight * 0.8, 700);
+        
+        targetLeft = (viewportWidth - finalWidth) / 2 + 'px';
+        targetTop = (viewportHeight - finalHeight) / 2 + 'px';
       }
       
       // 恢复transition并设置目标位置，触发动画
@@ -602,18 +613,14 @@ class LowSkyAIChat {
       // 最大化前保存当前状态
       const currentRect = container.getBoundingClientRect();
       
-      // 只有当有实际的位置信息时才保存，否则不保存（使用默认居中）
-      if (container.style.left && container.style.top) {
-        this.savedWindowState = {
-          left: container.style.left,
-          top: container.style.top,
-          width: container.style.width,
-          height: container.style.height
-        };
-      } else {
-        // 首次打开，没有位置信息，保存为null表示使用默认居中
-        this.savedWindowState = null;
-      }
+      // 保存当前的实际状态（使用实际渲染的尺寸，而不是inline style）
+      // 第一次打开时style是空的，但实际有CSS默认的尺寸
+      this.savedWindowState = {
+        left: container.style.left || '',
+        top: container.style.top || '',
+        width: container.style.width || (currentRect.width + 'px'),  // 如果没有inline style，使用实际宽度
+        height: container.style.height || (currentRect.height + 'px') // 如果没有inline style，使用实际高度
+      };
       
       // 获取当前窗口位置（作为动画起点）
       
