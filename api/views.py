@@ -16,6 +16,7 @@ from .serializers import (
     UserSerializer, UserRegisterSerializer
 )
 from ai import lowsky_ai
+from ai.config import DB_MODEL
 from .utils import get_client_ip, parse_location_by_ip
 
 # 配置日志
@@ -1116,7 +1117,7 @@ class PolicyViewSet(PublicModelViewSet):
             client = OpenAI(api_key=QIANWEN_API_KEY, base_url=QIANWEN_BASE_URL)
             
             format_resp = client.chat.completions.create(
-                model='qwen-turbo',
+                model=DB_MODEL,
                 messages=[{'role': 'user', 'content': format_prompt}],
                 max_tokens=4000,
                 temperature=0.2,
@@ -1168,7 +1169,7 @@ class PolicyViewSet(PublicModelViewSet):
             
             # 1. 生成摘要
             summary_resp = client.chat.completions.create(
-                model='qwen-turbo',
+                model=DB_MODEL,
                 messages=[{'role': 'user', 'content': summary_prompt}],
                 max_tokens=800,
                 temperature=0.3,
@@ -1180,7 +1181,7 @@ class PolicyViewSet(PublicModelViewSet):
             
             # 2. 格式化原文
             format_resp = client.chat.completions.create(
-                model='qwen-turbo',
+                model=DB_MODEL,
                 messages=[{'role': 'user', 'content': format_prompt}],
                 max_tokens=4000,
                 temperature=0.2,
@@ -1250,7 +1251,7 @@ class NewsViewSet(PublicModelViewSet):
             client = OpenAI(api_key=QIANWEN_API_KEY, base_url=QIANWEN_BASE_URL)
             
             format_resp = client.chat.completions.create(
-                model='qwen-turbo',
+                model=DB_MODEL,
                 messages=[{'role': 'user', 'content': format_prompt}],
                 max_tokens=4000,
                 temperature=0.2,
@@ -1302,7 +1303,7 @@ class NewsViewSet(PublicModelViewSet):
             
             # 1. 生成摘要
             summary_resp = client.chat.completions.create(
-                model='qwen-turbo',
+                model=DB_MODEL,
                 messages=[{'role': 'user', 'content': summary_prompt}],
                 max_tokens=800,
                 temperature=0.3,
@@ -1314,7 +1315,7 @@ class NewsViewSet(PublicModelViewSet):
             
             # 2. 格式化原文
             format_resp = client.chat.completions.create(
-                model='qwen-turbo',
+                model=DB_MODEL,
                 messages=[{'role': 'user', 'content': format_prompt}],
                 max_tokens=4000,
                 temperature=0.2,
@@ -1517,7 +1518,7 @@ class LowSkyAIViewSet(viewsets.ViewSet):
         
         def event_stream():
             try:
-                # ── 本地数据库模式：直接走 qwen-turbo 快速链路 ────────────────
+                # ── 本地数据库模式：直接走 DB_MODEL 快速链路 ────────────────
                 if tool_mode == 'db_only':
                     from ai.db_tools import get_db, get_llm, SQLDatabaseChain
                     from ai.config import QIANWEN_API_KEY, QIANWEN_BASE_URL
@@ -1528,7 +1529,7 @@ class LowSkyAIViewSet(viewsets.ViewSet):
                     llm = get_llm(
                         api_key=QIANWEN_API_KEY,
                         api_base=QIANWEN_BASE_URL,
-                    )  # 内部固定使用 qwen-turbo
+                    )  # 内部使用 config.py 中的 DB_MODEL 配置
                     db_chain = SQLDatabaseChain.from_llm(llm, db)
                     result = db_chain.run(message)
                     

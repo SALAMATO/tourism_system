@@ -21,10 +21,11 @@ class AITools:
         注入 LLM 配置，用于数据库自然语言查询（db_query 工具）。
         在 LowSkyAI 初始化模型后调用此方法。
         """
+        from .config import DB_MODEL
         self._llm_config = {
             'api_key': api_key,
             'api_base': api_base or 'https://dashscope.aliyuncs.com/compatible-mode/v1',
-            'model_name': model_name or 'qwen-plus',
+            'model_name': model_name or DB_MODEL,  # 使用config.py中的DB_MODEL配置
         }
         # 重置，下次使用时重建
         self._db_tool = None

@@ -95,13 +95,14 @@ Be professional and friendly."""
                 self.current_model = model_id
 
             # 将 LLM 配置注入数据库查询工具
-            # 注意：db_query 工具固定使用 qwen-turbo（见 db_tools.py），
+            # 注意：db_query 工具固定使用 config.py 中的 DB_MODEL（见 db_tools.py），
             # 此处只传 api_key 和 api_base，model_name 由 db_tools 内部决定
             if self.tools and api_key:
+                from .config import DB_MODEL
                 self.tools.set_llm_config(
                     api_key=api_key,
                     api_base=api_base,
-                    model_name='qwen-turbo',  # 数据库查询固定使用最快模型
+                    model_name=DB_MODEL,  # 数据库查询固定使用最快模型
                 )
 
             return True

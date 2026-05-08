@@ -9,7 +9,7 @@ QIANWEN_BASE_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1"
 
 # ── 可用模型列表 ───────────────────────────────────────────────────────
 AVAILABLE_MODELS = {
-    "qwen3.5-plus": {
+    "qwen3.6-plus": {
         "name": "通义千问Plus",
         "description": "默认AI助手，负责日常对话和问题理解",
         "max_tokens": 2048,
@@ -30,7 +30,7 @@ AVAILABLE_MODELS = {
 }
 
 # ── 默认主模型 ─────────────────────────────────────────────────────────
-DEFAULT_MODEL = "qwen3.5-plus"
+DEFAULT_MODEL = "qwen3.6-plus"
 
 # ── 数据库查询专用模型配置 ─────────────────────────────────────────────
 # 本地数据库模式固定使用此配置，与主模型解耦，便于独立调整
