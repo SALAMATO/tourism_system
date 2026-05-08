@@ -49,11 +49,17 @@ class DisplayHandler:
         if not text:
             return ''
         
-        # 移除 [TOOL:...] 标记
+        # 移除 [TOOL:...] 标记及其参数（支持多种格式）
+        # 格式1: [TOOL:search_web|query=xxx]
+        # 格式2: [调用工具: search_web]
+        # 格式3: 参数: {"query": "xxx"}
         filtered = re.sub(r'\[TOOL:[^\]]+\]', '', text)
+        filtered = re.sub(r'\[调用工具:\s*[^\]]+\]', '', filtered)
+        filtered = re.sub(r'参数:\s*\{[^}]*\}', '', filtered)
         
-        # 移除空行
+        # 移除空行和多余的空白行
         filtered = re.sub(r'^\s*[\r\n]+', '', filtered, flags=re.MULTILINE)
+        filtered = re.sub(r'\n{3,}', '\n\n', filtered)
         
         return filtered.strip()
     

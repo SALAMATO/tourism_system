@@ -1540,10 +1540,11 @@ class LowSkyAIViewSet(viewsets.ViewSet):
                     yield f"data: {json.dumps({'done': True})}\n\n"
                     return
                 
-                # ── 联网搜索模式：在消息前加强制指令 ────────────────────────
+                # ── 联网搜索模式：在消息前加强制指令（使用系统级标记，不会被显示） ──
                 forced_message = message
                 if tool_mode == 'web_only':
-                    forced_message = f'[强制使用联网搜索，必须调用search_web工具] {message}'
+                    # 使用特殊的系统标记，AI会识别但不会在回复中重复
+                    forced_message = f'<SYSTEM_INSTRUCTION:FORCE_WEB_SEARCH>{message}'
                 
                 # ✅ 传递request对象以支持位置获取
                 for chunk in lowsky_ai.chat_stream(forced_message, context, request=request):

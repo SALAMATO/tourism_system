@@ -196,9 +196,17 @@ Be professional and friendly."""
         if len(self.conversation_history) > 10:
             self.conversation_history = self.conversation_history[-10:]
         
+        # 添加当前时间到用户消息中（让AI知道真实时间）
+        from datetime import datetime
+        current_time = datetime.now().strftime("%Y年%m月%d日 %H:%M:%S")
+        time_info = f"\n\n[系统信息：当前时间是 {current_time}]\n"
+        
+        # 将时间信息添加到消息开头
+        enhanced_message = time_info + message
+        
         self.conversation_history.append({
             "role": "user",
-            "content": message
+            "content": enhanced_message
         })
         
         response = self._call_ai_model(message, context, stream)
@@ -230,9 +238,17 @@ Be professional and friendly."""
         if len(self.conversation_history) > 10:
             self.conversation_history = self.conversation_history[-10:]
         
+        # 添加当前时间到用户消息中（让AI知道真实时间）
+        from datetime import datetime
+        current_time = datetime.now().strftime("%Y年%m月%d日 %H:%M:%S")
+        time_info = f"\n\n[系统信息：当前时间是 {current_time}]\n"
+        
+        # 将时间信息添加到消息开头
+        enhanced_message = time_info + message
+        
         self.conversation_history.append({
             "role": "user",
-            "content": message
+            "content": enhanced_message
         })
         
         config = self.models[self.current_model]
@@ -268,8 +284,8 @@ Be professional and friendly."""
                     if content:
                         content_parts.append(content)
                         
-                        # 检测工具调用
-                        if "[TOOL:" in content:
+                        # 检测工具调用（支持多种格式）
+                        if "[TOOL:" in content or "[调用工具:" in content or "参数:" in content:
                             tool_calls_detected = True
                             continue  # 不输出工具调用标记
                         
@@ -305,10 +321,6 @@ Be professional and friendly."""
                     yield "\n\n"  # 添加分隔
                     for tool_name, params in tool_calls:
                         try:
-                            # 显示工具执行状态提示
-                            status_msg = f"\n🔍 正在执行 {self._get_tool_display_name(tool_name)}...\n"
-                            yield status_msg
-                            
                             # 如果是get_user_location工具，传递request对象
                             if tool_name == 'get_user_location' and request:
                                 result = self.tools.execute_tool(tool_name, request=request)
@@ -375,8 +387,8 @@ Be professional and friendly."""
             messages = [
                 {"role": "system", "content": self.system_prompt}
             ]
+            # conversation_history 已经包含了最新的用户消息，不需要再额外添加
             messages.extend(self.conversation_history)
-            messages.append({"role": "user", "content": message})
             
             payload = {
                 "model": config.model_name,
