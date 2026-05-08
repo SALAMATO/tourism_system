@@ -891,7 +891,8 @@ class LowSkyAIChat {
                 // 节流渲染：避免过于频繁的DOM操作，提升流畅度
                 const now = Date.now();
                 if (now - lastRenderTime > renderInterval) {
-                  contentDiv.innerHTML = this.parseMarkdown(fullContent);
+                  // 流式输出时使用简单的文本转换，避免不完整的Markdown导致占位符问题
+                  contentDiv.innerHTML = this.parseMarkdownSimple(fullContent);
                   this.smoothScrollToBottom();
                   lastRenderTime = now;
                 }
@@ -903,7 +904,7 @@ class LowSkyAIChat {
         }
       }
       
-      // 最终渲染（确保所有内容都显示）
+      // 最终渲染（确保所有内容都显示，使用完整的Markdown解析）
       if (fullContent) {
         contentDiv.innerHTML = this.parseMarkdown(fullContent);
         this.smoothScrollToBottom();
@@ -935,6 +936,28 @@ class LowSkyAIChat {
     });
   }
   
+  parseMarkdownSimple(text) {
+    // 简化的Markdown解析，用于流式输出时避免占位符问题
+    if (!text) return '';
+    
+    // 转义HTML特殊字符
+    let html = text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+    
+    // 处理换行
+    html = html.replace(/\n/g, '<br>');
+    
+    // 处理粗体（简单版本）
+    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    
+    // 处理链接
+    html = html.replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" target="_blank">$1</a>');
+    
+    return html;
+  }
+  
   parseMarkdown(text) {
     if (!text) return '';
     
@@ -958,6 +981,7 @@ class LowSkyAIChat {
     html = html.replace(/```([\s\S]+?)```/g, (match, code) => {
       const placeholder = `__CODE_BLOCK_${codeBlocks.length}__`;
       codeBlocks.push(`<pre><code>${code}</code></pre>`);
+      console.log(`[Markdown] 保护代码块 ${codeBlocks.length - 1}:`, placeholder);
       return placeholder;
     });
     
@@ -966,6 +990,7 @@ class LowSkyAIChat {
     html = html.replace(/`(.+?)`/g, (match, code) => {
       const placeholder = `__INLINE_CODE_${inlineCodes.length}__`;
       inlineCodes.push(`<code>${code}</code>`);
+      console.log(`[Markdown] 保护行内代码 ${inlineCodes.length - 1}:`, placeholder);
       return placeholder;
     });
     
@@ -1040,14 +1065,36 @@ class LowSkyAIChat {
     html = html.replace(/<p>(<hr>)<\/p>/g, '$1');
     html = html.replace(/<p>(<pre>.*?<\/pre>)<\/p>/g, '$1');
     
-    // 恢复代码块
+    // 恢复代码块和行内代码（必须在最后执行，确保占位符未被破坏）
+    // 先恢复代码块
     codeBlocks.forEach((code, i) => {
-      html = html.replace(`__CODE_BLOCK_${i}__`, code);
+      const placeholder = `__CODE_BLOCK_${i}__`;
+      console.log(`[Markdown] 恢复代码块 ${i}:`, placeholder);
+      // 使用全局替换，确保所有实例都被替换
+      let replaced = false;
+      while (html.includes(placeholder)) {
+        html = html.replace(placeholder, code);
+        replaced = true;
+      }
+      if (!replaced) {
+        console.warn(`[Markdown] 未找到代码块占位符: ${placeholder}`);
+        console.warn(`[Markdown] HTML内容片段:`, html.substring(0, 1000));
+      }
     });
     
-    // 恢复行内代码
+    // 再恢复行内代码
     inlineCodes.forEach((code, i) => {
-      html = html.replace(`__INLINE_CODE_${i}__`, code);
+      const placeholder = `__INLINE_CODE_${i}__`;
+      console.log(`[Markdown] 恢复行内代码 ${i}:`, placeholder);
+      // 使用全局替换，确保所有实例都被替换
+      let replaced = false;
+      while (html.includes(placeholder)) {
+        html = html.replace(placeholder, code);
+        replaced = true;
+      }
+      if (!replaced) {
+        console.warn(`[Markdown] 未找到行内代码占位符: ${placeholder}`);
+      }
     });
     
     return html;
@@ -1070,11 +1117,12 @@ class LowSkyAIChat {
       if (line.startsWith('|') && line.endsWith('|') && line.split('|').length >= 3) {
         // 找到表格开始，收集所有表格行
         const tableLines = [];
-        while (i < lines.length) {
-          const currentLine = lines[i].trim();
+        let j = i;
+        while (j < lines.length) {
+          const currentLine = lines[j].trim();
           if (currentLine.startsWith('|') && currentLine.endsWith('|')) {
             tableLines.push(currentLine);
-            i++;
+            j++;
           } else {
             break;
           }
@@ -1083,6 +1131,7 @@ class LowSkyAIChat {
         // 解析表格
         if (tableLines.length >= 2) {
           result.push(this.buildTableFromLines(tableLines));
+          i = j; // 跳过已处理的表格行
         } else {
           // 不是有效表格，作为普通文本处理
           result.push(line);
