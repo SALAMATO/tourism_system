@@ -131,6 +131,8 @@ class SQLDatabaseChain:
 8. 统计数据字段对应关系：tourist_count=游客人数(万人次), revenue=营收(万元), flight_count=航班次数, aircraft_count=航空器数量, growth_rate=增长率(%)
 9. destinations表的features和recommendation_type是JSON数组字段，SQLite中使用json_each()或LIKE进行查询
 10. 地理位置查询可以使用china_cities表（如果存在）关联destinations表的city字段，获取经纬度进行距离计算
+11. 【重要】查询 news 表时，绝对不要 SELECT content 字段，只查询 id, title, category, author, publish_date, views 等元数据字段
+12. 【重要】查询 policies 表时，也尽量不要 SELECT content 字段，除非用户明确要求查看政策全文
 """)
         human_msg = HumanMessage(content=f"用户问题：{question}")
 
@@ -212,6 +214,39 @@ class SQLDatabaseChain:
 | --- | --- | --- | --- | --- | --- | --- |
 | 直升机鸟瞰长城 | 北京 | 八达岭长城 | 中国 | US$480.00/人 | 2小时15分钟 | 春秋两季 |
 | 拉斯维加斯大道直升机夜航 | 拉斯维加斯 | Las Vegas | 美国 | 低至 US$109.71/人 | 12分钟 | 全年 |
+
+9. 【新闻资讯特殊处理】
+   - 如果查询结果包含 news 表的数据，不要展示 content 字段
+   - 在表格中只显示：标题、分类、作者、发布日期、浏览量
+   - 标题必须使用 Markdown 链接格式：[标题文本](/news/news-detail.html/?id=ID值)
+   - 在表格后添加提示：“点击标题可查看完整新闻内容”
+   - 示例格式：
+     ```
+     以下是相关的新闻资讯：
+
+     | 标题 | 分类 | 作者 | 发布日期 | 浏览量 |
+     | --- | --- | --- | --- | --- |
+     | [低空旅游新政发布](/news/news-detail.html/?id=1) | 政策动态 | 张记者 | 2026-05-01 | 1234 |
+     | [直升机观光项目上线](/news/news-detail.html/?id=2) | 行业动态 | 李编辑 | 2026-04-28 | 856 |
+
+     点击标题可查看完整新闻内容
+     ```
+
+10. 【政策法规特殊处理】
+    - 如果查询结果包含 policies 表的数据且没有 content 字段，只显示元数据
+    - 标题必须使用 Markdown 链接格式：[标题文本](/policies/policy-detail.html/?id=ID值)
+    - 在表格后添加提示：“点击标题可查看完整政策内容”
+    - 示例格式：
+      ```
+      以下是相关的政策法规：
+
+      | 标题 | 级别 | 分类 | 发布部门 | 发布日期 |
+      | --- | --- | --- | --- | --- |
+      | [低空旅游管理办法](/policies/policy-detail.html/?id=1) | 国家级 | 管理规定 | 民航局 | 2026-03-01 |
+      | [无人机飞行管理条例](/policies/policy-detail.html/?id=2) | 省级 | 安全管理 | 省政府 | 2026-02-15 |
+
+      点击标题可查看完整政策内容
+      ```
 
 请严格按照以上格式要求回答，确保表格规范美观。
 """
