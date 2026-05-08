@@ -415,6 +415,7 @@ class DatabaseQueryTool:
             if self._db_cache_enabled:
                 try:
                     from api.models import AICache
+                    print(f"🔍 正在查询数据库缓存...")
                     db_cache = AICache.objects.filter(
                         question_hash=cache_key,
                         is_valid=True
@@ -422,6 +423,7 @@ class DatabaseQueryTool:
                     
                     if db_cache and not db_cache.is_expired():
                         # 命中数据库缓存
+                        print(f"✅ 数据库缓存命中！ID: {db_cache.id}, 已命中{db_cache.hit_count}次")
                         db_cache.hit_count += 1
                         db_cache.save(update_fields=['hit_count'])
                         
@@ -429,8 +431,15 @@ class DatabaseQueryTool:
                         self._cache[cache_key] = (db_cache.answer, time.time())
                         
                         return f"{db_cache.answer}\n\n*(来自数据库缓存)*"
+                    else:
+                        if db_cache:
+                            print(f"⚠️ 数据库缓存已过期")
+                        else:
+                            print(f"ℹ️  数据库缓存未找到")
                 except Exception as e:
-                    print(f"⚠️ 数据库缓存查询失败: {e}")
+                    print(f"❌ 数据库缓存查询失败: {e}")
+                    import traceback
+                    traceback.print_exc()
             
             # 3. 缓存未命中，执行实际查询
             chain = self._get_chain()
@@ -448,7 +457,12 @@ class DatabaseQueryTool:
                     from api.models import AICache
                     expires_at = timezone.now() + timedelta(seconds=self._db_cache_ttl)
                     
-                    AICache.objects.create(
+                    print(f"💾 正在保存缓存到数据库...")
+                    print(f"   - 问题: {question[:50]}...")
+                    print(f"   - 表名: {tables_involved}")
+                    print(f"   - 过期时间: {expires_at}")
+                    
+                    cache_entry = AICache.objects.create(
                         question_hash=cache_key,
                         question=question[:500],  # 限制长度
                         answer=result,
@@ -459,8 +473,12 @@ class DatabaseQueryTool:
                         hit_count=0,
                         expires_at=expires_at
                     )
+                    
+                    print(f"✅ 缓存保存成功，ID: {cache_entry.id}")
                 except Exception as e:
-                    print(f"⚠️ 数据库缓存保存失败: {e}")
+                    print(f"❌ 数据库缓存保存失败: {e}")
+                    import traceback
+                    traceback.print_exc()
             
             # 7. 清理过期内存缓存
             self._cleanup_cache()
