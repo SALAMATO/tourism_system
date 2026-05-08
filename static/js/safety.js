@@ -70,8 +70,9 @@ function renderAlerts(container, alerts) {
           <h3>${escapeHtml(alert.title)}</h3>
           <div class="list-item-meta">
             <span><i class="fas fa-layer-group"></i> ${escapeHtml(alert.category || '未分类')}</span>
-            <span><i class="fas fa-calendar"></i> ${formatDate(alert.report_date)}</span>
             <span><i class="fas fa-info-circle"></i> ${escapeHtml(alert.status || '待处理')}</span>
+            <span><i class="fas fa-calendar-plus"></i> 创建: ${formatDateTime(alert.created_at)}</span>
+            <span><i class="fas fa-calendar-check"></i> 更新: ${formatDateTime(alert.updated_at)}</span>
           </div>
         </div>
         <span class="tag ${getRiskTagClass(alert.risk_level)}">${escapeHtml(alert.risk_level || '未知')}</span>
@@ -111,6 +112,8 @@ async function showAlertDetail(alertId) {
           <span><i class="fas fa-layer-group"></i> ${escapeHtml(alert.category || '未分类')}</span>
           <span><i class="fas fa-calendar"></i> ${formatDate(alert.report_date)}</span>
           <span><i class="fas fa-info-circle"></i> ${escapeHtml(alert.status || '待处理')}</span>
+          <span><i class="fas fa-calendar-plus"></i> 创建时间: ${formatDateTime(alert.created_at)}</span>
+          <span><i class="fas fa-calendar-check"></i> 更新时间: ${formatDateTime(alert.updated_at)}</span>
         </div>
         
         <div style="margin-bottom: 24px;">
