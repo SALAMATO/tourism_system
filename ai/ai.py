@@ -20,8 +20,8 @@ class AIModelConfig:
         model_name: str,
         api_key: str,
         api_base: Optional[str] = None,
-        max_tokens: int = 8000,
-        temperature: float = 0.7,
+        max_tokens: int = 2048,
+        temperature: float = 0.5,
         **kwargs
     ):
         self.model_name = model_name
@@ -75,8 +75,8 @@ Be professional and friendly."""
         model_name: str,
         api_key: str = "",
         api_base: Optional[str] = None,
-        max_tokens: int = 8000,
-        temperature: float = 0.7,
+        max_tokens: int = 2048,
+        temperature: float = 0.5,
         **kwargs
     ) -> bool:
         """Add AI model configuration"""
