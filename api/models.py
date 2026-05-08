@@ -448,6 +448,8 @@ class AICache(models.Model):
     """AI查询结果缓存表"""
     question_hash = models.CharField(max_length=64, unique=True, db_index=True, verbose_name='问题哈希值(MD5)')
     question = models.TextField(verbose_name='原始问题')
+    normalized_question = models.TextField(blank=True, null=True, verbose_name='标准化后的问题',
+                                           help_text='用于提高语义匹配命中率')
     answer = models.TextField(verbose_name='AI回答结果')
     query_type = models.CharField(max_length=50, default='db_query', verbose_name='查询类型', 
                                   help_text='db_query: 数据库查询, web_search: 网络搜索, general: 通用对话')
@@ -469,6 +471,7 @@ class AICache(models.Model):
         indexes = [
             models.Index(fields=['query_type', 'is_valid']),
             models.Index(fields=['cache_key']),
+            models.Index(fields=['normalized_question']),  # 新增：为标准化问题添加索引
         ]
 
     def __str__(self):

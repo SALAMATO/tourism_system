@@ -422,30 +422,46 @@ class DatabaseQueryTool:
                 if time.time() - cached_time < self._cache_ttl:
                     return cached_result
             
-            # 5. 检查数据库缓存（先精确匹配，再语义匹配）
+            # 5. 检查数据库缓存（三级匹配策略）
             if self._db_cache_enabled:
                 try:
                     from api.models import AICache
                     
-                    # 5.1 尝试精确匹配
+                    db_cache = None
+                    
+                    # 5.1 第一级：精确匹配（question_hash）
                     print(f"🔍 正在查询数据库缓存（精确匹配）...")
                     db_cache = AICache.objects.filter(
                         question_hash=exact_hash,
                         is_valid=True
                     ).first()
                     
-                    # 5.2 如果精确匹配失败，尝试语义匹配
+                    if db_cache:
+                        print(f"✅ 精确匹配成功！")
+                    
+                    # 5.2 第二级：标准化问题匹配（normalized_question）
+                    if not db_cache and normalized_question:
+                        print(f"🔍 精确匹配未找到，尝试标准化问题匹配...")
+                        db_cache = AICache.objects.filter(
+                            normalized_question=normalized_question,
+                            is_valid=True
+                        ).first()
+                        
+                        if db_cache:
+                            print(f"✅ 标准化问题匹配成功！原问题: '{db_cache.question}'")
+                    
+                    # 5.3 第三级：语义哈希匹配（semantic_hash）
                     if not db_cache:
-                        print(f"🔍 精确匹配未找到，尝试语义匹配...")
+                        print(f"🔍 标准化问题未找到，尝试语义哈希匹配...")
                         db_cache = AICache.objects.filter(
                             question_hash=semantic_hash,
                             is_valid=True
                         ).first()
                         
                         if db_cache:
-                            print(f"✅ 语义匹配成功！原问题: '{db_cache.question}'")
+                            print(f"✅ 语义哈希匹配成功！原问题: '{db_cache.question}'")
                     
-                    # 5.3 检查缓存是否有效且未过期
+                    # 5.4 检查缓存是否有效且未过期
                     if db_cache and not db_cache.is_expired():
                         # 命中数据库缓存
                         print(f"✅ 数据库缓存命中！ID: {db_cache.id}, 已命中{db_cache.hit_count}次")
@@ -455,17 +471,17 @@ class DatabaseQueryTool:
                         # 同时更新内存缓存（使用精确哈希）
                         self._cache[exact_hash] = (db_cache.answer, time.time())
                         
-                        # 如果是语义匹配，也缓存语义哈希
-                        if exact_hash != semantic_hash:
-                            self._cache[semantic_hash] = (db_cache.answer, time.time())
+                        # 如果有标准化问题，也缓存标准化问题的哈希
+                        if normalized_question:
+                            normalized_hash = hashlib.md5(normalized_question.encode('utf-8')).hexdigest()
+                            if normalized_hash != exact_hash:
+                                self._cache[normalized_hash] = (db_cache.answer, time.time())
                         
                         return db_cache.answer
                     else:
                         # 缓存不存在、已过期或无效
                         if db_cache:
                             print(f"⚠️ 数据库缓存已过期或无效，将更新缓存")
-                            # 可选：删除过期缓存，避免累积
-                            # db_cache.delete()
                         else:
                             print(f"ℹ️  数据库缓存未找到")
                 except Exception as e:
@@ -493,7 +509,7 @@ class DatabaseQueryTool:
                     
                     print(f"💾 正在保存缓存到数据库...")
                     print(f"   - 原始问题: {question[:50]}...")
-                    print(f"   - 标准化问题: {normalized_question[:50]}...")
+                    print(f"   - 标准化问题: {normalized_question[:50] if normalized_question else 'None'}...")
                     print(f"   - 表名: {tables_involved}")
                     print(f"   - 过期时间: {expires_at}")
                     
@@ -502,6 +518,7 @@ class DatabaseQueryTool:
                         question_hash=semantic_hash,  # 使用语义哈希作为唯一键
                         defaults={
                             'question': question[:500],  # 保存原始问题
+                            'normalized_question': normalized_question[:500] if normalized_question else None,  # 保存标准化问题
                             'answer': result,
                             'query_type': 'db_query',
                             'tables_involved': tables_involved,
@@ -515,6 +532,7 @@ class DatabaseQueryTool:
                     if not created:
                         # 如果记录已存在，更新它
                         cache_entry.question = question[:500]
+                        cache_entry.normalized_question = normalized_question[:500] if normalized_question else None
                         cache_entry.answer = result
                         cache_entry.query_type = 'db_query'
                         cache_entry.tables_involved = tables_involved
