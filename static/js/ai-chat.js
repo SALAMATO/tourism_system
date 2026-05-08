@@ -186,6 +186,17 @@ class LowSkyAIChat {
                         <div class="ai-tool-menu-desc">解答低空旅游相关信息</div>
                       </div>
                     </div>
+                     <div class="ai-tool-menu-item" data-mode="web_only">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/>
+                        <path d="M2 12h20"/>
+                      </svg>
+                      <div>
+                        <div class="ai-tool-menu-title">联网搜索</div>
+                        <div class="ai-tool-menu-desc">搜索互联网最新信息</div>
+                      </div>
+                    </div>
                     <div class="ai-tool-menu-item" data-mode="db_only">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <ellipse cx="12" cy="5" rx="9" ry="3"/>

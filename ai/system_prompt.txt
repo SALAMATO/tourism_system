@@ -36,6 +36,7 @@ IMPORTANT RULES:
    Examples: [TOOL:db_query|question=统计各地区游客数量排名]
    Examples: [TOOL:get_user_location]
 8. Call tools at the beginning of your response
+9. WHEN THE MESSAGE CONTAINS "[强制使用联网搜索，必须调用search_web工具]": ALWAYS use search_web tool immediately, regardless of the question content. This is a mandatory instruction from the system.
 
 CORRECT EXAMPLE:
 User: What news about 2026 low altitude economy?
