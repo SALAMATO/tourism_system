@@ -359,9 +359,12 @@ class DatabaseQueryTool:
     def __init__(self, llm_config: Optional[dict] = None):
         self.llm_config = llm_config or {}
         self._chain: Optional[SQLDatabaseChain] = None
-        # 简单缓存：{question_hash: (result, timestamp)}
+        # 内存缓存（短期）：{question_hash: (result, timestamp)}
         self._cache: dict = {}
-        self._cache_ttl = 300  # 缓存有效期5分钟
+        self._cache_ttl = 300  # 内存缓存有效期5分钟
+        # 数据库缓存配置
+        self._db_cache_enabled = True  # 是否启用数据库缓存
+        self._db_cache_ttl = 86400  # 数据库缓存有效期24小时（秒）
 
     def _get_chain(self) -> SQLDatabaseChain:
         """懒加载：首次调用时创建 SQLDatabaseChain"""
@@ -394,20 +397,72 @@ class DatabaseQueryTool:
             result = tool.query("最近有哪些安全隐患？")
         """
         try:
-            # 检查缓存
+            import hashlib
+            import time
+            from django.utils import timezone
+            from datetime import timedelta
+            
+            # 生成问题哈希
             cache_key = hashlib.md5(question.encode('utf-8')).hexdigest()
+            
+            # 1. 先检查内存缓存（最快）
             if cache_key in self._cache:
                 cached_result, cached_time = self._cache[cache_key]
                 if time.time() - cached_time < self._cache_ttl:
-                    return f"{cached_result}\n\n*(来自缓存)*"
+                    return f"{cached_result}\n\n*(来自内存缓存)*"
             
+            # 2. 检查数据库缓存（持久化）
+            if self._db_cache_enabled:
+                try:
+                    from api.models import AICache
+                    db_cache = AICache.objects.filter(
+                        question_hash=cache_key,
+                        is_valid=True
+                    ).first()
+                    
+                    if db_cache and not db_cache.is_expired():
+                        # 命中数据库缓存
+                        db_cache.hit_count += 1
+                        db_cache.save(update_fields=['hit_count'])
+                        
+                        # 同时更新内存缓存
+                        self._cache[cache_key] = (db_cache.answer, time.time())
+                        
+                        return f"{db_cache.answer}\n\n*(来自数据库缓存)*"
+                except Exception as e:
+                    print(f"⚠️ 数据库缓存查询失败: {e}")
+            
+            # 3. 缓存未命中，执行实际查询
             chain = self._get_chain()
             result = chain.run(question)
             
-            # 存入缓存
+            # 4. 分析涉及的表名（用于后续缓存失效）
+            tables_involved = self._extract_tables_from_question(question)
+            
+            # 5. 存入内存缓存
             self._cache[cache_key] = (result, time.time())
             
-            # 清理过期缓存
+            # 6. 存入数据库缓存
+            if self._db_cache_enabled:
+                try:
+                    from api.models import AICache
+                    expires_at = timezone.now() + timedelta(seconds=self._db_cache_ttl)
+                    
+                    AICache.objects.create(
+                        question_hash=cache_key,
+                        question=question[:500],  # 限制长度
+                        answer=result,
+                        query_type='db_query',
+                        tables_involved=tables_involved,
+                        cache_key=f"db_query:{cache_key}",
+                        is_valid=True,
+                        hit_count=0,
+                        expires_at=expires_at
+                    )
+                except Exception as e:
+                    print(f"⚠️ 数据库缓存保存失败: {e}")
+            
+            # 7. 清理过期内存缓存
             self._cleanup_cache()
             
             return result
@@ -415,7 +470,7 @@ class DatabaseQueryTool:
             return f"[数据库查询失败] {str(e)}"
     
     def _cleanup_cache(self):
-        """清理过期缓存"""
+        """清理过期内存缓存"""
         current_time = time.time()
         expired_keys = [
             key for key, (_, timestamp) in self._cache.items()
@@ -423,6 +478,30 @@ class DatabaseQueryTool:
         ]
         for key in expired_keys:
             del self._cache[key]
+    
+    def _extract_tables_from_question(self, question: str) -> list:
+        """
+        从问题中提取可能涉及的数据库表名
+        用于后续数据变更时清除相关缓存
+        """
+        tables = []
+        question_lower = question.lower()
+        
+        # 关键词映射到表名
+        table_keywords = {
+            'destinations': ['目的地', '旅游', '景点', 'destination', 'travel'],
+            'policies': ['政策', '法规', 'policy', 'regulation'],
+            'news': ['新闻', '资讯', '消息', 'news'],
+            'safety_alerts': ['安全', '隐患', '预警', 'safety', 'alert'],
+            'statistics': ['统计', '数据', '游客数量', '航班', 'statistics'],
+            'messages': ['留言', '评论', '反馈', 'message'],
+        }
+        
+        for table_name, keywords in table_keywords.items():
+            if any(keyword in question_lower for keyword in keywords):
+                tables.append(table_name)
+        
+        return tables
 
     def get_schema_summary(self) -> str:
         """返回数据库表结构描述字符串"""

@@ -1637,6 +1637,107 @@ class LowSkyAIViewSet(viewsets.ViewSet):
         """清空对话历史"""
         lowsky_ai.clear_history()
         return Response({'message': '对话历史已清空'})
+    
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    def cache_stats(self, request):
+        """获取AI缓存统计信息（需要管理员权限）"""
+        if not request.user.is_staff:
+            return Response({'error': '需要管理员权限'}, status=status.HTTP_403_FORBIDDEN)
+        
+        try:
+            from api.models import AICache
+            from django.utils import timezone
+            
+            # 总缓存数
+            total_cache = AICache.objects.count()
+            
+            # 有效缓存数
+            valid_cache = AICache.objects.filter(is_valid=True).count()
+            
+            # 已过期缓存数
+            expired_cache = AICache.objects.filter(
+                is_valid=True,
+                expires_at__lt=timezone.now()
+            ).count()
+            
+            # 按查询类型统计
+            type_stats = {}
+            for query_type in ['db_query', 'web_search', 'general']:
+                count = AICache.objects.filter(
+                    query_type=query_type,
+                    is_valid=True
+                ).count()
+                type_stats[query_type] = count
+            
+            # 命中率最高的前10条缓存
+            top_hits = AICache.objects.filter(
+                is_valid=True
+            ).order_by('-hit_count')[:10]
+            
+            top_hits_data = [
+                {
+                    'question': cache.question,
+                    'hit_count': cache.hit_count,
+                    'created_at': cache.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                    'query_type': cache.query_type
+                }
+                for cache in top_hits
+            ]
+            
+            return Response({
+                'total_cache': total_cache,
+                'valid_cache': valid_cache,
+                'expired_cache': expired_cache,
+                'type_stats': type_stats,
+                'top_hits': top_hits_data
+            })
+        except Exception as e:
+            return Response({'error': f'获取缓存统计失败: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
+    def clear_cache(self, request):
+        """清除AI缓存（需要管理员权限）"""
+        if not request.user.is_staff:
+            return Response({'error': '需要管理员权限'}, status=status.HTTP_403_FORBIDDEN)
+        
+        try:
+            from api.models import AICache
+            
+            # 支持按类型清除
+            query_type = request.data.get('query_type')
+            table_name = request.data.get('table_name')
+            clear_all = request.data.get('clear_all', False)
+            
+            if clear_all:
+                # 清除所有缓存
+                cleared_count = AICache.objects.filter(is_valid=True).update(is_valid=False)
+                message = f'已清除所有 {cleared_count} 条AI缓存'
+            elif table_name:
+                # 清除指定表相关的缓存（SQLite不支持JSON contains，改用icontains）
+                cleared_count = AICache.objects.filter(
+                    tables_involved__icontains=table_name,
+                    is_valid=True
+                ).update(is_valid=False)
+                message = f'已清除 {cleared_count} 条与 {table_name} 相关的AI缓存'
+            elif query_type:
+                # 清除指定类型的缓存
+                cleared_count = AICache.objects.filter(
+                    query_type=query_type,
+                    is_valid=True
+                ).update(is_valid=False)
+                message = f'已清除 {cleared_count} 条 {query_type} 类型的AI缓存'
+            else:
+                # 默认清除过期的缓存
+                from django.utils import timezone
+                cleared_count = AICache.objects.filter(
+                    is_valid=True,
+                    expires_at__lt=timezone.now()
+                ).update(is_valid=False)
+                message = f'已清除 {cleared_count} 条过期的AI缓存'
+            
+            return Response({'message': message, 'cleared_count': cleared_count})
+        except Exception as e:
+            return Response({'error': f'清除缓存失败: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['POST'])
 @permission_classes([AllowAny])

@@ -163,6 +163,25 @@ def destination_post_delete(sender, instance, **kwargs):
                 pass
 
 
+# 信号处理器：Destination保存/更新时清除相关AI缓存
+from django.db.models.signals import post_save
+
+@receiver(post_save, sender=Destination)
+def destination_post_save_clear_cache(sender, instance, created, **kwargs):
+    """当Destination被创建或更新时，清除相关的AI查询缓存"""
+    try:
+        from api.models import AICache
+        # SQLite不支持JSON字段的contains查询，改用LIKE查询
+        cleared_count = AICache.objects.filter(
+            tables_involved__icontains='destinations',
+            is_valid=True
+        ).update(is_valid=False)
+        if cleared_count > 0:
+            print(f"✅ 已清除 {cleared_count} 条目的地相关的AI缓存")
+    except Exception as e:
+        print(f"⚠️ 清除AI缓存失败: {e}")
+
+
 class Policy(models.Model):
     """政策法规模型"""
     title = models.CharField(max_length=200, verbose_name='政策标题')
@@ -186,6 +205,22 @@ class Policy(models.Model):
 
     def __str__(self):
         return self.title
+
+
+# 信号处理器：Policy保存/更新时清除相关AI缓存
+@receiver(post_save, sender=Policy)
+def policy_post_save_clear_cache(sender, instance, created, **kwargs):
+    """当Policy被创建或更新时，清除相关的AI查询缓存"""
+    try:
+        from api.models import AICache
+        cleared_count = AICache.objects.filter(
+            tables_involved__icontains='policies',
+            is_valid=True
+        ).update(is_valid=False)
+        if cleared_count > 0:
+            print(f"✅ 已清除 {cleared_count} 条政策相关的AI缓存")
+    except Exception as e:
+        print(f"⚠️ 清除AI缓存失败: {e}")
 
 
 class News(models.Model):
@@ -226,6 +261,22 @@ def news_post_delete(sender, instance, **kwargs):
             pass
 
 
+# 信号处理器：News保存/更新时清除相关AI缓存
+@receiver(post_save, sender=News)
+def news_post_save_clear_cache(sender, instance, created, **kwargs):
+    """当News被创建或更新时，清除相关的AI查询缓存"""
+    try:
+        from api.models import AICache
+        cleared_count = AICache.objects.filter(
+            tables_involved__icontains='news',
+            is_valid=True
+        ).update(is_valid=False)
+        if cleared_count > 0:
+            print(f"✅ 已清除 {cleared_count} 条新闻相关的AI缓存")
+    except Exception as e:
+        print(f"⚠️ 清除AI缓存失败: {e}")
+
+
 class SafetyAlert(models.Model):
     """安全隐患模型"""
     RISK_CHOICES = [
@@ -259,6 +310,22 @@ class SafetyAlert(models.Model):
 
     def __str__(self):
         return self.title
+
+
+# 信号处理器：SafetyAlert保存/更新时清除相关AI缓存
+@receiver(post_save, sender=SafetyAlert)
+def safety_alert_post_save_clear_cache(sender, instance, created, **kwargs):
+    """当SafetyAlert被创建或更新时，清除相关的AI查询缓存"""
+    try:
+        from api.models import AICache
+        cleared_count = AICache.objects.filter(
+            tables_involved__icontains='safety_alerts',
+            is_valid=True
+        ).update(is_valid=False)
+        if cleared_count > 0:
+            print(f"✅ 已清除 {cleared_count} 条安全预警相关的AI缓存")
+    except Exception as e:
+        print(f"⚠️ 清除AI缓存失败: {e}")
 
 
 class Message(models.Model):
@@ -359,3 +426,55 @@ class Statistic(models.Model):
 
     def __str__(self):
         return f'{self.region} - {self.year}年'
+
+
+# 信号处理器：Statistic保存/更新时清除相关AI缓存
+@receiver(post_save, sender=Statistic)
+def statistic_post_save_clear_cache(sender, instance, created, **kwargs):
+    """当Statistic被创建或更新时，清除相关的AI查询缓存"""
+    try:
+        from api.models import AICache
+        cleared_count = AICache.objects.filter(
+            tables_involved__icontains='statistics',
+            is_valid=True
+        ).update(is_valid=False)
+        if cleared_count > 0:
+            print(f"✅ 已清除 {cleared_count} 条统计数据相关的AI缓存")
+    except Exception as e:
+        print(f"⚠️ 清除AI缓存失败: {e}")
+
+
+class AICache(models.Model):
+    """AI查询结果缓存表"""
+    question_hash = models.CharField(max_length=64, unique=True, db_index=True, verbose_name='问题哈希值(MD5)')
+    question = models.TextField(verbose_name='原始问题')
+    answer = models.TextField(verbose_name='AI回答结果')
+    query_type = models.CharField(max_length=50, default='db_query', verbose_name='查询类型', 
+                                  help_text='db_query: 数据库查询, web_search: 网络搜索, general: 通用对话')
+    tables_involved = models.JSONField(default=list, blank=True, verbose_name='涉及的数据库表',
+                                       help_text='记录查询涉及的表名，用于数据变更时清除相关缓存')
+    cache_key = models.CharField(max_length=200, db_index=True, verbose_name='缓存键',
+                                 help_text='用于快速查找和清除缓存的标识符')
+    is_valid = models.BooleanField(default=True, verbose_name='是否有效')
+    hit_count = models.IntegerField(default=0, verbose_name='命中次数')
+    expires_at = models.DateTimeField(verbose_name='过期时间')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
+
+    class Meta:
+        db_table = 'ai_cache'
+        verbose_name = 'AI查询缓存'
+        verbose_name_plural = verbose_name
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['query_type', 'is_valid']),
+            models.Index(fields=['cache_key']),
+        ]
+
+    def __str__(self):
+        return f'{self.question[:50]}... (命中{self.hit_count}次)'
+    
+    def is_expired(self):
+        """检查缓存是否过期"""
+        from django.utils import timezone
+        return timezone.now() > self.expires_at
