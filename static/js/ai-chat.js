@@ -546,50 +546,105 @@ class LowSkyAIChat {
     
     if (container.classList.contains('maximized')) {
       // 还原 - 层叠方框
-      container.classList.remove('maximized');
-      maximizeBtn.innerHTML = '<rect x="1" y="1" width="8" height="8" fill="none" stroke="currentColor" stroke-width="1"/>';
       this.isMaximized = false;
       
-      // 还原时恢复之前的位置和尺寸
+      // 获取当前最大化状态下的位置和尺寸（作为动画起点）
+      const currentRect = container.getBoundingClientRect();
+      
+      // 先临时禁用transition，避免移除类时触发意外动画
+      container.style.transition = 'none';
+      
+      // 先设置当前位置为起点（保持在全屏位置）
+      container.style.left = currentRect.left + 'px';
+      container.style.top = currentRect.top + 'px';
+      container.style.width = currentRect.width + 'px';
+      container.style.height = currentRect.height + 'px';
+      container.style.maxWidth = 'none';
+      container.style.maxHeight = 'none';
+      
+      // 移除maximized类（此时transition已禁用，不会跳变）
+      container.classList.remove('maximized');
+      maximizeBtn.innerHTML = '<rect x="1" y="1" width="8" height="8" fill="none" stroke="currentColor" stroke-width="1"/>';
+      
+      // 强制重绘，确保所有样式生效
+      container.offsetHeight;
+      
+      // 计算目标位置
+      let targetLeft, targetTop, targetWidth, targetHeight;
+      
       if (this.savedWindowState) {
-        container.style.left = this.savedWindowState.left;
-        container.style.top = this.savedWindowState.top;
-        container.style.width = this.savedWindowState.width;
-        container.style.height = this.savedWindowState.height;
-        container.style.maxWidth = '';
-        container.style.maxHeight = '';
+        // 有保存的位置，直接使用
+        targetLeft = this.savedWindowState.left;
+        targetTop = this.savedWindowState.top;
+        targetWidth = this.savedWindowState.width || '';
+        targetHeight = this.savedWindowState.height || '';
       } else {
-        // 如果没有保存的状态，重置为默认
+        // 没有保存的位置（首次打开），计算居中位置
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        const defaultWidth = Math.min(viewportWidth * 0.5, viewportWidth * 0.4);
+        const defaultHeight = Math.min(viewportHeight * 0.8, 700);
+        targetLeft = (viewportWidth - defaultWidth) / 2 + 'px';
+        targetTop = (viewportHeight - defaultHeight) / 2 + 'px';
+        targetWidth = '';
+        targetHeight = '';
+      }
+      
+      // 恢复transition并设置目标位置，触发动画
+      requestAnimationFrame(() => {
+        container.style.transition = ''; // 恢复CSS的transition
+        container.style.left = targetLeft;
+        container.style.top = targetTop;
+        if (targetWidth) container.style.width = targetWidth;
+        if (targetHeight) container.style.height = targetHeight;
+      });
+    } else {
+      // 最大化前保存当前状态
+      const currentRect = container.getBoundingClientRect();
+      
+      // 只有当有实际的位置信息时才保存，否则不保存（使用默认居中）
+      if (container.style.left && container.style.top) {
+        this.savedWindowState = {
+          left: container.style.left,
+          top: container.style.top,
+          width: container.style.width,
+          height: container.style.height
+        };
+      } else {
+        // 首次打开，没有位置信息，保存为null表示使用默认居中
+        this.savedWindowState = null;
+      }
+      
+      // 获取当前窗口位置（作为动画起点）
+      
+      // 临时禁用transition
+      container.style.transition = 'none';
+      
+      // 确保当前位置被设置
+      container.style.left = currentRect.left + 'px';
+      container.style.top = currentRect.top + 'px';
+      container.style.width = currentRect.width + 'px';
+      container.style.height = currentRect.height + 'px';
+      
+      // 强制重绘
+      container.offsetHeight;
+      
+      // 延迟一帧后最大化，触发动画
+      requestAnimationFrame(() => {
+        container.style.transition = ''; // 恢复transition
+        // 最大化 - 单个方框
+        container.classList.add('maximized');
+        maximizeBtn.innerHTML = '<rect x="3" y="1" width="6" height="6" fill="none" stroke="currentColor" stroke-width="1"/><rect x="1" y="3" width="6" height="6" fill="none" stroke="currentColor" stroke-width="1"/>';
+        this.isMaximized = true;
+        
+        // 最大化时清除拖拽定位
         container.style.left = '';
         container.style.top = '';
         container.style.right = '';
         container.style.bottom = '';
         container.style.width = '';
         container.style.height = '';
-        container.style.maxWidth = '';
-        container.style.maxHeight = '';
-      }
-    } else {
-      // 最大化前保存当前状态
-      this.savedWindowState = {
-        left: container.style.left,
-        top: container.style.top,
-        width: container.style.width,
-        height: container.style.height
-      };
-      
-      // 最大化 - 单个方框
-      container.classList.add('maximized');
-      maximizeBtn.innerHTML = '<rect x="3" y="1" width="6" height="6" fill="none" stroke="currentColor" stroke-width="1"/><rect x="1" y="3" width="6" height="6" fill="none" stroke="currentColor" stroke-width="1"/>';
-      this.isMaximized = true;
-      
-      // 最大化时清除拖拽定位
-      container.style.left = '';
-      container.style.top = '';
-      container.style.right = '';
-      container.style.bottom = '';
-      container.style.width = '';
-      container.style.height = '';
+      });
     }
   }
   
