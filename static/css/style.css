@@ -2326,8 +2326,7 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(10px);
+  background: transparent;
   z-index: 10000;
   align-items: center;
   justify-content: center;
@@ -2354,6 +2353,8 @@ body {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   transform: scale(0.95) translateY(20px);
   opacity: 0;
+  position: absolute;
+  cursor: default;
 }
 
 .ai-chat-modal.show .ai-chat-container {
@@ -2382,6 +2383,8 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  cursor: move;
+  user-select: none;
 }
 
 .ai-chat-header h3 {

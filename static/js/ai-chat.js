@@ -15,6 +15,13 @@ class LowSkyAIChat {
     this.toolMode = 'auto'; // 'auto' | 'db_only' | 'web_only'
     this.isMaximized = false; // 记住最大化状态
     
+    // 拖拽相关
+    this.isDragging = false;
+    this.dragStartX = 0;
+    this.dragStartY = 0;
+    this.containerStartLeft = 0;
+    this.containerStartTop = 0;
+    
     this.init();
   }
   
@@ -233,8 +240,84 @@ class LowSkyAIChat {
         this.toolMenu.classList.remove('show');
       }
     });
+    
+    // 绑定拖拽功能
+    this.bindDragEvents();
   }
 
+  bindDragEvents() {
+    const header = this.modal.querySelector('.ai-chat-header');
+    const container = this.modal.querySelector('.ai-chat-container');
+    
+    // 鼠标按下事件
+    header.addEventListener('mousedown', (e) => {
+      // 如果点击的是按钮，不启动拖拽
+      if (e.target.closest('.ai-chat-controls')) {
+        return;
+      }
+      
+      // 最大化状态下不允许拖拽
+      if (this.isMaximized) {
+        return;
+      }
+      
+      this.isDragging = true;
+      this.dragStartX = e.clientX;
+      this.dragStartY = e.clientY;
+      
+      // 获取当前位置
+      const rect = container.getBoundingClientRect();
+      this.containerStartLeft = rect.left;
+      this.containerStartTop = rect.top;
+      
+      // 设置初始位置（从居中转换为绝对定位）
+      container.style.left = rect.left + 'px';
+      container.style.top = rect.top + 'px';
+      container.style.right = 'auto';
+      container.style.bottom = 'auto';
+      container.style.transform = 'none';
+      
+      header.style.cursor = 'grabbing';
+      e.preventDefault();
+    });
+    
+    // 鼠标移动事件
+    document.addEventListener('mousemove', (e) => {
+      if (!this.isDragging) return;
+      
+      const deltaX = e.clientX - this.dragStartX;
+      const deltaY = e.clientY - this.dragStartY;
+      
+      let newLeft = this.containerStartLeft + deltaX;
+      let newTop = this.containerStartTop + deltaY;
+      
+      // 边界检查：确保窗口不会完全移出屏幕
+      const containerRect = container.getBoundingClientRect();
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      
+      // 限制左边界
+      if (newLeft < 0) newLeft = 0;
+      // 限制右边界（至少保留100px在视野内）
+      if (newLeft > viewportWidth - 100) newLeft = viewportWidth - 100;
+      // 限制上边界
+      if (newTop < 0) newTop = 0;
+      // 限制下边界（至少保留100px在视野内）
+      if (newTop > viewportHeight - 100) newTop = viewportHeight - 100;
+      
+      container.style.left = newLeft + 'px';
+      container.style.top = newTop + 'px';
+    });
+    
+    // 鼠标释放事件
+    document.addEventListener('mouseup', () => {
+      if (this.isDragging) {
+        this.isDragging = false;
+        header.style.cursor = 'move';
+      }
+    });
+  }
+  
   setToolMode(mode) {
     this.toolMode = mode;
     const modeBar = this.modal.querySelector('#ai-tool-mode-bar');
@@ -261,16 +344,28 @@ class LowSkyAIChat {
   }
   
   openChat() {
+    const container = this.modal.querySelector('.ai-chat-container');
+    
     // 恢复上次最大化状态（仅桌面端）
     if (window.innerWidth > 768) {
       const savedMaximized = localStorage.getItem('ai-chat-maximized');
       if (savedMaximized === 'true') {
         this.isMaximized = true;
-        const container = this.modal.querySelector('.ai-chat-container');
         const maximizeBtn = this.modal.querySelector('.ai-chat-maximize svg');
         container.classList.add('maximized');
         maximizeBtn.innerHTML = '<rect x="3" y="1" width="6" height="6" fill="none" stroke="currentColor" stroke-width="1"/><rect x="1" y="3" width="6" height="6" fill="none" stroke="currentColor" stroke-width="1"/>';
+      } else {
+        this.isMaximized = false;
       }
+    }
+    
+    // 如果不是最大化状态，重置为居中显示
+    if (!this.isMaximized) {
+      container.style.left = '';
+      container.style.top = '';
+      container.style.right = '';
+      container.style.bottom = '';
+      container.style.transform = '';
     }
     
     this.modal.classList.add('show');
@@ -316,13 +411,27 @@ class LowSkyAIChat {
     const maximizeBtn = this.modal.querySelector('.ai-chat-maximize svg');
     
     if (container.classList.contains('maximized')) {
-      // 还原 - 单个方框
+      // 还原 - 层叠方框
       container.classList.remove('maximized');
       maximizeBtn.innerHTML = '<rect x="1" y="1" width="8" height="8" fill="none" stroke="currentColor" stroke-width="1"/>';
+      this.isMaximized = false;
+      
+      // 还原时重置位置样式，让CSS居中生效
+      container.style.left = '';
+      container.style.top = '';
+      container.style.right = '';
+      container.style.bottom = '';
     } else {
-      // 最大化 - 层叠方框
+      // 最大化 - 单个方框
       container.classList.add('maximized');
       maximizeBtn.innerHTML = '<rect x="3" y="1" width="6" height="6" fill="none" stroke="currentColor" stroke-width="1"/><rect x="1" y="3" width="6" height="6" fill="none" stroke="currentColor" stroke-width="1"/>';
+      this.isMaximized = true;
+      
+      // 最大化时清除拖拽定位
+      container.style.left = '';
+      container.style.top = '';
+      container.style.right = '';
+      container.style.bottom = '';
     }
   }
   
