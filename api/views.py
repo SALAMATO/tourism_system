@@ -1518,20 +1518,20 @@ class LowSkyAIViewSet(viewsets.ViewSet):
         
         def event_stream():
             try:
-                # ── 本地数据库模式：直接走 DB_MODEL 快速链路 ────────────────
+                # ── 本地数据库模式：使用带缓存的 DatabaseQueryTool ────────────────
                 if tool_mode == 'db_only':
-                    from ai.db_tools import get_db, get_llm, SQLDatabaseChain
+                    from ai.db_tools import get_db_tool
                     from ai.config import QIANWEN_API_KEY, QIANWEN_BASE_URL
                     
                     yield f"data: {json.dumps({'content': '🔍 正在查询本地数据库...'})}\n\n"
                     
-                    db = get_db()
-                    llm = get_llm(
-                        api_key=QIANWEN_API_KEY,
-                        api_base=QIANWEN_BASE_URL,
-                    )  # 内部使用 config.py 中的 DB_MODEL 配置
-                    db_chain = SQLDatabaseChain.from_llm(llm, db)
-                    result = db_chain.run(message)
+                    # 使用带缓存的 DatabaseQueryTool（而不是直接使用 SQLDatabaseChain）
+                    llm_config = {
+                        'api_key': QIANWEN_API_KEY,
+                        'api_base': QIANWEN_BASE_URL,
+                    }
+                    db_tool = get_db_tool(llm_config)
+                    result = db_tool.query(message)  # 这里会使用缓存！
                     
                     # 分块输出结果（模拟流式）
                     chunk_size = 20
