@@ -20,6 +20,16 @@ class LowSkyAIChat {
     this.dragOffsetX = 0;  // 鼠标相对于容器左上角的X偏移
     this.dragOffsetY = 0;  // 鼠标相对于容器左上角的Y偏移
     
+    // 窗口大小调整相关
+    this.isResizing = false;
+    this.resizeDirection = ''; // 'nw', 'ne', 'sw', 'se', 'n', 's', 'e', 'w'
+    this.resizeStartX = 0;
+    this.resizeStartY = 0;
+    this.resizeStartWidth = 0;
+    this.resizeStartHeight = 0;
+    this.resizeStartLeft = 0;
+    this.resizeStartTop = 0;
+    
     this.init();
   }
   
@@ -157,6 +167,15 @@ class LowSkyAIChat {
             </div>
           </div>
         </div>
+        <!-- 窗口大小调整手柄 -->
+        <div class="resize-handle resize-nw" data-direction="nw"></div>
+        <div class="resize-handle resize-ne" data-direction="ne"></div>
+        <div class="resize-handle resize-sw" data-direction="sw"></div>
+        <div class="resize-handle resize-se" data-direction="se"></div>
+        <div class="resize-handle resize-n" data-direction="n"></div>
+        <div class="resize-handle resize-s" data-direction="s"></div>
+        <div class="resize-handle resize-e" data-direction="e"></div>
+        <div class="resize-handle resize-w" data-direction="w"></div>
       </div>
     `;
     
@@ -240,6 +259,15 @@ class LowSkyAIChat {
     const header = this.modal.querySelector('.ai-chat-header');
     const container = this.modal.querySelector('.ai-chat-container');
     
+    // 双击标题栏最大化/还原
+    header.addEventListener('dblclick', (e) => {
+      // 如果点击的是按钮，不触发双击
+      if (e.target.closest('.ai-chat-controls')) {
+        return;
+      }
+      this.toggleMaximize();
+    });
+    
     // 鼠标按下事件
     header.addEventListener('mousedown', (e) => {
       // 如果点击的是按钮，不启动拖拽
@@ -309,6 +337,89 @@ class LowSkyAIChat {
         // 移除拖拽类，恢复过渡动画
         container.classList.remove('dragging');
       }
+      
+      if (this.isResizing) {
+        this.isResizing = false;
+        container.classList.remove('resizing');
+      }
+    });
+    
+    // 绑定窗口大小调整功能
+    this.bindResizeEvents();
+  }
+  
+  bindResizeEvents() {
+    const container = this.modal.querySelector('.ai-chat-container');
+    const handles = container.querySelectorAll('.resize-handle');
+    
+    handles.forEach(handle => {
+      handle.addEventListener('mousedown', (e) => {
+        // 最大化状态下不允许调整大小
+        if (this.isMaximized) return;
+        
+        e.preventDefault();
+        e.stopPropagation();
+        
+        this.isResizing = true;
+        this.resizeDirection = handle.dataset.direction;
+        
+        // 记录初始状态
+        const rect = container.getBoundingClientRect();
+        this.resizeStartX = e.clientX;
+        this.resizeStartY = e.clientY;
+        this.resizeStartWidth = rect.width;
+        this.resizeStartHeight = rect.height;
+        this.resizeStartLeft = rect.left;
+        this.resizeStartTop = rect.top;
+        
+        // 清除CSS限制，允许自由调整大小
+        container.style.maxWidth = 'none';
+        container.style.maxHeight = 'none';
+        
+        container.classList.add('resizing');
+      });
+    });
+    
+    // 鼠标移动事件 - 调整窗口大小
+    document.addEventListener('mousemove', (e) => {
+      if (!this.isResizing) return;
+      
+      const deltaX = e.clientX - this.resizeStartX;
+      const deltaY = e.clientY - this.resizeStartY;
+      
+      let newWidth = this.resizeStartWidth;
+      let newHeight = this.resizeStartHeight;
+      let newLeft = this.resizeStartLeft;
+      let newTop = this.resizeStartTop;
+      
+      const minWidth = 400;  // 最小宽度
+      const minHeight = 300; // 最小高度
+      const maxWidth = window.innerWidth;
+      const maxHeight = window.innerHeight;
+      
+      // 根据拖拽方向计算新尺寸和位置
+      if (this.resizeDirection.includes('e')) {
+        newWidth = Math.max(minWidth, Math.min(maxWidth, this.resizeStartWidth + deltaX));
+      }
+      if (this.resizeDirection.includes('w')) {
+        newWidth = Math.max(minWidth, Math.min(maxWidth, this.resizeStartWidth - deltaX));
+        newLeft = this.resizeStartLeft + (this.resizeStartWidth - newWidth);
+      }
+      if (this.resizeDirection.includes('s')) {
+        newHeight = Math.max(minHeight, Math.min(maxHeight, this.resizeStartHeight + deltaY));
+      }
+      if (this.resizeDirection.includes('n')) {
+        newHeight = Math.max(minHeight, Math.min(maxHeight, this.resizeStartHeight - deltaY));
+        newTop = this.resizeStartTop + (this.resizeStartHeight - newHeight);
+      }
+      
+      // 应用新尺寸和位置
+      container.style.width = newWidth + 'px';
+      container.style.height = newHeight + 'px';
+      container.style.left = newLeft + 'px';
+      container.style.top = newTop + 'px';
+      container.style.maxWidth = 'none'; // 移除max-width限制
+      container.style.maxHeight = 'none'; // 移除max-height限制
     });
   }
   
@@ -353,16 +464,36 @@ class LowSkyAIChat {
       }
     }
     
-    // 如果不是最大化状态，重置为居中显示
+    // 如果不是最大化状态，保持上次的位置和尺寸
     if (!this.isMaximized) {
-      container.style.left = '';
-      container.style.top = '';
-      container.style.right = '';
-      container.style.bottom = '';
-      container.style.transform = '';
+      // 如果已经有位置信息，保持不变；否则使用默认居中
+      if (!container.style.left || !container.style.top) {
+        container.style.left = '';
+        container.style.top = '';
+        container.style.right = '';
+        container.style.bottom = '';
+      }
+      // 恢复默认尺寸
+      if (!container.style.width) {
+        container.style.width = '';
+      }
+      if (!container.style.height) {
+        container.style.height = '';
+      }
     }
     
-    this.modal.classList.add('show');
+    // 设置初始缩放状态（从当前位置缩小）
+    container.style.transform = 'scale(0.95)';
+    
+    // 强制重绘后显示
+    requestAnimationFrame(() => {
+      this.modal.classList.add('show');
+      // 延迟一帧后恢复正常大小，实现从当前位置展开的动画
+      requestAnimationFrame(() => {
+        container.style.transform = 'scale(1)';
+      });
+    });
+    
     this.isOpen = true;
     this.input.focus();
   }
@@ -379,20 +510,29 @@ class LowSkyAIChat {
       localStorage.setItem('ai-chat-maximized', this.isMaximized.toString());
     }
     
-    // 先移除show类触发关闭动画
-    this.modal.classList.remove('show');
-    this.isOpen = false;
+    const container = this.modal.querySelector('.ai-chat-container');
     
-    // 等待动画完成后再清理状态（350ms与CSS动画时间一致）
+    // 先缩小到当前位置
+    container.style.transform = 'scale(0.95)';
+    
+    // 延迟后隐藏modal
     setTimeout(() => {
-      // 清除最小化和最大化状态
-      const container = this.modal.querySelector('.ai-chat-container');
-      container.classList.remove('minimized', 'maximized');
+      this.modal.classList.remove('show');
+      this.isOpen = false;
       
-      // 重置最大化按钮图标
-      const maximizeBtn = this.modal.querySelector('.ai-chat-maximize svg');
-      maximizeBtn.innerHTML = '<rect x="1" y="1" width="8" height="8" fill="none" stroke="currentColor" stroke-width="1"/>';
-    }, 350);
+      // 等待动画完成后再清理状态（350ms与CSS动画时间一致）
+      setTimeout(() => {
+        // 清除最小化和最大化状态
+        container.classList.remove('minimized', 'maximized');
+        
+        // 重置最大化按钮图标
+        const maximizeBtn = this.modal.querySelector('.ai-chat-maximize svg');
+        maximizeBtn.innerHTML = '<rect x="1" y="1" width="8" height="8" fill="none" stroke="currentColor" stroke-width="1"/>';
+        
+        // 清除transform
+        container.style.transform = '';
+      }, 350);
+    }, 50);
   }
   
   minimizeChat() {
@@ -410,12 +550,34 @@ class LowSkyAIChat {
       maximizeBtn.innerHTML = '<rect x="1" y="1" width="8" height="8" fill="none" stroke="currentColor" stroke-width="1"/>';
       this.isMaximized = false;
       
-      // 还原时重置位置样式，让CSS居中生效
-      container.style.left = '';
-      container.style.top = '';
-      container.style.right = '';
-      container.style.bottom = '';
+      // 还原时恢复之前的位置和尺寸
+      if (this.savedWindowState) {
+        container.style.left = this.savedWindowState.left;
+        container.style.top = this.savedWindowState.top;
+        container.style.width = this.savedWindowState.width;
+        container.style.height = this.savedWindowState.height;
+        container.style.maxWidth = '';
+        container.style.maxHeight = '';
+      } else {
+        // 如果没有保存的状态，重置为默认
+        container.style.left = '';
+        container.style.top = '';
+        container.style.right = '';
+        container.style.bottom = '';
+        container.style.width = '';
+        container.style.height = '';
+        container.style.maxWidth = '';
+        container.style.maxHeight = '';
+      }
     } else {
+      // 最大化前保存当前状态
+      this.savedWindowState = {
+        left: container.style.left,
+        top: container.style.top,
+        width: container.style.width,
+        height: container.style.height
+      };
+      
       // 最大化 - 单个方框
       container.classList.add('maximized');
       maximizeBtn.innerHTML = '<rect x="3" y="1" width="6" height="6" fill="none" stroke="currentColor" stroke-width="1"/><rect x="1" y="3" width="6" height="6" fill="none" stroke="currentColor" stroke-width="1"/>';
@@ -426,6 +588,8 @@ class LowSkyAIChat {
       container.style.top = '';
       container.style.right = '';
       container.style.bottom = '';
+      container.style.width = '';
+      container.style.height = '';
     }
   }
   
