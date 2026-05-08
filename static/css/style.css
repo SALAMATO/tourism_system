@@ -2458,9 +2458,10 @@ body {
 /* 默认状态下的内容区域 */
 .ai-chat-container .ai-chat-messages,
 .ai-chat-container .ai-chat-input-area {
-  max-width: 100%;
-  margin-left: 0;
-  margin-right: 0;
+  width: 100%;
+  max-width: 50vw;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .ai-chat-header {
@@ -2567,9 +2568,10 @@ body {
 /* 最大化状态下的内容区域限制 - 仅限制消息区和输入区 */
 .ai-chat-container.maximized .ai-chat-messages,
 .ai-chat-container.maximized .ai-chat-input-area {
+  width: 100%;
   max-width: 50vw !important;
-  margin-left: 25vw !important;
-  margin-right: 25vw !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
 }
 
 
