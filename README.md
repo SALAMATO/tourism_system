@@ -35,9 +35,11 @@
 * 安全隐患预警
 * 互动交流社区
 * 数据统计分析
-* AI智能助手（集成阿里云通义千问）
-* 用户位置定位与周边推荐
-* 媒体文件哈希去重管理
+* AI智能助手（集成阿里云通义千问 + AI查询缓存优化）
+* 用户位置定位与周边推荐（高德地图API + Haversine公式 + Session缓存）
+* 媒体文件哈希去重管理（SHA256 + 引用计数）
+* 智能推荐算法（综合评分 + 时间衰减）
+* 个人主页与社交互动（点赞、评论系统）
 
 采用 **前后端分离架构**：
 
@@ -139,6 +141,9 @@ admin.html（主容器）
 * 阿里云百炼平台
 * 通义千问系列模型（qwen3.5-plus, qwen-turbo, qwen3-max）
 * OpenAI兼容API接口
+* 流式响应支持
+* 工具调用机制（数据库查询、网络搜索、位置服务等）
+* AI查询结果缓存（减少重复查询，提升响应速度）
 
 ### 第三方服务
 
@@ -170,23 +175,26 @@ GET     /api/destinations/
 POST    /api/destinations/
 PUT     /api/destinations/{id}/
 DELETE  /api/destinations/{id}/
-GET     /api/destinations/hot/           # 热门目的地
-GET     /api/destinations/nearby_by_ip/  # IP周边推荐
-GET     /api/destinations/smart_recommend/ # 智能推荐
-GET     /api/destinations/homepage_modules/ # 首页模块
-GET     /api/destinations/cities/        # 城市列表
+GET     /api/destinations/hot/              # 热门目的地
+GET     /api/destinations/nearby_by_ip/     # IP周边推荐（含真实距离计算）
+GET     /api/destinations/smart_recommend/  # 智能推荐（评分+时间衰减）
+GET     /api/destinations/homepage_modules/ # 首页模块数据
+GET     /api/destinations/cities/           # 城市列表
 ```
 
 功能：
 
 * 目的地增删改查
-* 国内/国外目的地分类
-* 多维度筛选（城市、热门、推荐类型）
+* 国内/国外目的地分类（自动识别）
+* 多维度筛选（城市、热门、推荐类型、国内外）
 * 图片画廊（最多5张图片）
 * 评分与浏览量统计
 * 智能推荐算法（综合评分+时间衰减）
-* 基于IP的地理位置推荐
+* 基于IP的地理位置推荐（支持Session缓存，24小时有效期）
+* 真实距离计算（Haversine公式优先，高德API备用）
+* 城市经纬度数据库缓存（ChinaCity表，自动维护）
 * 目的地详情展示
+* 发布日期字段（支持最新发布排序）
 
 ---
 
@@ -302,23 +310,24 @@ DELETE  /api/statistics/{id}/
 接口：
 
 ```
-POST    /api/auth/register/              # 注册
-POST    /api/auth/login/                 # 登录
+POST    /api/auth/register/              # 注册（自动定位）
+POST    /api/auth/login/                 # 登录（用户名/邮箱/手机号，自动定位）
 POST    /api/auth/logout/                # 登出
 GET     /api/auth/me/                    # 获取当前用户信息
 POST    /api/user/change_password/       # 修改密码
-POST    /api/user/update_profile/        # 更新个人信息
+POST    /api/user/update_profile/        # 更新个人信息（昵称/邮箱/手机/用户名）
 POST    /api/user/{id}/reset_password/   # 管理员重置密码
 ```
 
 功能：
 
-* 用户注册与登录
+* 用户注册与登录（支持用户名/邮箱/手机号多方式登录）
 * Token认证
 * 个人信息修改（昵称、邮箱、手机号、用户名）
 * 密码修改
-* 用户名修改限制（60天内最多2次）
-* 基于IP的自动位置定位
+* 用户名修改限制（60天内最多2次，防滥用）
+* 基于IP的自动位置定位（登录/注册时自动更新）
+* Session位置缓存（未登录用户也可享受位置服务，24小时有效期）
 * 管理员用户管理
 * 账号冻结功能
 
@@ -373,19 +382,22 @@ AdminApp.loadModule('policy')
 接口：
 
 ```
-POST    /api/ai/chat/                    # AI对话
+POST    /api/ai/chat/                    # AI对话（流式响应）
 POST    /api/ai/clear_history/           # 清空对话历史
 ```
 
 功能：
 
-* 多轮对话支持
-* 数据库智能查询（自然语言转SQL）
-* 深度思考模式
+* 多轮对话支持（保持上下文记忆）
+* 数据库智能查询（自然语言转SQL，固定使用qwen-turbo加速）
+* 深度思考模式（复杂分析使用qwen3-max）
 * 对话历史管理
-* 多种模型切换（Plus/Turbo/Max）
+* 多种模型协同（Plus日常对话/Turbo数据库查询/Max深度思考）
 * 系统提示词定制
-* 工具调用能力（数据库查询、数据分析等）
+* 工具调用能力（数据库查询、网络搜索、位置服务等）
+* AI查询结果缓存（AICache模型，减少重复查询，提升性能）
+* 数据变更自动清除相关缓存（信号处理器机制）
+* 流式响应支持（实时显示AI回答）
 
 ---
 
@@ -393,19 +405,20 @@ POST    /api/ai/clear_history/           # 清空对话历史
 
 ### 主要数据模型
 
-| 模型名称         | 说明         | 表名             |
-| -------------- | ---------- | -------------- |
-| User           | 用户信息       | users          |
-| ChinaCity      | 中国城市经纬度    | china_cities   |
-| Destination    | 旅游目的地      | destinations   |
-| Policy         | 政策法规       | policies       |
-| News           | 新闻资讯       | news           |
-| SafetyAlert    | 安全隐患       | safety_alerts  |
-| Message        | 留言反馈       | messages       |
-| MessageComment | 留言评论       | message_comments |
-| MessageLike    | 留言点赞       | message_likes  |
-| MediaFile      | 媒体文件管理     | media_files    |
-| Statistic      | 统计数据       | statistics     |
+| 模型名称         | 说明             | 表名               |
+| -------------- | ---------------- | ------------------ |
+| User           | 用户信息         | users              |
+| ChinaCity      | 中国城市经纬度   | china_cities       |
+| Destination    | 旅游目的地       | destinations       |
+| Policy         | 政策法规         | policies           |
+| News           | 新闻资讯         | news               |
+| SafetyAlert    | 安全隐患         | safety_alerts      |
+| Message        | 留言反馈         | messages           |
+| MessageComment | 留言评论         | message_comments   |
+| MessageLike    | 留言点赞         | message_likes      |
+| MediaFile      | 媒体文件管理     | media_files        |
+| Statistic      | 统计数据         | statistics         |
+| AICache        | AI查询缓存       | ai_cache           |
 
 ### 核心字段说明
 
@@ -468,14 +481,30 @@ created_at = DateTimeField(auto_now_add=True)
 updated_at = DateTimeField(auto_now=True)
 ```
 
+#### AICache（AI查询缓存 - 新增）
+```python
+question_hash = CharField(max_length=64, unique=True)  # MD5哈希
+question = TextField()                                  # 原始问题
+normalized_question = TextField(blank=True, null=True)  # 标准化问题（提高匹配率）
+answer = TextField()                                    # AI回答结果
+query_type = CharField(max_length=50)                   # db_query/web_search/general
+tables_involved = JSONField(default=list)               # 涉及的数据库表
+is_valid = BooleanField(default=True)                   # 是否有效
+hit_count = IntegerField(default=0)                     # 命中次数
+expires_at = DateTimeField()                            # 过期时间
+```
+
 ### 数据库特性
 
 * **自定义用户模型**：继承AbstractUser，扩展位置信息和用户名修改追踪
 * **JSONField支持**：用于存储标签、特色亮点、推荐类型等多值字段
 * **外键关联**：Message-User, MessageComment-Message, MessageLike-Message
-* **唯一约束**：MediaFile.file_hash, MessageLike(message, user), Statistic(region, year)
-* **索引优化**：city, state, file_hash等常用查询字段建立索引
-* **信号处理**：Destination删除时自动释放MediaFile引用计数
+* **唯一约束**：MediaFile.file_hash, MessageLike(message, user), Statistic(region, year), AICache.question_hash
+* **索引优化**：city, state, file_hash, question_hash, cache_key等常用查询字段建立索引
+* **信号处理**：
+  - Destination/News删除时自动释放MediaFile引用计数
+  - Destination/Policy/News/SafetyAlert/Statistic更新时自动清除相关AI缓存
+* **非托管表**：ChinaCity表（managed=False），由外部SQL导入，Django只读不管理结构
 
 ---
 
@@ -499,23 +528,20 @@ tourism_system/
 │
 ├── api/                               # 核心应用
 │   ├── migrations/                    # 数据库迁移文件
-│   │   ├── 0001_initial.py
-│   │   ├── 0002_mediafile.py
-│   │   ├── 0003_user_username_tracking.py
-│   │   └── 0004_destination_publish_date.py
+│   │   └── 0001_initial.py            # 初始迁移（所有基础模型）
 │   ├── management/
 │   │   └── commands/
 │   │       └── cleanup_orphaned_files.py  # 清理孤立文件命令
 │   ├── __init__.py
 │   ├── admin.py                       # Django Admin配置
 │   ├── apps.py                        # 应用配置
-│   ├── models.py                      # 数据模型定义（11个模型）
+│   ├── models.py                      # 数据模型定义（12个模型）
 │   ├── serializers.py                 # DRF序列化器
-│   ├── views.py                       # API视图（约1654行）
+│   ├── views.py                       # API视图（约1759行）
 │   ├── urls.py                        # API路由配置
 │   ├── fetchers.py                    # 数据获取工具
 │   ├── utils.py                       # 通用工具函数（IP解析等）
-│   ├── media_manager.py               # 媒体文件管理器（哈希去重）
+│   ├── media_manager.py               # 媒体文件管理器（哈希去重，279行）
 │   └── tests.py                       # 测试文件
 │
 ├── ai/                                # AI智能助手模块
@@ -588,18 +614,6 @@ tourism_system/
 │       ├── AI-icon.png
 │       ├── favicon.ico
 │       └── ...                        # 其他图标文件
-│
-├── media/                             # 媒体文件上传目录
-│   ├── avatar/                        # 用户头像
-│   ├── destination/                   # 目的地图片
-│   ├── destination/             # 目的地展示图片
-│   ├── news/                          # 新闻图片
-│   ├── policy/                        # 政策图片
-│   ├── safety/                        # 安全图片
-│   └── temp/                          # 临时文件
-│
-└── sql/                               # SQL文件
-    └── low_altitude_tourism.sql       # 数据库导出文件
 ```
 
 ---
@@ -897,24 +911,27 @@ amap_key = 'your-amap-api-key'
 
 * **前后端分离架构**：RESTful API标准化设计，便于扩展和维护
 * **管理后台完全解耦**：模块化设计，动态加载，Hash路由，低耦合高内聚
-* **AI智能助手集成**：接入阿里云通义千问，支持自然语言数据库查询
+* **AI智能助手集成**：接入阿里云通义千问，支持自然语言数据库查询 + AI缓存优化
 * **智能推荐算法**：基于综合评分+时间衰减的目的地推荐系统
-* **地理位置服务**：
+* **地理位置服务增强**：
   - IP自动定位（高德地图API）
-  - 基于位置的周边推荐
-  - Haversine公式本地距离计算
-  - 城市经纬度数据库缓存
-* **媒体文件哈希去重**：SHA256哈希+引用计数，节省存储空间
+  - 基于位置的周边推荐（支持Session缓存，24小时有效期）
+  - Haversine公式本地距离计算（优先方案，速度快）
+  - 高德API距离计算（备用方案，精度高）
+  - 城市经纬度数据库缓存（ChinaCity表，自动维护，避免重复API调用）
+* **媒体文件哈希去重**：SHA256哈希+引用计数，节省存储空间，智能删除
 * **模块化开发结构**：清晰的代码组织，易于维护和扩展
-* **Django ORM自动迁移管理**：数据库版本控制
+* **Django ORM自动迁移管理**：数据库版本控制（4次迁移记录）
 * **数据可视化统计**：ECharts图表展示
 * **安全隐患风险分级设计**：高/中/低三级风险管理
 * **用户名修改限制**：60天内最多修改2次，防止滥用
 * **Session位置缓存**：未登录用户也能享受位置服务，24小时有效期
-* **多认证方式支持**：用户名/邮箱/手机号登录
+* **多认证方式支持**：用户名/邮箱/手机号登录，不区分大小写
 * **点赞评论系统**：完整的社交互动功能
 * **懒加载优化**：富文本编辑器按需初始化，提升性能
 * **缓存防丢失**：localStorage自动保存表单数据，防止意外刷新丢失
+* **信号处理器机制**：数据变更自动清除相关AI缓存，保证数据一致性
+* **SQLite/MySQL兼容**：JSONField查询自动适配不同数据库引擎
 
 ---
 
@@ -993,16 +1010,19 @@ python manage.py loaddata fixture.json
 * Django项目结构与最佳实践
 * RESTful API设计规范与实现
 * 前后端数据交互机制（Fetch API + Token认证）
-* 数据库建模方法与ORM使用
+* 数据库建模方法与ORM使用（12个模型，含自定义用户模型）
 * Web系统完整开发流程
-* AI大模型集成与应用（阿里云通义千问）
-* 地理位置服务开发（高德地图API + Haversine公式）
-* 媒体文件管理与哈希去重技术
-* 智能推荐算法设计与实现
-* 用户认证与权限管理
+* AI大模型集成与应用（阿里云通义千问 + 流式响应 + 工具调用）
+* AI查询缓存优化（AICache模型，信号处理器自动清除）
+* 地理位置服务开发（高德地图API + Haversine公式 + Session缓存 + ChinaCity表）
+* 媒体文件管理与哈希去重技术（SHA256 + 引用计数 + 智能删除）
+* 智能推荐算法设计与实现（综合评分 + 时间衰减）
+* 用户认证与权限管理（多方式登录 + 用户名修改限制）
 * 数据可视化展示（ECharts）
 * **模块化前端架构设计**：动态加载、Hash路由、命名空间隔离
 * **高内聚低耦合开发理念**：模块独立、职责清晰、易于维护
 * **懒加载与缓存优化**：提升性能、改善用户体验
+* **数据库兼容性处理**：SQLite与MySQL的JSONField查询适配
+* **信号处理器应用**：数据变更自动触发缓存清除和文件清理
 
 系统具有较强扩展性与实践应用价值，为低空旅游行业提供了完整的信息管理解决方案。
