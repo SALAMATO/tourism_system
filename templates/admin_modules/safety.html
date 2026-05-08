@@ -50,6 +50,22 @@
         <label class="form-label">应急预案 *</label>
         <textarea id="safety-plan" class="form-textarea" rows="5" placeholder="请输入应急预案"></textarea>
       </div>
+      
+      <!-- 时间信息显示区域（编辑时显示） -->
+      <div id="safety-time-info" style="display: none; margin-top: 16px; padding: 12px; background: #f8f9fa; border-radius: 8px;">
+        <div style="display: flex; gap: 24px; font-size: 14px; color: #666;">
+          <div>
+            <i class="fas fa-calendar-plus"></i> 
+            <strong>创建时间：</strong>
+            <span id="safety-created-at">-</span>
+          </div>
+          <div>
+            <i class="fas fa-calendar-check"></i> 
+            <strong>更新时间：</strong>
+            <span id="safety-updated-at">-</span>
+          </div>
+        </div>
+      </div>
         
       <div style="margin-top: 8px;">
         <button type="submit" class="btn btn-primary">提交</button>

@@ -746,6 +746,14 @@ function resetSafetyFormState() {
   if (submitBtn) submitBtn.textContent = '提交';
   const deleteBtn = document.getElementById('safety-delete-btn');
   if (deleteBtn) deleteBtn.style.display = 'none';
+  
+  // 隐藏时间信息显示区域
+  const timeInfoDiv = document.getElementById('safety-time-info');
+  if (timeInfoDiv) {
+    timeInfoDiv.style.display = 'none';
+    document.getElementById('safety-created-at').textContent = '-';
+    document.getElementById('safety-updated-at').textContent = '-';
+  }
 }
 
 async function editSafetyAlert(id) {
@@ -771,6 +779,14 @@ async function editSafetyAlert(id) {
     if (submitBtn) submitBtn.textContent = '保存修改';
     const deleteBtn = document.getElementById('safety-delete-btn');
     if (deleteBtn) deleteBtn.style.display = 'inline-block';
+
+    // 显示创建时间和更新时间
+    const timeInfoDiv = document.getElementById('safety-time-info');
+    if (timeInfoDiv) {
+      timeInfoDiv.style.display = 'block';
+      document.getElementById('safety-created-at').textContent = formatDateTime(alert.created_at);
+      document.getElementById('safety-updated-at').textContent = formatDateTime(alert.updated_at);
+    }
 
     // 滚动到安全隐患管理区域
     document.getElementById('safety-module').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1117,6 +1133,8 @@ function renderSafetyAlertsForAdmin(container, alerts) {
           <span><i class="fas fa-layer-group"></i> ${escapeHtml(alert.category || '未分类')}</span>
           <span><i class="fas fa-calendar"></i> ${formatDate(alert.report_date)}</span>
           <span><i class="fas fa-info-circle"></i> ${escapeHtml(alert.status || '待处理')}</span>
+          <span><i class="fas fa-calendar-plus"></i> 创建: ${formatDateTime(alert.created_at)}</span>
+          <span><i class="fas fa-calendar-check"></i> 更新: ${formatDateTime(alert.updated_at)}</span>
         </div>
       </div>
       <div style="display: flex; gap: 8px;">

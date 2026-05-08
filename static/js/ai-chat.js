@@ -1143,6 +1143,14 @@ async function showSafetyAlertDetail(alertId) {
                 ${data.status}
               </span>
             </div>
+            <div class="info-row">
+              <span class="info-label">创建时间：</span>
+              <span>${data.created_at || '-'}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">更新时间：</span>
+              <span>${data.updated_at || '-'}</span>
+            </div>
           </div>
           
           ${data.description ? `
