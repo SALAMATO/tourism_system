@@ -1123,33 +1123,31 @@ async function showSafetyAlertDetail(alertId) {
         </div>
         <div class="safety-alert-detail-body">
           <div class="safety-alert-info">
-            <div class="info-row">
-              <span class="info-label">风险等级：</span>
-              <span class="risk-level risk-${data.risk_level === '高' ? 'high' : data.risk_level === '中' ? 'medium' : 'low'}">
-                ${data.risk_level}
-              </span>
+            <div class="info-row" style="display: flex; gap: 24px;">
+              <div>
+                <span class="info-label">风险等级：</span>
+                <span class="risk-level risk-${data.risk_level === '高' ? 'high' : data.risk_level === '中' ? 'medium' : 'low'}">
+                  ${data.risk_level}
+                </span>
+              </div>
+              <div>
+                <span class="info-label">状态：</span>
+                <span class="status-${data.status === '已解决' ? 'resolved' : data.status === '处理中' ? 'processing' : 'pending'}">
+                  ${data.status}
+                </span>
+              </div>
             </div>
             <div class="info-row">
               <span class="info-label">隐患类别：</span>
               <span>${data.category}</span>
             </div>
             <div class="info-row">
-              <span class="info-label">报告日期：</span>
-              <span>${data.report_date}</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">状态：</span>
-              <span class="status-${data.status === '已解决' ? 'resolved' : data.status === '处理中' ? 'processing' : 'pending'}">
-                ${data.status}
-              </span>
-            </div>
-            <div class="info-row">
               <span class="info-label">创建时间：</span>
-              <span>${data.created_at || '-'}</span>
+              <span>${formatDateTime(data.created_at) || '-'}</span>
             </div>
             <div class="info-row">
               <span class="info-label">更新时间：</span>
-              <span>${data.updated_at || '-'}</span>
+              <span>${formatDateTime(data.updated_at) || '-'}</span>
             </div>
           </div>
           
