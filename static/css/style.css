@@ -2359,6 +2359,11 @@ body {
   pointer-events: auto;
 }
 
+/* 拖拽时禁用过渡动画，实现完全跟手 */
+.ai-chat-container.dragging {
+  transition: none !important;
+}
+
 .ai-chat-modal.show .ai-chat-container {
   transform: scale(1) translateY(0);
   opacity: 1;
