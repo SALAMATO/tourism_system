@@ -716,6 +716,18 @@ async function submitSafety() {
     
     console.log('提交安全隐患数据:', data);
     if (currentSafetyEditingId) {
+      // 如果编辑模式且时间输入框有值，则添加自定义时间
+      const createdAtInput = document.getElementById('safety-created-at-input');
+      const updatedAtInput = document.getElementById('safety-updated-at-input');
+      
+      if (createdAtInput && createdAtInput.value) {
+        data.created_at = new Date(createdAtInput.value).toISOString();
+      }
+      
+      if (updatedAtInput && updatedAtInput.value) {
+        data.updated_at = new Date(updatedAtInput.value).toISOString();
+      }
+      
       // 保留原有报告时间
       if (currentSafetyEditingData) {
         data.report_date = currentSafetyEditingData.report_date;
@@ -747,12 +759,14 @@ function resetSafetyFormState() {
   const deleteBtn = document.getElementById('safety-delete-btn');
   if (deleteBtn) deleteBtn.style.display = 'none';
   
-  // 隐藏时间信息显示区域
+  // 隐藏时间信息编辑区域并清空值
   const timeInfoDiv = document.getElementById('safety-time-info');
   if (timeInfoDiv) {
     timeInfoDiv.style.display = 'none';
-    document.getElementById('safety-created-at').textContent = '-';
-    document.getElementById('safety-updated-at').textContent = '-';
+    const createdAtInput = document.getElementById('safety-created-at-input');
+    const updatedAtInput = document.getElementById('safety-updated-at-input');
+    if (createdAtInput) createdAtInput.value = '';
+    if (updatedAtInput) updatedAtInput.value = '';
   }
 }
 
@@ -780,12 +794,34 @@ async function editSafetyAlert(id) {
     const deleteBtn = document.getElementById('safety-delete-btn');
     if (deleteBtn) deleteBtn.style.display = 'inline-block';
 
-    // 显示创建时间和更新时间
+    // 显示并填充创建时间和更新时间输入框
     const timeInfoDiv = document.getElementById('safety-time-info');
     if (timeInfoDiv) {
       timeInfoDiv.style.display = 'block';
-      document.getElementById('safety-created-at').textContent = formatDateTime(alert.created_at);
-      document.getElementById('safety-updated-at').textContent = formatDateTime(alert.updated_at);
+      
+      // 将ISO格式转换为datetime-local需要的格式 (YYYY-MM-DDTHH:mm)
+      const createdAtInput = document.getElementById('safety-created-at-input');
+      const updatedAtInput = document.getElementById('safety-updated-at-input');
+      
+      if (createdAtInput && alert.created_at) {
+        const createdDate = new Date(alert.created_at);
+        const createdStr = createdDate.getFullYear() + '-' + 
+                          String(createdDate.getMonth() + 1).padStart(2, '0') + '-' + 
+                          String(createdDate.getDate()).padStart(2, '0') + 'T' + 
+                          String(createdDate.getHours()).padStart(2, '0') + ':' + 
+                          String(createdDate.getMinutes()).padStart(2, '0');
+        createdAtInput.value = createdStr;
+      }
+      
+      if (updatedAtInput && alert.updated_at) {
+        const updatedDate = new Date(alert.updated_at);
+        const updatedStr = updatedDate.getFullYear() + '-' + 
+                          String(updatedDate.getMonth() + 1).padStart(2, '0') + '-' + 
+                          String(updatedDate.getDate()).padStart(2, '0') + 'T' + 
+                          String(updatedDate.getHours()).padStart(2, '0') + ':' + 
+                          String(updatedDate.getMinutes()).padStart(2, '0');
+        updatedAtInput.value = updatedStr;
+      }
     }
 
     // 滚动到安全隐患管理区域

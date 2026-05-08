@@ -51,18 +51,25 @@
         <textarea id="safety-plan" class="form-textarea" rows="5" placeholder="请输入应急预案"></textarea>
       </div>
       
-      <!-- 时间信息显示区域（编辑时显示） -->
-      <div id="safety-time-info" style="display: none; margin-top: 16px; padding: 12px; background: #f8f9fa; border-radius: 8px;">
-        <div style="display: flex; gap: 24px; font-size: 14px; color: #666;">
-          <div>
-            <i class="fas fa-calendar-plus"></i> 
-            <strong>创建时间：</strong>
-            <span id="safety-created-at">-</span>
+      <!-- 时间信息编辑区域（编辑时显示） -->
+      <div id="safety-time-info" style="display: none; margin-top: 16px; padding: 16px; background: #f8f9fa; border-radius: 8px;">
+        <h4 style="margin: 0 0 12px 0; font-size: 14px; color: #333;">
+          <i class="fas fa-clock"></i> 时间设置
+        </h4>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" style="font-size: 13px;">创建时间</label>
+            <input type="datetime-local" id="safety-created-at-input" class="form-input" style="font-size: 13px;">
+            <div style="margin-top: 4px; font-size: 12px; color: #999;">
+              <i class="fas fa-info-circle"></i> 首次创建记录的时间
+            </div>
           </div>
-          <div>
-            <i class="fas fa-calendar-check"></i> 
-            <strong>更新时间：</strong>
-            <span id="safety-updated-at">-</span>
+          <div class="form-group">
+            <label class="form-label" style="font-size: 13px;">更新时间</label>
+            <input type="datetime-local" id="safety-updated-at-input" class="form-input" style="font-size: 13px;">
+            <div style="margin-top: 4px; font-size: 12px; color: #999;">
+              <i class="fas fa-info-circle"></i> 最后修改记录的时间
+            </div>
           </div>
         </div>
       </div>
