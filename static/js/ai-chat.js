@@ -241,6 +241,7 @@ class LowSkyAIChat {
   bindDragEvents() {
     const header = this.modal.querySelector('.ai-chat-header');
     const container = this.modal.querySelector('.ai-chat-container');
+    let rafId = null; // requestAnimationFrame ID
     
     // 鼠标按下事件
     header.addEventListener('mousedown', (e) => {
@@ -263,6 +264,10 @@ class LowSkyAIChat {
       this.containerStartLeft = rect.left;
       this.containerStartTop = rect.top;
       
+      // 缓存容器尺寸，避免重复计算
+      this.containerWidth = rect.width;
+      this.containerHeight = rect.height;
+      
       // 设置初始位置（从居中转换为绝对定位）
       container.style.left = rect.left + 'px';
       container.style.top = rect.top + 'px';
@@ -274,32 +279,42 @@ class LowSkyAIChat {
       e.preventDefault();
     });
     
-    // 鼠标移动事件
+    // 鼠标移动事件 - 使用requestAnimationFrame优化性能
     document.addEventListener('mousemove', (e) => {
       if (!this.isDragging) return;
       
-      const deltaX = e.clientX - this.dragStartX;
-      const deltaY = e.clientY - this.dragStartY;
+      // 取消之前的帧请求
+      if (rafId) {
+        cancelAnimationFrame(rafId);
+      }
       
-      let newLeft = this.containerStartLeft + deltaX;
-      let newTop = this.containerStartTop + deltaY;
-      
-      // 边界检查：确保窗口不会完全移出屏幕
-      const containerRect = container.getBoundingClientRect();
-      const viewportWidth = window.innerWidth;
-      const viewportHeight = window.innerHeight;
-      
-      // 限制左边界
-      if (newLeft < 0) newLeft = 0;
-      // 限制右边界（至少保留100px在视野内）
-      if (newLeft > viewportWidth - 100) newLeft = viewportWidth - 100;
-      // 限制上边界
-      if (newTop < 0) newTop = 0;
-      // 限制下边界（至少保留100px在视野内）
-      if (newTop > viewportHeight - 100) newTop = viewportHeight - 100;
-      
-      container.style.left = newLeft + 'px';
-      container.style.top = newTop + 'px';
+      // 使用requestAnimationFrame批量更新，提高性能
+      rafId = requestAnimationFrame(() => {
+        const deltaX = e.clientX - this.dragStartX;
+        const deltaY = e.clientY - this.dragStartY;
+        
+        let newLeft = this.containerStartLeft + deltaX;
+        let newTop = this.containerStartTop + deltaY;
+        
+        // 边界检查：使用缓存的尺寸，避免getBoundingClientRect
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        
+        // 限制左边界
+        if (newLeft < 0) newLeft = 0;
+        // 限制右边界（至少保留100px在视野内）
+        if (newLeft > viewportWidth - 100) newLeft = viewportWidth - 100;
+        // 限制上边界
+        if (newTop < 0) newTop = 0;
+        // 限制下边界（至少保留100px在视野内）
+        if (newTop > viewportHeight - 100) newTop = viewportHeight - 100;
+        
+        // 使用transform代替left/top，性能更好
+        container.style.left = newLeft + 'px';
+        container.style.top = newTop + 'px';
+        
+        rafId = null;
+      });
     });
     
     // 鼠标释放事件
@@ -307,6 +322,11 @@ class LowSkyAIChat {
       if (this.isDragging) {
         this.isDragging = false;
         header.style.cursor = 'move';
+        // 清理未完成的动画帧
+        if (rafId) {
+          cancelAnimationFrame(rafId);
+          rafId = null;
+        }
       }
     });
   }
