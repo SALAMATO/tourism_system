@@ -896,6 +896,9 @@ class LowSkyAIChat {
     // 处理分隔线
     html = html.replace(/^[-*_]{3,}$/gm, '<hr>');
     
+    // 处理Markdown表格（管道符分隔）
+    html = this.parseMarkdownTables(html);
+    
     // 处理换行
     html = html.replace(/\n\n/g, '</p><p>');
     html = html.replace(/^(.+)$/gm, (match) => {
@@ -924,6 +927,87 @@ class LowSkyAIChat {
     });
     
     return html;
+  }
+  
+  parseMarkdownTables(html) {
+    // 匹配Markdown表格格式：
+    // | 标题1 | 标题2 | 标题3 |
+    // | --- | --- | --- |
+    // | 内容1 | 内容2 | 内容3 |
+    
+    const lines = html.split('\n');
+    const result = [];
+    let i = 0;
+    
+    while (i < lines.length) {
+      const line = lines[i].trim();
+      
+      // 检查是否是表格行（以 | 开头和结尾，或包含 |）
+      if (line.startsWith('|') && line.endsWith('|') && line.split('|').length >= 3) {
+        // 找到表格开始，收集所有表格行
+        const tableLines = [];
+        while (i < lines.length) {
+          const currentLine = lines[i].trim();
+          if (currentLine.startsWith('|') && currentLine.endsWith('|')) {
+            tableLines.push(currentLine);
+            i++;
+          } else {
+            break;
+          }
+        }
+        
+        // 解析表格
+        if (tableLines.length >= 2) {
+          result.push(this.buildTableFromLines(tableLines));
+        } else {
+          // 不是有效表格，作为普通文本处理
+          result.push(line);
+          i++;
+        }
+      } else {
+        result.push(line);
+        i++;
+      }
+    }
+    
+    return result.join('\n');
+  }
+  
+  buildTableFromLines(tableLines) {
+    // 第一行是表头，第二行是分隔符，之后是数据行
+    const headers = this.parseTableRow(tableLines[0]);
+    const rows = tableLines.slice(2).map(line => this.parseTableRow(line));
+    
+    let tableHtml = '<table class="ai-data-table">';
+    
+    // 表头
+    tableHtml += '<thead><tr>';
+    headers.forEach(header => {
+      tableHtml += `<th>${header.trim()}</th>`;
+    });
+    tableHtml += '</tr></thead>';
+    
+    // 数据行
+    if (rows.length > 0) {
+      tableHtml += '<tbody>';
+      rows.forEach(row => {
+        tableHtml += '<tr>';
+        row.forEach(cell => {
+          tableHtml += `<td>${cell.trim()}</td>`;
+        });
+        tableHtml += '</tr>';
+      });
+      tableHtml += '</tbody>';
+    }
+    
+    tableHtml += '</table>';
+    return tableHtml;
+  }
+  
+  parseTableRow(row) {
+    // 移除首尾的 | 并分割
+    const cells = row.replace(/^\||\|$/g, '').split('|');
+    return cells;
   }
   
   createMessageElement(role, content) {

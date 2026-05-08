@@ -2776,6 +2776,70 @@ body {
   border-bottom-color: #667eea;
 }
 
+/* 数据表格样式 - Apple风格 */
+.ai-data-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0;
+  font-size: 14px;
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.ai-data-table thead {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.ai-data-table th {
+  padding: 14px 16px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  border: none;
+}
+
+.ai-data-table tbody tr {
+  border-bottom: 1px solid #f0f0f0;
+  transition: all 0.2s ease;
+}
+
+.ai-data-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.ai-data-table tbody tr:hover {
+  background: #f5f5f7;
+  transform: scale(1.01);
+}
+
+.ai-data-table td {
+  padding: 12px 16px;
+  color: var(--text-primary);
+  border: none;
+  line-height: 1.5;
+}
+
+/* 移动端表格优化 */
+@media (max-width: 768px) {
+  .ai-data-table {
+    font-size: 12px;
+  }
+  
+  .ai-data-table th,
+  .ai-data-table td {
+    padding: 8px 10px;
+  }
+  
+  .ai-message-content {
+    max-width: 100%;
+  }
+}
+
 .ai-chat-input-area {
   padding: 16px 20px;
   background: transparent;
