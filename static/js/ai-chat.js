@@ -638,19 +638,21 @@ class LowSkyAIChat {
       
       // 延迟一帧后最大化，触发动画
       requestAnimationFrame(() => {
-        container.style.transition = ''; // 恢复transition
-        // 最大化 - 单个方框
-        container.classList.add('maximized');
-        maximizeBtn.innerHTML = '<rect x="3" y="1" width="6" height="6" fill="none" stroke="currentColor" stroke-width="1"/><rect x="1" y="3" width="6" height="6" fill="none" stroke="currentColor" stroke-width="1"/>';
-        this.isMaximized = true;
-        
-        // 最大化时清除拖拽定位
+        // 先清除所有位置属性，避免与.maximized冲突
         container.style.left = '';
         container.style.top = '';
         container.style.right = '';
         container.style.bottom = '';
         container.style.width = '';
         container.style.height = '';
+        
+        // 然后恢复transition
+        container.style.transition = '';
+        
+        // 最后添加maximized类，触发动画
+        container.classList.add('maximized');
+        maximizeBtn.innerHTML = '<rect x="3" y="1" width="6" height="6" fill="none" stroke="currentColor" stroke-width="1"/><rect x="1" y="3" width="6" height="6" fill="none" stroke="currentColor" stroke-width="1"/>';
+        this.isMaximized = true;
       });
     }
   }
