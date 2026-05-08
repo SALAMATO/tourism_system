@@ -199,10 +199,17 @@ Be professional and friendly."""
         # 添加当前时间到用户消息中（让AI知道真实时间）
         from datetime import datetime
         current_time = datetime.now().strftime("%Y年%m月%d日 %H:%M:%S")
-        time_info = f"\n\n[系统信息：当前时间是 {current_time}]\n"
+        time_info = f"\n[系统信息：当前时间是 {current_time}]"
         
-        # 将时间信息添加到消息开头
-        enhanced_message = time_info + message
+        # 检查是否有强制指令标记
+        has_force_instruction = message.startswith('<SYSTEM_INSTRUCTION:FORCE_WEB_SEARCH>')
+        
+        if has_force_instruction:
+            # 如果有强制指令，将时间信息放在强制指令之后
+            enhanced_message = message + time_info
+        else:
+            # 否则将时间信息放在消息开头
+            enhanced_message = time_info + "\n" + message
         
         self.conversation_history.append({
             "role": "user",
@@ -241,10 +248,17 @@ Be professional and friendly."""
         # 添加当前时间到用户消息中（让AI知道真实时间）
         from datetime import datetime
         current_time = datetime.now().strftime("%Y年%m月%d日 %H:%M:%S")
-        time_info = f"\n\n[系统信息：当前时间是 {current_time}]\n"
+        time_info = f"\n[系统信息：当前时间是 {current_time}]"
         
-        # 将时间信息添加到消息开头
-        enhanced_message = time_info + message
+        # 检查是否有强制指令标记
+        has_force_instruction = message.startswith('<SYSTEM_INSTRUCTION:FORCE_WEB_SEARCH>')
+        
+        if has_force_instruction:
+            # 如果有强制指令，将时间信息放在强制指令之后
+            enhanced_message = message + time_info
+        else:
+            # 否则将时间信息放在消息开头
+            enhanced_message = time_info + "\n" + message
         
         self.conversation_history.append({
             "role": "user",
