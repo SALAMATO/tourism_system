@@ -14,6 +14,7 @@ class LowSkyAIChat {
     this.abortController = null;
     this.toolMode = 'auto'; // 'auto' | 'db_only' | 'web_only'
     this.isMaximized = false; // 记住最大化状态
+    this.hasOpenedBefore = false; // 标记是否是页面刷新后第一次打开
     
     // 拖拽相关
     this.isDragging = false;
@@ -459,16 +460,32 @@ class LowSkyAIChat {
   openChat() {
     const container = this.modal.querySelector('.ai-chat-container');
     
-    // 恢复上次最大化状态（仅桌面端）
-    if (window.innerWidth > 768) {
-      const savedMaximized = localStorage.getItem('ai-chat-maximized');
-      if (savedMaximized === 'true') {
-        this.isMaximized = true;
-        const maximizeBtn = this.modal.querySelector('.ai-chat-maximize svg');
-        container.classList.add('maximized');
-        maximizeBtn.innerHTML = '<rect x="3" y="1" width="6" height="6" fill="none" stroke="currentColor" stroke-width="1"/><rect x="1" y="3" width="6" height="6" fill="none" stroke="currentColor" stroke-width="1"/>';
-      } else {
-        this.isMaximized = false;
+    // 检查是否是页面加载后第一次打开
+    const isFirstOpenAfterRefresh = !this.hasOpenedBefore;
+    
+    if (isFirstOpenAfterRefresh) {
+      // 页面刷新后第一次打开，强制重置为正常状态
+      this.isMaximized = false;
+      container.classList.remove('maximized');
+      
+      // 重置最大化按钮图标
+      const maximizeBtn = this.modal.querySelector('.ai-chat-maximize svg');
+      maximizeBtn.innerHTML = '<rect x="1" y="1" width="8" height="8" fill="none" stroke="currentColor" stroke-width="1"/>';
+      
+      // 标记已经打开过一次
+      this.hasOpenedBefore = true;
+    } else {
+      // 非首次打开，恢复上次最大化状态（仅桌面端）
+      if (window.innerWidth > 768) {
+        const savedMaximized = localStorage.getItem('ai-chat-maximized');
+        if (savedMaximized === 'true') {
+          this.isMaximized = true;
+          const maximizeBtn = this.modal.querySelector('.ai-chat-maximize svg');
+          container.classList.add('maximized');
+          maximizeBtn.innerHTML = '<rect x="3" y="1" width="6" height="6" fill="none" stroke="currentColor" stroke-width="1"/><rect x="1" y="3" width="6" height="6" fill="none" stroke="currentColor" stroke-width="1"/>';
+        } else {
+          this.isMaximized = false;
+        }
       }
     }
     
