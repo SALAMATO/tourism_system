@@ -2722,8 +2722,8 @@ let lastNewsAiResult = null;
 async function formatContent(type) {
   const isPolicy = type === 'policy';
   const apiUrl = isPolicy
-    ? 'http://127.0.0.1:8000/api/policies/format_content/'
-    : 'http://127.0.0.1:8000/api/news/format_content/';
+    ? '/api/policies/format_content/'
+    : '/api/news/format_content/';
   
   const rawContent = window.WangEditorHelper
     ? window.WangEditorHelper.getContent(isPolicy ? 'policy-content' : 'news-content')
@@ -2779,8 +2779,8 @@ async function formatContent(type) {
 async function runAiSummary(type) {
   const isPolicy = type === 'policy';
   const apiUrl = isPolicy
-    ? 'http://127.0.0.1:8000/api/policies/ai_summary/'
-    : 'http://127.0.0.1:8000/api/news/ai_summary/';
+    ? '/api/policies/ai_summary/'
+    : '/api/news/ai_summary/';
 
   const title = document.getElementById(isPolicy ? 'policy-title' : 'news-title').value.trim();
   const content = window.WangEditorHelper

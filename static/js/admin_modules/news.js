@@ -453,7 +453,7 @@ AdminApp.Modules.News = {
     
     // AI整理原文
     async formatContent() {
-        const apiUrl = 'http://127.0.0.1:8000/api/news/format_content/';
+        const apiUrl = '/api/news/format_content/';
         
         const rawContent = this.getContent();
         const plainContent = rawContent.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
@@ -504,7 +504,7 @@ AdminApp.Modules.News = {
     
     // AI生成摘要
     async generateSummary() {
-        const apiUrl = 'http://127.0.0.1:8000/api/news/ai_summary/';
+        const apiUrl = '/api/news/ai_summary/';
         
         const rawContent = this.getContent();
         const plainContent = rawContent.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();

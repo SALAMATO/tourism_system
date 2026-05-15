@@ -311,7 +311,7 @@ AdminApp.Modules.Policy = {
     
     // AI整理原文
     async formatContent() {
-        const apiUrl = 'http://127.0.0.1:8000/api/policies/format_content/';
+        const apiUrl = '/api/policies/format_content/';
         
         const rawContent = this.getContent();
         const plainContent = rawContent.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
@@ -362,7 +362,7 @@ AdminApp.Modules.Policy = {
     
     // AI生成摘要
     async generateSummary() {
-        const apiUrl = 'http://127.0.0.1:8000/api/policies/ai_summary/';
+        const apiUrl = '/api/policies/ai_summary/';
         
         const rawContent = this.getContent();
         const plainContent = rawContent.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();

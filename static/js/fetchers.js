@@ -23,7 +23,7 @@ async function fetchNewsFromUrl() {
   fetchBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 识别中...';
   
   try {
-    const response = await fetch('http://127.0.0.1:8000/api/news/fetch_from_url/', {
+    const response = await fetch('/api/news/fetch_from_url/', {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify({ url })
@@ -94,7 +94,7 @@ async function fetchPolicyFromUrl() {
   fetchBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 识别中...';
   
   try {
-    const response = await fetch('http://127.0.0.1:8000/api/policies/fetch_from_url/', {
+    const response = await fetch('/api/policies/fetch_from_url/', {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify({ url })

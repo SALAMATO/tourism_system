@@ -37,7 +37,7 @@ async function loadHotDestinations() {
 
   try {
     showLoading(container);
-    const response = await fetch('http://127.0.0.1:8000/api/destinations/hot/');
+    const response = await fetch('/api/destinations/hot/');
 
     if (response.ok) {
       const destinations = await response.json();

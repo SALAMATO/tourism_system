@@ -10,7 +10,7 @@ def main():
     from django.core.management import execute_from_command_line
 
     if len(sys.argv) == 1:
-        sys.argv.append('runserver')
+        sys.argv.append('runserver', '0.0.0.0:9000')
 
     execute_from_command_line(sys.argv)
 

@@ -24,7 +24,7 @@ class AuthManager {
 
   async register(username, email, password, passwordConfirm, phone = '') {
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/auth/register/', {
+      const response = await fetch('/api/auth/register/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -54,7 +54,7 @@ class AuthManager {
 
   async login(username, password) {
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/auth/login/', {
+      const response = await fetch('/api/auth/login/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -82,7 +82,7 @@ class AuthManager {
   async logout() {
     try {
       if (this.token) {
-        await fetch('http://127.0.0.1:8000/api/auth/logout/', {
+        await fetch('/api/auth/logout/', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -103,7 +103,7 @@ class AuthManager {
     }
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/auth/me/', {
+      const response = await fetch('/api/auth/me/', {
         headers: {
           'Authorization': `Token ${this.token}`
         }

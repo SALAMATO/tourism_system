@@ -88,7 +88,7 @@ async function loadProfileInfo() {
 
 async function loadUserStats() {
   try {
-    const response = await api.request('http://127.0.0.1:8000/api/messages/my/');
+    const response = await api.request('/api/messages/my/');
     const messages = Array.isArray(response) ? response : (response.data || []);
     
     let totalLikes = 0;
@@ -147,7 +147,7 @@ async function submitProfileUpdate() {
   }
 
   try {
-    const response = await api.request('http://127.0.0.1:8000/api/user/update_profile/', {
+    const response = await api.request('/api/user/update_profile/', {
       method: 'POST',
       body: JSON.stringify({
         username: username,
@@ -191,7 +191,7 @@ async function submitPasswordChange() {
   }
 
   try {
-    const response = await api.request('http://127.0.0.1:8000/api/user/change_password/', {
+    const response = await api.request('/api/user/change_password/', {
       method: 'POST',
       body: JSON.stringify({
         old_password: oldPwd,
@@ -215,7 +215,7 @@ async function loadMyMessages() {
   const container = document.getElementById('my-messages-container');
   try {
     showLoading(container);
-    const response = await api.request('http://127.0.0.1:8000/api/messages/my/');
+    const response = await api.request('/api/messages/my/');
     const messages = Array.isArray(response) ? response : (response.data || []);
 
     if (!messages.length) {

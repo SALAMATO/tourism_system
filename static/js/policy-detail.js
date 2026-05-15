@@ -18,7 +18,7 @@ async function loadPolicyDetail(policyId) {
     
     // 增加浏览次数
     try {
-      await api.request(`http://127.0.0.1:8000/api/policies/${policyId}/increment_views/`, {
+      await api.request(`/api/policies/${policyId}/increment_views/`, {
         method: 'POST'
       });
     } catch (e) {
