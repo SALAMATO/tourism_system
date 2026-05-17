@@ -584,11 +584,13 @@ class LowSkyAIChat {
     // 8. 应用安全区域限制（只调整水平方向，确保鼠标不在标题或按钮上）
     const headerRect = this.modal.querySelector('.ai-chat-header').getBoundingClientRect();
     const titleWidth = headerRect.width * 0.6;
-
+    
     const controlsWidth = 46 * 3; // 138px
-        
+    const rightPadding = 30; // 控制按钮右边的空隙
+    
     const safeMarginLeft = titleWidth * 0.55;
-    const safeMarginRight = controlsWidth * 1;
+    // 安全区域右边界 = 窗口宽度 - 控制按钮宽度 - 右边距（按钮区域不可拖拽）
+    const safeMaxOffsetX = headerRect.width - controlsWidth - rightPadding;
     //
     // 如果鼠标在标题文字区域，调整窗口位置使得鼠标移到安全区域左边界
     if (offsetX < safeMarginLeft) {
@@ -596,10 +598,10 @@ class LowSkyAIChat {
       offsetX = safeMarginLeft;
       targetLeft = targetLeft - adjustDelta;
     }
-    // 如果鼠标在控制按钮区域，调整窗口位置使得鼠标移到安全区域右边界
-    if (offsetX > headerRect.width - safeMarginRight) {
-      const adjustDelta = offsetX - (headerRect.width - safeMarginRight);
-      offsetX = headerRect.width - safeMarginRight;
+    // 如果鼠标在控制按钮区域或右侧，调整窗口位置使得鼠标移到安全区域右边界（按钮左边缘）
+    if (offsetX > safeMaxOffsetX) {
+      const adjustDelta = offsetX - safeMaxOffsetX;
+      offsetX = safeMaxOffsetX;
       targetLeft = targetLeft + adjustDelta;
     }
         
