@@ -357,6 +357,17 @@ class LowSkyAIChat {
         return;
       }
       
+      // Windows风格的HitTest区域：左侧140px为标题区，右侧138px为控制按钮区
+      const headerRect = header.getBoundingClientRect();
+      const clickX = e.clientX - headerRect.left;
+      const LEFT_SAFE_ZONE = 140;  // 标题文字区域
+      const RIGHT_SAFE_ZONE = 138; // 控制按钮区域
+      
+      // 如果在非拖拽区域（左侧标题或右侧按钮），不启动拖拽
+      if (clickX < LEFT_SAFE_ZONE || clickX > headerRect.width - RIGHT_SAFE_ZONE) {
+        return;
+      }
+      
       // 记录鼠标按下的位置
       this.dragStartX = e.clientX;
       this.dragStartY = e.clientY;
@@ -365,19 +376,6 @@ class LowSkyAIChat {
       // 最大化状态下，准备检测是否开始拖动
       if (this.isMaximized) {
         this.pendingMaximizeRestore = true;
-        
-        // 记录鼠标在标题栏内的相对位置（百分比）
-        const headerRect = header.getBoundingClientRect();
-        const headerWidth = headerRect.width;
-        const headerHeight = headerRect.height;
-        
-        // 计算百分比位置（0-1之间）
-        this.maximizeHeaderPercentX = (e.clientX - headerRect.left) / headerWidth;
-        this.maximizeHeaderPercentY = (e.clientY - headerRect.top) / headerHeight;
-        
-        console.log('[Mousedown Debug] maximize state');
-        console.log('  Header size:', headerWidth, 'x', headerHeight);
-        console.log('  Header percent:', this.maximizeHeaderPercentX.toFixed(3), this.maximizeHeaderPercentY.toFixed(3));
       } else {
         this.startDragging(e, container, header);
       }
@@ -398,10 +396,8 @@ class LowSkyAIChat {
           const currentContainer = this.modal.querySelector('.ai-chat-container');
           const currentHeader = this.modal.querySelector('.ai-chat-header');
           
-          // 先取消最大化，窗口会出现在鼠标附近
+          // 直接从最大化进入normal state并启动拖拽（不先restore）
           this.restoreFromMaximizeForDrag(e, currentContainer);
-          
-          // 启动拖拽，但不重新计算偏移量，使用之前保存的 maximizeDragOffset
           this.startDraggingFromMaximize(e, currentContainer, currentHeader);
         }
         return;
@@ -429,6 +425,7 @@ class LowSkyAIChat {
       if (newTop > viewportHeight - 100) newTop = viewportHeight - 100;
       
       // 直接更新位置，不使用RAF，确保即时响应
+      // Windows风格：只修改left/top，不触发reflow
       container.style.left = newLeft + 'px';
       container.style.top = newTop + 'px';
     });
@@ -472,7 +469,7 @@ class LowSkyAIChat {
     container.style.bottom = 'auto';
     container.style.transform = 'none';
     
-    // 添加拖拽类，禁用过渡动画
+    // 添加拖拽类，禁用过渡动画（包括子元素）
     container.classList.add('dragging');
     
     header.style.cursor = 'grabbing';
@@ -488,10 +485,6 @@ class LowSkyAIChat {
     this.dragOffsetX = this.adjustedDragOffsetX;
     this.dragOffsetY = this.adjustedDragOffsetY;
     
-    console.log('[Drag Debug] startDraggingFromMaximize called');
-    console.log('[Drag Debug] Using adjusted offset:', this.dragOffsetX, this.dragOffsetY);
-    console.log('[Drag Debug] mouse position:', e.clientX, e.clientY);
-    
     // 添加拖拽类，禁用过渡动画
     container.classList.add('dragging');
     
@@ -502,14 +495,14 @@ class LowSkyAIChat {
   // 从最大化状态恢复并准备拖拽（特殊版本）
   restoreFromMaximizeForDrag(e, container) {
     const maximizeBtn = this.modal.querySelector('.ai-chat-maximize svg');
-    
+      
     // 标记为非最大化状态
     this.isMaximized = false;
-    
+      
     // 获取应该恢复的窗口尺寸
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
-    
+      
     let targetWidth, targetHeight;
     if (this.savedWindowState && this.savedWindowState.width) {
       targetWidth = parseFloat(this.savedWindowState.width);
@@ -518,123 +511,84 @@ class LowSkyAIChat {
       targetWidth = Math.min(viewportWidth * 0.5, viewportWidth * 0.4);
       targetHeight = Math.min(viewportHeight * 0.8, 700);
     }
-    
-    // Windows 11风格：简单的偏移量计算
-    // 关键：先恢复窗口尺寸，再计算偏移量
-    
-    // 1. 先禁用所有过渡和动画
+      
+    // Windows 11风格：直接进入normal state，不先restore再拖拽
+    // 关键：使用transform而不是修改layout属性
+      
+    // 1. 立即禁用所有过渡和动画
     container.style.transition = 'none';
     container.style.animation = 'none';
-    
-    // 2. 移除maximized类并设置小窗口尺寸
+      
+    // 2. 移除maximized类
     container.classList.remove('maximized');
-    maximizeBtn.innerHTML = '<rect x="1" y="1" width="8" height="8" fill="none" stroke="currentColor" stroke-width="1"/>';
-    
-    // 重要：先设置窗口位置为(0,0)，确保后续计算正确
-    container.style.left = '0px';
-    container.style.top = '0px';
+    maximizeBtn.innerHTML = '<rect x="1" y="1" width="8" height="8" fill="none" stroke="currentColor" stroke-width="1"/>',
+      
+    // 3. 设置窗口尺寸（这是唯一一次修改width/height）
     container.style.width = targetWidth + 'px';
     container.style.height = targetHeight + 'px';
-    container.style.right = 'auto';
-    container.style.bottom = 'auto';
     container.style.maxWidth = 'none';
     container.style.maxHeight = 'none';
-    container.style.transform = 'none';
-    
-    // 3. 强制重绘，确保样式立即生效
-    container.offsetHeight;
-    
-    // 4. 现在获取恢复后窗口的实际位置（此时窗口在0,0的位置）
-    const rect = container.getBoundingClientRect();
-    
-    // 5. 计算偏移量：使用百分比来保持相对位置
+      
+    // 4. 计算窗口位置：让鼠标落在标题栏的安全区域内
+    // Windows风格：直接使用鼠标位置减去固定的偏移量
     const headerRect = this.modal.querySelector('.ai-chat-header').getBoundingClientRect();
-    console.log('[Restore Debug] Header width:', headerRect.width);
+      
+    // Windows风格的HitTest区域：左侧140px为标题区，右侧138px为控制按钮区
+    const LEFT_SAFE_ZONE = 140;  // 标题文字区域
+    const RIGHT_SAFE_ZONE = 138; // 控制按钮区域
     
-    // 使用最大化状态下记录的百分比来计算小窗口中的偏移量
-    let offsetX = headerRect.width * this.maximizeHeaderPercentX;
-    let offsetY = headerRect.height * this.maximizeHeaderPercentY;
-    
-    console.log('[Restore Debug] Mouse percent:', this.maximizeHeaderPercentX.toFixed(3), this.maximizeHeaderPercentY.toFixed(3));
-    console.log('[Restore Debug] Calculated offset:', offsetX, offsetY);
-    
-    // 6. 应用安全区域限制（在计算窗口位置之前先调整偏移量）
-    const titleWidth = headerRect.width * 0.6;
-    // const controlsWidth = 46 * 3; // 138px
-    // const rightPadding = 30; // 控制按钮右边的空隙
-    const rightWidth = headerRect.width * 0.6;
-
-    const safeMarginLeft = titleWidth * 0.55;
-    const safeMaxOffsetX = rightWidth * 0.55;
-    
-    console.log('[Restore Debug] Safe area left boundary:', safeMarginLeft);
-    console.log('[Restore Debug] Controls area right boundary:', safeMaxOffsetX);
-    
-    // 如果鼠标在标题文字区域，调整到安全区域右边界
-      if (offsetX < safeMaxOffsetX) {
-        console.log('[Restore Debug] Adjusting left: from', offsetX, 'to', safeMaxOffsetX);
-        offsetX = safeMaxOffsetX;
-      } else {
-        console.log('[Restore Debug] No adjustment needed');
-      }
-    // 如果鼠标在标题文字区域，调整到安全区域左边界
-      if (offsetX < safeMarginLeft) {
-        console.log('[Restore Debug] Adjusting left: from', offsetX, 'to', safeMarginLeft);
-        offsetX = safeMarginLeft;
-      } else {
-        console.log('[Restore Debug] No adjustment needed');
-      }
-
-        
-    // 7. 计算窗口位置：让鼠标落在标题栏的对应位置
+    // 计算理想的偏移量：让鼠标在窗口的中间偏左位置（更自然）
+    let offsetX = targetWidth * 0.4;  // 默认鼠标在窗口宽度40%处
+    let offsetY = headerRect.height / 2;  // 默认鼠标在标题栏高度中间
+      
+    // 应用安全区域限制
+    if (offsetX < LEFT_SAFE_ZONE) {
+      offsetX = LEFT_SAFE_ZONE;
+    }
+    if (offsetX > targetWidth - RIGHT_SAFE_ZONE) {
+      offsetX = targetWidth - RIGHT_SAFE_ZONE;
+    }
+      
+    // 计算窗口左上角位置
     let targetLeft = e.clientX - offsetX;
     let targetTop = e.clientY - offsetY;
-        
-    // 8. 边界检查：确保窗口不会完全跑出屏幕
-    const minVisibleWidth = targetWidth * 0.5;
-    const minVisibleHeight = targetHeight * 0.5;
-    
-    console.log('[Restore Debug] Before boundary check - position:', targetLeft, targetTop);
-    console.log('[Restore Debug] Before boundary check - offset:', offsetX, offsetY);
-        
-    if (targetLeft < 0) {
-      targetLeft = 0;
-      offsetX = e.clientX - targetLeft;
+      
+    // 边界检查：确保窗口不会完全跑出屏幕
+    const minVisibleWidth = targetWidth * 0.3;
+    const minVisibleHeight = targetHeight * 0.3;
+      
+    if (targetLeft < -(targetWidth - minVisibleWidth)) {
+      targetLeft = -(targetWidth - minVisibleWidth);
     }
     if (targetTop < 0) {
       targetTop = 0;
-      offsetY = e.clientY - targetTop;
     }
     if (targetLeft > viewportWidth - minVisibleWidth) {
       targetLeft = viewportWidth - minVisibleWidth;
-      offsetX = e.clientX - targetLeft;
     }
     if (targetTop > viewportHeight - minVisibleHeight) {
       targetTop = viewportHeight - minVisibleHeight;
-      offsetY = e.clientY - targetTop;
     }
-    
-    console.log('[Restore Debug] After boundary check - position:', targetLeft, targetTop);
-    console.log('[Restore Debug] After boundary check - offset:', offsetX, offsetY);
-        
+      
+    // 保存偏移量供后续拖拽使用
     this.adjustedDragOffsetX = offsetX;
     this.adjustedDragOffsetY = offsetY;
-        
-    console.log('[Restore Debug] Final offset:', this.adjustedDragOffsetX, this.adjustedDragOffsetY);
-    console.log('[Restore Debug] Final position:', targetLeft, targetTop);
-    
-    // 设置最终的窗口位置
+      
+    // 5. 设置窗口位置（使用left/top，但只在restore时设置一次）
     container.style.left = targetLeft + 'px';
     container.style.top = targetTop + 'px';
-    
-    // 重要：更新 savedWindowState 为当前位置，防止后续代码恢复到旧位置
+    container.style.right = 'auto';
+    container.style.bottom = 'auto';
+    container.style.transform = 'none';
+      
+    // 重要：更新 savedWindowState 为当前位置
     this.savedWindowState = {
       left: targetLeft + 'px',
       top: targetTop + 'px',
       width: targetWidth + 'px',
       height: targetHeight + 'px'
     };
-    
+      
     // 注意：不要恢复transition，保持禁用状态直到拖拽结束
   }
   
@@ -881,17 +835,17 @@ class LowSkyAIChat {
   toggleMaximize() {
     const container = this.modal.querySelector('.ai-chat-container');
     const maximizeBtn = this.modal.querySelector('.ai-chat-maximize svg');
-    
+      
     if (container.classList.contains('maximized')) {
       // 还原 - 层叠方框
       this.isMaximized = false;
-      
+        
       // 获取当前最大化状态下的位置和尺寸（作为动画起点）
       const currentRect = container.getBoundingClientRect();
-      
+        
       // 先临时禁用transition，避免移除类时触发意外动画
       container.style.transition = 'none';
-      
+        
       // 先设置当前位置为起点（保持在全屏位置）
       container.style.left = currentRect.left + 'px';
       container.style.top = currentRect.top + 'px';
@@ -899,17 +853,14 @@ class LowSkyAIChat {
       container.style.height = currentRect.height + 'px';
       container.style.maxWidth = 'none';
       container.style.maxHeight = 'none';
-      
+        
       // 移除maximized类（此时transition已禁用，不会跳变）
       container.classList.remove('maximized');
       maximizeBtn.innerHTML = '<rect x="1" y="1" width="8" height="8" fill="none" stroke="currentColor" stroke-width="1"/>';
-      
-      // 强制重绘，确保所有样式生效
-      container.offsetHeight;
-      
+        
       // 计算目标位置
       let targetLeft, targetTop, targetWidth, targetHeight;
-      
+        
       // 如果保存了位置信息（非空字符串），则使用保存的位置
       if (this.savedWindowState && this.savedWindowState.left) {
         // 有保存的位置，直接使用
@@ -921,7 +872,7 @@ class LowSkyAIChat {
         // 没有保存的位置（首次打开或未拖拽过），计算居中位置
         const viewportWidth = window.innerWidth;
         const viewportHeight = window.innerHeight;
-        
+          
         // 如果有保存的尺寸，使用保存的尺寸；否则使用默认尺寸
         if (this.savedWindowState && this.savedWindowState.width) {
           targetWidth = this.savedWindowState.width;
@@ -930,56 +881,49 @@ class LowSkyAIChat {
           targetWidth = '';
           targetHeight = '';
         }
-        
+          
         // 计算居中位置（基于目标尺寸或默认尺寸）
         const finalWidth = targetWidth ? parseFloat(targetWidth) : Math.min(viewportWidth * 0.5, viewportWidth * 0.4);
         const finalHeight = targetHeight ? parseFloat(targetHeight) : Math.min(viewportHeight * 0.8, 700);
-        
+          
         targetLeft = (viewportWidth - finalWidth) / 2 + 'px';
         targetTop = (viewportHeight - finalHeight) / 2 + 'px';
       }
-      
+        
       // 立即设置目标位置（同步，不使用requestAnimationFrame）
-      // 这样startDragging可以立即获取到正确的位置
       container.style.left = targetLeft;
       container.style.top = targetTop;
       if (targetWidth) container.style.width = targetWidth;
       if (targetHeight) container.style.height = targetHeight;
-      
+        
       // 恢复transition（用于后续的动画）
       container.style.transition = '';
     } else {
       // 最大化前保存当前状态
       const currentRect = container.getBoundingClientRect();
-      
+        
       // 保存当前的实际状态（使用实际渲染的尺寸，而不是inline style）
-      // 第一次打开时style是空的，但实际有CSS默认的尺寸
       this.savedWindowState = {
         left: container.style.left || '',
         top: container.style.top || '',
-        width: container.style.width || (currentRect.width + 'px'),  // 如果没有inline style，使用实际宽度
-        height: container.style.height || (currentRect.height + 'px') // 如果没有inline style，使用实际高度
+        width: container.style.width || (currentRect.width + 'px'),
+        height: container.style.height || (currentRect.height + 'px')
       };
-      
-      // 获取当前窗口位置（作为动画起点）
-      
+        
       // 临时禁用transition
       container.style.transition = 'none';
-      
+        
       // 确保当前位置被设置
       container.style.left = currentRect.left + 'px';
       container.style.top = currentRect.top + 'px';
       container.style.width = currentRect.width + 'px';
       container.style.height = currentRect.height + 'px';
-      
-      // 强制重绘
-      container.offsetHeight;
-      
+        
       // 延迟一帧后最大化，触发动画
       requestAnimationFrame(() => {
         // 恢复transition
         container.style.transition = '';
-        
+          
         // 添加maximized类（CSS会处理所有位置和尺寸）
         container.classList.add('maximized');
         maximizeBtn.innerHTML = '<rect x="3" y="1" width="6" height="6" fill="none" stroke="currentColor" stroke-width="1"/><rect x="1" y="3" width="6" height="6" fill="none" stroke="currentColor" stroke-width="1"/>';

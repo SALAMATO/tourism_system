@@ -36,16 +36,19 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   opacity: 0;
   position: absolute;
   cursor: default;
   pointer-events: auto;
+  /* 默认有transition用于打开/关闭动画 */
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* 拖拽时禁用过渡动画 */
-.ai-chat-container.dragging {
+/* 拖拽时禁用过渡动画（包括所有子元素） */
+.ai-chat-container.dragging,
+.ai-chat-container.dragging * {
   transition: none !important;
+  animation: none !important;
 }
 
 /* 调整大小时禁用过渡动画 */
