@@ -356,18 +356,17 @@ class LowSkyAIChat {
       if (e.target.closest('.ai-chat-controls')) {
         return;
       }
-      
-      // Windows风格的HitTest区域：左侧140px为标题区，右侧138px为控制按钮区
+
+      // Windows风格的HitTest区域：只排除右侧控制按钮区
       const headerRect = header.getBoundingClientRect();
       const clickX = e.clientX - headerRect.left;
-      const LEFT_SAFE_ZONE = 140;  // 标题文字区域
       const RIGHT_SAFE_ZONE = 138; // 控制按钮区域
-      
-      // 如果在非拖拽区域（左侧标题或右侧按钮），不启动拖拽
-      if (clickX < LEFT_SAFE_ZONE || clickX > headerRect.width - RIGHT_SAFE_ZONE) {
-        return;
-      }
-      
+
+      // // 如果在右侧按钮区域，不启动拖拽
+      // if (clickX > headerRect.width - RIGHT_SAFE_ZONE) {
+      //   return;
+      // }
+
       // 记录鼠标按下的位置
       this.dragStartX = e.clientX;
       this.dragStartY = e.clientY;
@@ -534,8 +533,7 @@ class LowSkyAIChat {
     // Windows风格：使用最大化时的百分比位置映射到restore后的窗口
     const headerRect = this.modal.querySelector('.ai-chat-header').getBoundingClientRect();
       
-    // Windows风格的HitTest区域：左侧140px为标题区，右侧138px为控制按钮区
-    const LEFT_SAFE_ZONE = 140;  // 标题文字区域
+    // Windows风格的HitTest区域：只排除右侧控制按钮区（138px）
     const RIGHT_SAFE_ZONE = 138; // 控制按钮区域
     
     // 基于鼠标在最大化标题栏中的相对位置计算offset
@@ -545,10 +543,7 @@ class LowSkyAIChat {
     // Windows风格微调：轻微向中间吸附，避免贴边
     offsetX = offsetX * 0.92;
       
-    // 自动避开左侧标题区域
-    offsetX = Math.max(offsetX, LEFT_SAFE_ZONE);
-    
-    // 自动避开右侧按钮区域（关键！）
+    // 自动避开右侧按钮区域（关键！确保鼠标不会落到按钮上）
     offsetX = Math.min(offsetX, targetWidth - RIGHT_SAFE_ZONE);
       
     // 计算窗口左上角位置
