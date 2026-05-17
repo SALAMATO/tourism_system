@@ -492,8 +492,8 @@ class LowSkyAIChat {
     const controlsWidth = 46 * 3; // 138px
     const titleWidth = headerRect.width * 0.6;
     
-    const safeMarginLeft = titleWidth * 0.3;
-    const safeMarginRight = controlsWidth + 20;
+    const safeMarginLeft = titleWidth * 0.55;
+    const safeMarginRight = controlsWidth + 30;
     
     if (dragOffsetX < safeMarginLeft) {
       dragOffsetX = safeMarginLeft;
