@@ -485,12 +485,39 @@ class LowSkyAIChat {
     
     // 使用百分比计算新的偏移量
     const headerRect = header.getBoundingClientRect();
-    this.dragOffsetX = headerRect.width * this.maximizeHeaderPercentX;
-    this.dragOffsetY = headerRect.height * this.maximizeHeaderPercentY;
+    let dragOffsetX = headerRect.width * this.maximizeHeaderPercentX;
+    let dragOffsetY = headerRect.height * this.maximizeHeaderPercentY;
+    
+    // Windows 11行为：确保鼠标不会跑到标题文字或控制按钮上
+    const controlsWidth = 46 * 3; // 138px
+    const titleWidth = headerRect.width * 0.6;
+    
+    const safeMarginLeft = titleWidth * 0.3;
+    const safeMarginRight = controlsWidth + 20;
+    
+    if (dragOffsetX < safeMarginLeft) {
+      dragOffsetX = safeMarginLeft;
+    }
+    if (dragOffsetX > headerRect.width - safeMarginRight) {
+      dragOffsetX = headerRect.width - safeMarginRight;
+    }
+    
+    const safeMarginTop = headerRect.height * 0.2;
+    const safeMarginBottom = headerRect.height * 0.2;
+    if (dragOffsetY < safeMarginTop) {
+      dragOffsetY = safeMarginTop;
+    }
+    if (dragOffsetY > headerRect.height - safeMarginBottom) {
+      dragOffsetY = headerRect.height - safeMarginBottom;
+    }
+    
+    this.dragOffsetX = dragOffsetX;
+    this.dragOffsetY = dragOffsetY;
     
     console.log('[Drag Debug] startDraggingFromMaximize called');
-    console.log('[Drag Debug] Header percent:', this.maximizeHeaderPercentX.toFixed(3), this.maximizeHeaderPercentY.toFixed(3));
-    console.log('[Drag Debug] Calculated dragOffset:', this.dragOffsetX, this.dragOffsetY);
+    console.log('[Drag Debug] Original percent:', this.maximizeHeaderPercentX.toFixed(3), this.maximizeHeaderPercentY.toFixed(3));
+    console.log('[Drag Debug] Adjusted dragOffset:', this.dragOffsetX, this.dragOffsetY);
+    console.log('[Drag Debug] Safe margins L/R:', safeMarginLeft, safeMarginRight);
     console.log('[Drag Debug] mouse position:', e.clientX, e.clientY);
     
     // 添加拖拽类，禁用过渡动画
@@ -525,15 +552,44 @@ class LowSkyAIChat {
     const headerRect = this.modal.querySelector('.ai-chat-header').getBoundingClientRect();
     
     // 使用百分比计算偏移量：新标题栏宽度 * 百分比 = 新的像素偏移
-    const newHeaderOffsetX = headerRect.width * this.maximizeHeaderPercentX;
-    const newHeaderOffsetY = headerRect.height * this.maximizeHeaderPercentY;
+    let newHeaderOffsetX = headerRect.width * this.maximizeHeaderPercentX;
+    let newHeaderOffsetY = headerRect.height * this.maximizeHeaderPercentY;
+    
+    // Windows 11行为：确保鼠标不会跑到标题文字或控制按钮上
+    // 计算控制按钮区域的宽度（3个按钮，每个约46px）
+    const controlsWidth = 46 * 3; // 138px
+    // 计算标题文字的近似宽度（假设标题占左侧60%）
+    const titleWidth = headerRect.width * 0.6;
+    
+    // 安全的拖动区域：标题栏中间部分
+    const safeMarginLeft = titleWidth * 0.3; // 标题右侧留30%空间
+    const safeMarginRight = controlsWidth + 20; // 控制按钮左侧留20px缓冲
+    
+    // 调整偏移量，确保鼠标在安全区域内
+    if (newHeaderOffsetX < safeMarginLeft) {
+      newHeaderOffsetX = safeMarginLeft;
+    }
+    if (newHeaderOffsetX > headerRect.width - safeMarginRight) {
+      newHeaderOffsetX = headerRect.width - safeMarginRight;
+    }
+    
+    // 垂直方向保持在标题栏上半部分
+    const safeMarginTop = headerRect.height * 0.2;
+    const safeMarginBottom = headerRect.height * 0.2;
+    if (newHeaderOffsetY < safeMarginTop) {
+      newHeaderOffsetY = safeMarginTop;
+    }
+    if (newHeaderOffsetY > headerRect.height - safeMarginBottom) {
+      newHeaderOffsetY = headerRect.height - safeMarginBottom;
+    }
     
     // 计算窗口左上角的位置
     let targetLeft = e.clientX - newHeaderOffsetX;
     let targetTop = e.clientY - newHeaderOffsetY;
     
-    console.log('[Restore Debug] Header percent:', this.maximizeHeaderPercentX.toFixed(3), this.maximizeHeaderPercentY.toFixed(3));
-    console.log('[Restore Debug] New header offset:', newHeaderOffsetX, newHeaderOffsetY);
+    console.log('[Restore Debug] Original percent:', this.maximizeHeaderPercentX.toFixed(3), this.maximizeHeaderPercentY.toFixed(3));
+    console.log('[Restore Debug] Adjusted offset:', newHeaderOffsetX, newHeaderOffsetY);
+    console.log('[Restore Debug] Safe margins L/R:', safeMarginLeft, safeMarginRight);
     console.log('[Restore Debug] Calculated position:', targetLeft, targetTop);
     
     // 边界检查：确保窗口不会完全超出屏幕
