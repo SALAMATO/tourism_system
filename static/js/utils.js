@@ -13,7 +13,6 @@ const NAV_MENU_ITEMS = [
 // 初始化导航栏菜单（动态生成）
 function initNavbarMenu() {
   const navbarMenu = document.querySelector('.navbar-menu');
-  const mobileMenu = document.querySelector('.mobile-menu');
   const footerLinks = document.querySelector('.footer-links');
   
   // 生成桌面端菜单HTML
@@ -24,13 +23,8 @@ function initNavbarMenu() {
     navbarMenu.innerHTML = desktopHtml;
   }
   
-  // 生成移动端菜单HTML
-  if (mobileMenu) {
-    const mobileHtml = NAV_MENU_ITEMS.map(item => 
-      `<a href="${item.url}" class="mobile-menu-item">${item.name}</a>`
-    ).join('');
-    mobileMenu.innerHTML = mobileHtml;
-  }
+  // 注意：移动端菜单由 auth.js 的 updateMobileMenu() 统一管理，此处不再生成
+  // 这样可以避免覆盖用户相关的菜单项（个人主页、退出登录等）
   
   // 生成底部链接HTML
   if (footerLinks) {
@@ -513,13 +507,33 @@ document.addEventListener('DOMContentLoaded', function() {
   initNavbarMenu();
   
   const navbarToggle = document.getElementById('navbar-toggle');
-  const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+  let mobileMenuToggle = document.getElementById('mobile-menu-toggle');
   const mobileMenuOverlay = document.getElementById('mobile-menu-overlay');
   const navbar = document.querySelector('.navbar');
   const aiAssistantWrapper = document.querySelector('.ai-assistant-wrapper');
   const mobileAiBtn = document.querySelector('.mobile-ai-btn');
   
-  console.log('汉堡菜单初始化:', { navbarToggle, mobileMenuOverlay, mobileAiBtn });
+  // 如果关闭按钮不存在，创建它
+  if (!mobileMenuToggle && mobileMenuOverlay) {
+    console.log('创建移动端关闭按钮');
+    mobileMenuToggle = document.createElement('button');
+    mobileMenuToggle.className = 'navbar-toggle mobile-menu-toggle';
+    mobileMenuToggle.id = 'mobile-menu-toggle';
+    mobileMenuToggle.innerHTML = `
+      <span></span>
+      <span></span>
+      <span></span>
+    `;
+    // 插入到 mobile-menu-overlay 的最前面
+    mobileMenuOverlay.insertBefore(mobileMenuToggle, mobileMenuOverlay.firstChild);
+  }
+  
+  console.log('汉堡菜单初始化:', { 
+    navbarToggle, 
+    mobileMenuToggle,
+    mobileMenuOverlay, 
+    mobileAiBtn 
+  });
   
   if (navbarToggle && mobileMenuOverlay) {
     let isOpen = false;

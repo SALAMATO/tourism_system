@@ -7,6 +7,12 @@ class AuthManager {
 
   init() {
     // 页面加载时更新用户菜单
+    console.log('AuthManager 初始化', {
+      isAuthenticated: this.isAuthenticated(),
+      hasToken: !!this.token,
+      hasUser: !!this.user,
+      user: this.user
+    });
     this.updateUserMenu();
   }
 
@@ -216,9 +222,21 @@ updateMobileMenu() {
   const mobileMenuOverlay = document.querySelector('.mobile-menu-overlay');
   const aiAssistantWrapper = document.querySelector('.ai-assistant-wrapper');
   const navbarToggle = document.getElementById('navbar-toggle');
-  if (!mobileMenu || !mobileMenuOverlay) return;
+  
+  console.log('updateMobileMenu 被调用', {
+    hasMobileMenu: !!mobileMenu,
+    hasOverlay: !!mobileMenuOverlay,
+    isAuthenticated: this.isAuthenticated(),
+    hasUser: !!this.user
+  });
+  
+  if (!mobileMenu || !mobileMenuOverlay) {
+    console.warn('移动端菜单元素未找到');
+    return;
+  }
 
-  // 更新汉堡按钮为Apple风格（三条线）
+  // 注意：mobile-menu-toggle 按钮已在 HTML 模板中定义，不需要在此创建
+  // 只需要确保汉堡按钮为Apple风格（三条线）
   if (navbarToggle && !navbarToggle.querySelector('span')) {
     navbarToggle.innerHTML = `
       <span></span>
@@ -227,26 +245,13 @@ updateMobileMenu() {
     `;
   }
 
-  // 确保菜单内的关闭按钮存在
-  let mobileMenuToggle = mobileMenuOverlay.querySelector('.mobile-menu-toggle');
-  if (!mobileMenuToggle) {
-    mobileMenuToggle = document.createElement('button');
-    mobileMenuToggle.className = 'navbar-toggle mobile-menu-toggle';
-    mobileMenuToggle.id = 'mobile-menu-toggle';
-    mobileMenuToggle.innerHTML = `
-      <span></span>
-      <span></span>
-      <span></span>
-    `;
-    mobileMenuOverlay.insertBefore(mobileMenuToggle, mobileMenuOverlay.firstChild);
-  }
-
   // 保留原有的导航链接 - 使用 NAV_MENU_ITEMS 动态生成
   const navLinks = typeof NAV_MENU_ITEMS !== 'undefined' 
     ? NAV_MENU_ITEMS.map(item => `<a href="${item.url}" class="mobile-menu-item">${item.name}</a>`).join('\n')
     : '';
 
   if (this.isAuthenticated() && this.user) {
+    console.log('用户已登录，生成带个人主页的菜单');
     const adminLink = this.user.is_staff ? `
       <a href="/admin-page/" class="mobile-menu-item">
         <i class="fas fa-user-shield"></i> 管理后台
@@ -282,6 +287,7 @@ updateMobileMenu() {
       });
     }
   } else {
+    console.log('用户未登录，生成带登录按钮的菜单');
     mobileMenu.innerHTML = `
       ${navLinks}
       <a href="#" class="mobile-menu-item" onclick="authModal.open('login'); return false;">
@@ -289,6 +295,8 @@ updateMobileMenu() {
       </a>
     `;
   }
+  
+  console.log('移动端菜单HTML已更新:', mobileMenu.innerHTML.substring(0, 200));
 }
 
   requireAuth() {
