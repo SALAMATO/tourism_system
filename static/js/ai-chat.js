@@ -21,6 +21,12 @@ class LowSkyAIChat {
     this.dragOffsetX = 0;  // 鼠标相对于容器左上角的X偏移
     this.dragOffsetY = 0;  // 鼠标相对于容器左上角的Y偏移
     
+    // Windows 11风格的拖动检测
+    this.dragStartX = 0;  // 鼠标按下时的X坐标
+    this.dragStartY = 0;  // 鼠标按下时的Y坐标
+    this.dragThresholdExceeded = false;  // 是否超过拖动阈值
+    this.pendingMaximizeRestore = false;  // 是否等待从最大化状态恢复
+    
     // 窗口大小调整相关
     this.isResizing = false;
     this.resizeDirection = ''; // 'nw', 'ne', 'sw', 'se', 'n', 's', 'e', 'w'
@@ -345,34 +351,43 @@ class LowSkyAIChat {
         return;
       }
       
-      // 最大化状态下不允许拖拽
+      // 记录鼠标按下的位置
+      this.dragStartX = e.clientX;
+      this.dragStartY = e.clientY;
+      this.dragThresholdExceeded = false;
+      
+      // 最大化状态下，准备检测是否开始拖动
       if (this.isMaximized) {
-        return;
+        this.pendingMaximizeRestore = true;
+      } else {
+        this.startDragging(e, container, header);
       }
-      
-      this.isDragging = true;
-      
-      // 记录鼠标相对于容器左上角的偏移
-      const rect = container.getBoundingClientRect();
-      this.dragOffsetX = e.clientX - rect.left;
-      this.dragOffsetY = e.clientY - rect.top;
-      
-      // 设置初始位置（从居中转换为绝对定位）
-      container.style.left = rect.left + 'px';
-      container.style.top = rect.top + 'px';
-      container.style.right = 'auto';
-      container.style.bottom = 'auto';
-      container.style.transform = 'none';
-      
-      // 添加拖拽类，禁用过渡动画
-      container.classList.add('dragging');
-      
-      header.style.cursor = 'grabbing';
-      e.preventDefault();
     });
     
     // 鼠标移动事件 - 直接同步位置，不使用RAF以获得最佳响应
     document.addEventListener('mousemove', (e) => {
+      // 如果正在等待检测拖动阈值（最大化状态）
+      if (this.pendingMaximizeRestore && !this.dragThresholdExceeded) {
+        const deltaX = Math.abs(e.clientX - this.dragStartX);
+        const deltaY = Math.abs(e.clientY - this.dragStartY);
+        
+        // Windows 11风格：移动超过5像素才认为是拖动
+        if (deltaX > 5 || deltaY > 5) {
+          this.dragThresholdExceeded = true;
+          
+          // 获取当前容器的引用
+          const currentContainer = this.modal.querySelector('.ai-chat-container');
+          const currentHeader = this.modal.querySelector('.ai-chat-header');
+          
+          // 先取消最大化，窗口会出现在鼠标附近
+          this.restoreFromMaximizeForDrag(e, currentContainer);
+          
+          // 立即启动拖拽，这会重新计算dragOffset
+          this.startDragging(e, currentContainer, currentHeader);
+        }
+        return;
+      }
+      
       if (!this.isDragging) return;
       
       // 直接计算新位置：鼠标位置 - 偏移量
@@ -401,6 +416,10 @@ class LowSkyAIChat {
     
     // 鼠标释放事件
     document.addEventListener('mouseup', () => {
+      // 清除待处理的最大化恢复标志
+      this.pendingMaximizeRestore = false;
+      this.dragThresholdExceeded = false;
+      
       if (this.isDragging) {
         this.isDragging = false;
         header.style.cursor = 'default';
@@ -416,6 +435,92 @@ class LowSkyAIChat {
     
     // 绑定窗口大小调整功能
     this.bindResizeEvents();
+  }
+  
+  // 开始拖拽的辅助方法
+  startDragging(e, container, header) {
+    this.isDragging = true;
+    
+    // 记录鼠标相对于容器左上角的偏移
+    const rect = container.getBoundingClientRect();
+    this.dragOffsetX = e.clientX - rect.left;
+    this.dragOffsetY = e.clientY - rect.top;
+    
+    // 设置初始位置（从居中转换为绝对定位）
+    container.style.left = rect.left + 'px';
+    container.style.top = rect.top + 'px';
+    container.style.right = 'auto';
+    container.style.bottom = 'auto';
+    container.style.transform = 'none';
+    
+    // 添加拖拽类，禁用过渡动画
+    container.classList.add('dragging');
+    
+    header.style.cursor = 'grabbing';
+    e.preventDefault();
+  }
+  
+  // 从最大化状态恢复并准备拖拽（特殊版本）
+  restoreFromMaximizeForDrag(e, container) {
+    const maximizeBtn = this.modal.querySelector('.ai-chat-maximize svg');
+    
+    // 标记为非最大化状态
+    this.isMaximized = false;
+    
+    // 获取应该恢复的窗口尺寸
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    
+    let targetWidth, targetHeight;
+    if (this.savedWindowState && this.savedWindowState.width) {
+      targetWidth = parseFloat(this.savedWindowState.width);
+      targetHeight = parseFloat(this.savedWindowState.height);
+    } else {
+      targetWidth = Math.min(viewportWidth * 0.5, viewportWidth * 0.4);
+      targetHeight = Math.min(viewportHeight * 0.8, 700);
+    }
+    
+    // Windows 11风格：窗口左上角位于鼠标位置
+    let targetLeft = e.clientX;
+    let targetTop = e.clientY;
+    
+    // 边界检查：确保窗口不会完全超出屏幕
+    if (targetLeft > viewportWidth - 50) targetLeft = viewportWidth - 50;
+    if (targetTop > viewportHeight - 50) targetTop = viewportHeight - 50;
+    if (targetLeft < -targetWidth + 50) targetLeft = -targetWidth + 50;
+    if (targetTop < -targetHeight + 50) targetTop = -targetHeight + 50;
+    
+    // 关键：先禁用所有过渡和动画
+    container.style.transition = 'none';
+    container.style.animation = 'none';
+    
+    // 移除maximized类
+    container.classList.remove('maximized');
+    maximizeBtn.innerHTML = '<rect x="1" y="1" width="8" height="8" fill="none" stroke="currentColor" stroke-width="1"/>';
+    
+    // 立即设置位置和尺寸（在移除类之后）
+    container.style.left = targetLeft + 'px';
+    container.style.top = targetTop + 'px';
+    container.style.width = targetWidth + 'px';
+    container.style.height = targetHeight + 'px';
+    container.style.right = 'auto';
+    container.style.bottom = 'auto';
+    container.style.maxWidth = 'none';
+    container.style.maxHeight = 'none';
+    container.style.transform = 'none';
+    
+    // 强制重绘，确保样式立即生效
+    container.offsetHeight;
+    
+    // 重要：更新 savedWindowState 为当前位置，防止后续代码恢复到旧位置
+    this.savedWindowState = {
+      left: targetLeft + 'px',
+      top: targetTop + 'px',
+      width: targetWidth + 'px',
+      height: targetHeight + 'px'
+    };
+    
+    // 注意：不要恢复transition，保持禁用状态直到拖拽结束
   }
   
   bindResizeEvents() {
@@ -719,14 +824,15 @@ class LowSkyAIChat {
         targetTop = (viewportHeight - finalHeight) / 2 + 'px';
       }
       
-      // 恢复transition并设置目标位置，触发动画
-      requestAnimationFrame(() => {
-        container.style.transition = ''; // 恢复CSS的transition
-        container.style.left = targetLeft;
-        container.style.top = targetTop;
-        if (targetWidth) container.style.width = targetWidth;
-        if (targetHeight) container.style.height = targetHeight;
-      });
+      // 立即设置目标位置（同步，不使用requestAnimationFrame）
+      // 这样startDragging可以立即获取到正确的位置
+      container.style.left = targetLeft;
+      container.style.top = targetTop;
+      if (targetWidth) container.style.width = targetWidth;
+      if (targetHeight) container.style.height = targetHeight;
+      
+      // 恢复transition（用于后续的动画）
+      container.style.transition = '';
     } else {
       // 最大化前保存当前状态
       const currentRect = container.getBoundingClientRect();
