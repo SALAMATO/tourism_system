@@ -546,17 +546,19 @@ class LowSkyAIChat {
     
     // 4. 现在获取恢复后窗口的实际位置（此时窗口在0,0的位置）
     const rect = container.getBoundingClientRect();
-        
-    // 5. 计算原始偏移量：鼠标位置 - 窗口位置
-    let offsetX = e.clientX - rect.left;
-    let offsetY = e.clientY - rect.top;
     
-    console.log('[Restore Debug] Window rect:', rect.left, rect.top);
-    console.log('[Restore Debug] Mouse position:', e.clientX, e.clientY);
-    console.log('[Restore Debug] Raw offset:', offsetX, offsetY);
+    // 5. 计算偏移量：使用百分比来保持相对位置
+    const headerRect = this.modal.querySelector('.ai-chat-header').getBoundingClientRect();
+    console.log('[Restore Debug] Header width:', headerRect.width);
+    
+    // 使用最大化状态下记录的百分比来计算小窗口中的偏移量
+    let offsetX = headerRect.width * this.maximizeHeaderPercentX;
+    let offsetY = headerRect.height * this.maximizeHeaderPercentY;
+    
+    console.log('[Restore Debug] Mouse percent:', this.maximizeHeaderPercentX.toFixed(3), this.maximizeHeaderPercentY.toFixed(3));
+    console.log('[Restore Debug] Calculated offset:', offsetX, offsetY);
     
     // 6. 应用安全区域限制（在计算窗口位置之前先调整偏移量）
-    const headerRect = this.modal.querySelector('.ai-chat-header').getBoundingClientRect();
     const titleWidth = headerRect.width * 0.6;
     const controlsWidth = 46 * 3; // 138px
     const rightPadding = 30; // 控制按钮右边的空隙
@@ -564,24 +566,33 @@ class LowSkyAIChat {
     const safeMarginLeft = titleWidth * 0.55;
     const safeMaxOffsetX = headerRect.width - controlsWidth - rightPadding;
     
+    console.log('[Restore Debug] Safe area:', safeMarginLeft, '~', safeMaxOffsetX);
+    
     // 如果鼠标在标题文字区域，调整到安全区域左边界
     if (offsetX < safeMarginLeft) {
+      console.log('[Restore Debug] Adjusting left: from', offsetX, 'to', safeMarginLeft);
       offsetX = safeMarginLeft;
     }
     // 如果鼠标在控制按钮区域或右侧，调整到安全区域右边界（按钮左边缘）
-    if (offsetX > safeMaxOffsetX) {
+    else if (offsetX > safeMaxOffsetX) {
+      console.log('[Restore Debug] Adjusting right: from', offsetX, 'to', safeMaxOffsetX);
       offsetX = safeMaxOffsetX;
+    } else {
+      console.log('[Restore Debug] No adjustment needed');
     }
     
     console.log('[Restore Debug] Adjusted offset:', offsetX, offsetY);
         
-    // 7. 计算窗口位置
+    // 7. 计算窗口位置：让鼠标落在标题栏的对应位置
     let targetLeft = e.clientX - offsetX;
     let targetTop = e.clientY - offsetY;
         
     // 8. 边界检查：确保窗口不会完全跑出屏幕
     const minVisibleWidth = targetWidth * 0.5;
     const minVisibleHeight = targetHeight * 0.5;
+    
+    console.log('[Restore Debug] Before boundary check - position:', targetLeft, targetTop);
+    console.log('[Restore Debug] Before boundary check - offset:', offsetX, offsetY);
         
     if (targetLeft < 0) {
       targetLeft = 0;
@@ -599,6 +610,9 @@ class LowSkyAIChat {
       targetTop = viewportHeight - minVisibleHeight;
       offsetY = e.clientY - targetTop;
     }
+    
+    console.log('[Restore Debug] After boundary check - position:', targetLeft, targetTop);
+    console.log('[Restore Debug] After boundary check - offset:', offsetX, offsetY);
         
     this.adjustedDragOffsetX = offsetX;
     this.adjustedDragOffsetY = offsetY;
