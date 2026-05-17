@@ -566,19 +566,24 @@ class LowSkyAIChat {
     const safeMarginLeft = titleWidth * 0.55;
     const safeMaxOffsetX = headerRect.width - controlsWidth - rightPadding;
     
-    console.log('[Restore Debug] Safe area:', safeMarginLeft, '~', safeMaxOffsetX);
+    console.log('[Restore Debug] Safe area left boundary:', safeMarginLeft);
+    console.log('[Restore Debug] Controls area right boundary:', safeMaxOffsetX);
     
-    // 如果鼠标在标题文字区域，调整到安全区域左边界
-    if (offsetX < safeMarginLeft) {
-      console.log('[Restore Debug] Adjusting left: from', offsetX, 'to', safeMarginLeft);
-      offsetX = safeMarginLeft;
-    }
-    // 如果鼠标在控制按钮区域或右侧，调整到安全区域右边界（按钮左边缘）
-    else if (offsetX > safeMaxOffsetX) {
-      console.log('[Restore Debug] Adjusting right: from', offsetX, 'to', safeMaxOffsetX);
-      offsetX = safeMaxOffsetX;
+    // 判断是否在控制按钮区域
+    const isInControlsArea = offsetX > safeMaxOffsetX;
+    
+    if (isInControlsArea) {
+      // 在控制按钮区域：不应用安全区域限制，保持原始的百分比偏移量
+      console.log('[Restore Debug] In controls area, using original offset:', offsetX);
     } else {
-      console.log('[Restore Debug] No adjustment needed');
+      // 不在控制按钮区域：应用安全区域限制
+      // 如果鼠标在标题文字区域，调整到安全区域左边界
+      if (offsetX < safeMarginLeft) {
+        console.log('[Restore Debug] Adjusting left: from', offsetX, 'to', safeMarginLeft);
+        offsetX = safeMarginLeft;
+      } else {
+        console.log('[Restore Debug] No adjustment needed');
+      }
     }
     
     console.log('[Restore Debug] Adjusted offset:', offsetX, offsetY);
