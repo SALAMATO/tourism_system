@@ -483,34 +483,13 @@ class LowSkyAIChat {
   startDraggingFromMaximize(e, container, header) {
     this.isDragging = true;
     
-    // 使用百分比计算新的偏移量
-    const headerRect = header.getBoundingClientRect();
-    let dragOffsetX = headerRect.width * this.maximizeHeaderPercentX;
-    let dragOffsetY = headerRect.height * this.maximizeHeaderPercentY;
-    
-    // Windows 11行为：只限制水平方向，垂直方向不做限制
-    const controlsWidth = 46 * 3; // 138px
-    const titleWidth = headerRect.width * 0.6;
-    
-    const safeMarginLeft = titleWidth * 0.55;
-    const safeMarginRight = controlsWidth + 30;
-    
-    if (dragOffsetX < safeMarginLeft) {
-      dragOffsetX = safeMarginLeft;
-    }
-    if (dragOffsetX > headerRect.width - safeMarginRight) {
-      dragOffsetX = headerRect.width - safeMarginRight;
-    }
-    
-    // 垂直方向保持原值，不做限制
-    
-    this.dragOffsetX = dragOffsetX;
-    this.dragOffsetY = dragOffsetY;
+    // 使用 restoreFromMaximizeForDrag 中计算好的偏移量
+    // 确保窗口位置和拖拽偏移量一致
+    this.dragOffsetX = this.adjustedDragOffsetX;
+    this.dragOffsetY = this.adjustedDragOffsetY;
     
     console.log('[Drag Debug] startDraggingFromMaximize called');
-    console.log('[Drag Debug] Original percent:', this.maximizeHeaderPercentX.toFixed(3), this.maximizeHeaderPercentY.toFixed(3));
-    console.log('[Drag Debug] Adjusted dragOffset X:', this.dragOffsetX, '(Y unchanged:', this.dragOffsetY, ')');
-    console.log('[Drag Debug] Safe margins L/R:', safeMarginLeft, safeMarginRight);
+    console.log('[Drag Debug] Using adjusted offset:', this.dragOffsetX, this.dragOffsetY);
     console.log('[Drag Debug] mouse position:', e.clientX, e.clientY);
     
     // 添加拖拽类，禁用过渡动画
@@ -540,44 +519,6 @@ class LowSkyAIChat {
       targetHeight = Math.min(viewportHeight * 0.8, 700);
     }
     
-    // Windows 11风格：保持鼠标在标题栏上的相对位置
-    // 首先获取恢复后标题栏的尺寸
-    const headerRect = this.modal.querySelector('.ai-chat-header').getBoundingClientRect();
-    
-    // 使用百分比计算偏移量：新标题栏宽度 * 百分比 = 新的像素偏移
-    let newHeaderOffsetX = headerRect.width * this.maximizeHeaderPercentX;
-    let newHeaderOffsetY = headerRect.height * this.maximizeHeaderPercentY;
-    
-    // Windows 11行为：只限制水平方向，确保鼠标不会跑到标题文字或控制按钮上
-    // 垂直方向不做限制，允许在标题栏的任何高度拖动
-    const controlsWidth = 46 * 3; // 138px
-    const titleWidth = headerRect.width * 0.6;
-    
-    const safeMarginLeft = titleWidth * 0.3;
-    const safeMarginRight = controlsWidth + 20;
-    
-    if (newHeaderOffsetX < safeMarginLeft) {
-      newHeaderOffsetX = safeMarginLeft;
-    }
-    if (newHeaderOffsetX > headerRect.width - safeMarginRight) {
-      newHeaderOffsetX = headerRect.width - safeMarginRight;
-    }
-    
-    // 计算窗口左上角的位置
-    let targetLeft = e.clientX - newHeaderOffsetX;
-    let targetTop = e.clientY - newHeaderOffsetY;
-    
-    console.log('[Restore Debug] Original percent:', this.maximizeHeaderPercentX.toFixed(3), this.maximizeHeaderPercentY.toFixed(3));
-    console.log('[Restore Debug] Adjusted offset X:', newHeaderOffsetX, '(Y unchanged:', newHeaderOffsetY, ')');
-    console.log('[Restore Debug] Safe margins L/R:', safeMarginLeft, safeMarginRight);
-    console.log('[Restore Debug] Calculated position:', targetLeft, targetTop);
-    
-    // 边界检查：确保窗口不会完全超出屏幕
-    if (targetLeft > viewportWidth - 50) targetLeft = viewportWidth - 50;
-    if (targetTop > viewportHeight - 50) targetTop = viewportHeight - 50;
-    if (targetLeft < -targetWidth + 50) targetLeft = -targetWidth + 50;
-    if (targetTop < -targetHeight + 50) targetTop = -targetHeight + 50;
-    
     // 关键：先禁用所有过渡和动画
     container.style.transition = 'none';
     container.style.animation = 'none';
@@ -587,8 +528,8 @@ class LowSkyAIChat {
     maximizeBtn.innerHTML = '<rect x="1" y="1" width="8" height="8" fill="none" stroke="currentColor" stroke-width="1"/>';
     
     // 立即设置位置和尺寸（在移除类之后）
-    container.style.left = targetLeft + 'px';
-    container.style.top = targetTop + 'px';
+    container.style.left = '0px';  // 临时位置
+    container.style.top = '0px';   // 临时位置
     container.style.width = targetWidth + 'px';
     container.style.height = targetHeight + 'px';
     container.style.right = 'auto';
@@ -599,6 +540,65 @@ class LowSkyAIChat {
     
     // 强制重绘，确保样式立即生效
     container.offsetHeight;
+    
+    // 现在获取恢复后标题栏的尺寸（此时窗口已经是小窗口了）
+    const headerRect = this.modal.querySelector('.ai-chat-header').getBoundingClientRect();
+    
+    // 计算安全区域的边界
+    const controlsWidth = 46 * 3; // 138px
+    const titleWidth = headerRect.width * 0.6;
+    
+    const safeMarginLeft = titleWidth * 0.55;
+    const safeMarginRight = controlsWidth + 30;
+    const safeMinOffsetX = safeMarginLeft;
+    const safeMaxOffsetX = headerRect.width - safeMarginRight;
+    
+    // 策略：根据鼠标位置动态选择偏移量
+    // 1. 先尝试让鼠标落在安全区域中心
+    const safeCenterX = (safeMinOffsetX + safeMaxOffsetX) / 2;
+    let targetLeft = e.clientX - safeCenterX;
+    
+    // 2. 垂直方向：使用百分比保持相对位置
+    const newHeaderOffsetY = headerRect.height * this.maximizeHeaderPercentY;
+    let targetTop = e.clientY - newHeaderOffsetY;
+    
+    // 3. 边界检查：如果窗口会跑出屏幕，调整偏移量
+    const minVisibleWidth = targetWidth * 0.5;
+    const minVisibleHeight = targetHeight * 0.5;
+    
+    if (targetLeft < 0) {
+      // 窗口会跑出左边界，让窗口贴左边，鼠标落在安全区域左边界
+      targetLeft = 0;
+      this.adjustedDragOffsetX = safeMinOffsetX;
+    } else if (targetLeft > viewportWidth - minVisibleWidth) {
+      // 窗口会跑出右边界，让窗口贴右边，鼠标落在安全区域右边界
+      targetLeft = viewportWidth - minVisibleWidth;
+      this.adjustedDragOffsetX = safeMaxOffsetX;
+    } else {
+      // 窗口在合理位置，鼠标落在安全区域中心
+      this.adjustedDragOffsetX = safeCenterX;
+    }
+    
+    // 垂直方向边界检查
+    if (targetTop < 0) {
+      targetTop = 0;
+      this.adjustedDragOffsetY = e.clientY - targetTop;
+    } else if (targetTop > viewportHeight - minVisibleHeight) {
+      targetTop = viewportHeight - minVisibleHeight;
+      this.adjustedDragOffsetY = e.clientY - targetTop;
+    } else {
+      this.adjustedDragOffsetY = newHeaderOffsetY;
+    }
+    
+    console.log('[Restore Debug] Safe margins L/R:', safeMinOffsetX, safeMaxOffsetX);
+    console.log('[Restore Debug] Safe center:', safeCenterX);
+    console.log('[Restore Debug] Mouse position:', e.clientX, e.clientY);
+    console.log('[Restore Debug] Final position:', targetLeft, targetTop);
+    console.log('[Restore Debug] Final offset:', this.adjustedDragOffsetX, this.adjustedDragOffsetY);
+    
+    // 设置最终的窗口位置
+    container.style.left = targetLeft + 'px';
+    container.style.top = targetTop + 'px';
     
     // 重要：更新 savedWindowState 为当前位置，防止后续代码恢复到旧位置
     this.savedWindowState = {
