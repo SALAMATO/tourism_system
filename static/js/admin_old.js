@@ -25,6 +25,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     clearAllCache();
   }
   
+  // 初始化导航栏菜单（动态生成）
+  if (typeof initNavbarMenu === 'function') {
+    initNavbarMenu();
+    console.log('✅ 导航栏菜单初始化完成');
+  }
+  
   // 管理后台权限校验：必须登录且为管理员
   try {
     // 未登录则跳转到统一登录页
