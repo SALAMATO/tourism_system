@@ -26,6 +26,12 @@ class LowSkyAIChat {
     this.dragStartY = 0;  // 鼠标按下时的Y坐标
     this.dragThresholdExceeded = false;  // 是否超过拖动阈值
     this.pendingMaximizeRestore = false;  // 是否等待从最大化状态恢复
+    this.maximizeDragOffsetX = 0;  // 最大化状态下鼠标相对于窗口左上角的X偏移
+    this.maximizeDragOffsetY = 0;  // 最大化状态下鼠标相对于窗口左上角的Y偏移
+    this.maximizeHeaderOffsetX = 0;  // 最大化状态下鼠标相对于标题栏左上角的X偏移
+    this.maximizeHeaderOffsetY = 0;  // 最大化状态下鼠标相对于标题栏左上角的Y偏移
+    this.maximizeHeaderPercentX = 0;  // 最大化状态下鼠标在标题栏宽度中的百分比（0-1）
+    this.maximizeHeaderPercentY = 0;  // 最大化状态下鼠标在标题栏高度中的百分比（0-1）
     
     // 窗口大小调整相关
     this.isResizing = false;
@@ -359,6 +365,19 @@ class LowSkyAIChat {
       // 最大化状态下，准备检测是否开始拖动
       if (this.isMaximized) {
         this.pendingMaximizeRestore = true;
+        
+        // 记录鼠标在标题栏内的相对位置（百分比）
+        const headerRect = header.getBoundingClientRect();
+        const headerWidth = headerRect.width;
+        const headerHeight = headerRect.height;
+        
+        // 计算百分比位置（0-1之间）
+        this.maximizeHeaderPercentX = (e.clientX - headerRect.left) / headerWidth;
+        this.maximizeHeaderPercentY = (e.clientY - headerRect.top) / headerHeight;
+        
+        console.log('[Mousedown Debug] maximize state');
+        console.log('  Header size:', headerWidth, 'x', headerHeight);
+        console.log('  Header percent:', this.maximizeHeaderPercentX.toFixed(3), this.maximizeHeaderPercentY.toFixed(3));
       } else {
         this.startDragging(e, container, header);
       }
@@ -382,8 +401,8 @@ class LowSkyAIChat {
           // 先取消最大化，窗口会出现在鼠标附近
           this.restoreFromMaximizeForDrag(e, currentContainer);
           
-          // 立即启动拖拽，这会重新计算dragOffset
-          this.startDragging(e, currentContainer, currentHeader);
+          // 启动拖拽，但不重新计算偏移量，使用之前保存的 maximizeDragOffset
+          this.startDraggingFromMaximize(e, currentContainer, currentHeader);
         }
         return;
       }
@@ -460,6 +479,27 @@ class LowSkyAIChat {
     e.preventDefault();
   }
   
+  // 从最大化状态启动拖拽（使用保存的偏移量）
+  startDraggingFromMaximize(e, container, header) {
+    this.isDragging = true;
+    
+    // 使用百分比计算新的偏移量
+    const headerRect = header.getBoundingClientRect();
+    this.dragOffsetX = headerRect.width * this.maximizeHeaderPercentX;
+    this.dragOffsetY = headerRect.height * this.maximizeHeaderPercentY;
+    
+    console.log('[Drag Debug] startDraggingFromMaximize called');
+    console.log('[Drag Debug] Header percent:', this.maximizeHeaderPercentX.toFixed(3), this.maximizeHeaderPercentY.toFixed(3));
+    console.log('[Drag Debug] Calculated dragOffset:', this.dragOffsetX, this.dragOffsetY);
+    console.log('[Drag Debug] mouse position:', e.clientX, e.clientY);
+    
+    // 添加拖拽类，禁用过渡动画
+    container.classList.add('dragging');
+    
+    header.style.cursor = 'grabbing';
+    e.preventDefault();
+  }
+  
   // 从最大化状态恢复并准备拖拽（特殊版本）
   restoreFromMaximizeForDrag(e, container) {
     const maximizeBtn = this.modal.querySelector('.ai-chat-maximize svg');
@@ -480,9 +520,21 @@ class LowSkyAIChat {
       targetHeight = Math.min(viewportHeight * 0.8, 700);
     }
     
-    // Windows 11风格：窗口左上角位于鼠标位置
-    let targetLeft = e.clientX;
-    let targetTop = e.clientY;
+    // Windows 11风格：保持鼠标在标题栏上的相对位置
+    // 首先获取恢复后标题栏的尺寸
+    const headerRect = this.modal.querySelector('.ai-chat-header').getBoundingClientRect();
+    
+    // 使用百分比计算偏移量：新标题栏宽度 * 百分比 = 新的像素偏移
+    const newHeaderOffsetX = headerRect.width * this.maximizeHeaderPercentX;
+    const newHeaderOffsetY = headerRect.height * this.maximizeHeaderPercentY;
+    
+    // 计算窗口左上角的位置
+    let targetLeft = e.clientX - newHeaderOffsetX;
+    let targetTop = e.clientY - newHeaderOffsetY;
+    
+    console.log('[Restore Debug] Header percent:', this.maximizeHeaderPercentX.toFixed(3), this.maximizeHeaderPercentY.toFixed(3));
+    console.log('[Restore Debug] New header offset:', newHeaderOffsetX, newHeaderOffsetY);
+    console.log('[Restore Debug] Calculated position:', targetLeft, targetTop);
     
     // 边界检查：确保窗口不会完全超出屏幕
     if (targetLeft > viewportWidth - 50) targetLeft = viewportWidth - 50;
