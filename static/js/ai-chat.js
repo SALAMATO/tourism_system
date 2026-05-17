@@ -373,9 +373,12 @@ class LowSkyAIChat {
       this.dragStartY = e.clientY;
       this.dragThresholdExceeded = false;
       
-      // 最大化状态下，准备检测是否开始拖动
+      // 关键：如果是最大化状态，记录鼠标在标题栏中的百分比位置
       if (this.isMaximized) {
         this.pendingMaximizeRestore = true;
+        // 记录鼠标在标题栏宽度/高度中的百分比（0-1）
+        this.maximizeHeaderPercentX = (e.clientX - headerRect.left) / headerRect.width;
+        this.maximizeHeaderPercentY = (e.clientY - headerRect.top) / headerRect.height;
       } else {
         this.startDragging(e, container, header);
       }
@@ -528,24 +531,25 @@ class LowSkyAIChat {
     container.style.maxHeight = 'none';
       
     // 4. 计算窗口位置：让鼠标落在标题栏的安全区域内
-    // Windows风格：直接使用鼠标位置减去固定的偏移量
+    // Windows风格：使用最大化时的百分比位置映射到restore后的窗口
     const headerRect = this.modal.querySelector('.ai-chat-header').getBoundingClientRect();
       
     // Windows风格的HitTest区域：左侧140px为标题区，右侧138px为控制按钮区
     const LEFT_SAFE_ZONE = 140;  // 标题文字区域
     const RIGHT_SAFE_ZONE = 138; // 控制按钮区域
     
-    // 计算理想的偏移量：让鼠标在窗口的中间偏左位置（更自然）
-    let offsetX = targetWidth * 0.4;  // 默认鼠标在窗口宽度40%处
-    let offsetY = headerRect.height / 2;  // 默认鼠标在标题栏高度中间
+    // 基于鼠标在最大化标题栏中的相对位置计算offset
+    let offsetX = targetWidth * this.maximizeHeaderPercentX;
+    let offsetY = headerRect.height * this.maximizeHeaderPercentY;
+    
+    // Windows风格微调：轻微向中间吸附，避免贴边
+    offsetX = offsetX * 0.92;
       
-    // 应用安全区域限制
-    if (offsetX < LEFT_SAFE_ZONE) {
-      offsetX = LEFT_SAFE_ZONE;
-    }
-    if (offsetX > targetWidth - RIGHT_SAFE_ZONE) {
-      offsetX = targetWidth - RIGHT_SAFE_ZONE;
-    }
+    // 自动避开左侧标题区域
+    offsetX = Math.max(offsetX, LEFT_SAFE_ZONE);
+    
+    // 自动避开右侧按钮区域（关键！）
+    offsetX = Math.min(offsetX, targetWidth - RIGHT_SAFE_ZONE);
       
     // 计算窗口左上角位置
     let targetLeft = e.clientX - offsetX;
