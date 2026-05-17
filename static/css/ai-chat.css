@@ -44,11 +44,12 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* 拖拽时禁用过渡动画（包括所有子元素） */
+/* 拖拽时禁用过渡动画、动画和transform（包括所有子元素） */
 .ai-chat-container.dragging,
 .ai-chat-container.dragging * {
   transition: none !important;
   animation: none !important;
+  transform: none !important;
 }
 
 /* 调整大小时禁用过渡动画 */

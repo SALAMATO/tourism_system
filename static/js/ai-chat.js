@@ -412,8 +412,6 @@ class LowSkyAIChat {
       // 边界检查
       const viewportWidth = window.innerWidth;
       const viewportHeight = window.innerHeight;
-      const containerWidth = container.offsetWidth;
-      const containerHeight = container.offsetHeight;
       
       // 限制左边界
       if (newLeft < 0) newLeft = 0;
@@ -570,10 +568,6 @@ class LowSkyAIChat {
       targetTop = viewportHeight - minVisibleHeight;
     }
       
-    // 保存偏移量供后续拖拽使用
-    this.adjustedDragOffsetX = offsetX;
-    this.adjustedDragOffsetY = offsetY;
-      
     // 5. 设置窗口位置（使用left/top，但只在restore时设置一次）
     container.style.left = targetLeft + 'px';
     container.style.top = targetTop + 'px';
@@ -581,7 +575,12 @@ class LowSkyAIChat {
     container.style.bottom = 'auto';
     container.style.transform = 'none';
       
-    // 重要：更新 savedWindowState 为当前位置
+    // 重要：restore后重新计算真实拖拽offset（基于实际窗口位置）
+    // 这确保了鼠标坐标和窗口坐标系的一致性
+    this.adjustedDragOffsetX = e.clientX - targetLeft;
+    this.adjustedDragOffsetY = e.clientY - targetTop;
+      
+    // 更新 savedWindowState 为当前位置
     this.savedWindowState = {
       left: targetLeft + 'px',
       top: targetTop + 'px',
