@@ -519,17 +519,20 @@ class LowSkyAIChat {
       targetHeight = Math.min(viewportHeight * 0.8, 700);
     }
     
-    // 关键：先禁用所有过渡和动画
+    // Windows 11风格：简单的偏移量计算
+    // 关键：先恢复窗口尺寸，再计算偏移量
+    
+    // 1. 先禁用所有过渡和动画
     container.style.transition = 'none';
     container.style.animation = 'none';
     
-    // 移除maximized类
+    // 2. 移除maximized类并设置小窗口尺寸
     container.classList.remove('maximized');
     maximizeBtn.innerHTML = '<rect x="1" y="1" width="8" height="8" fill="none" stroke="currentColor" stroke-width="1"/>';
     
-    // 立即设置位置和尺寸（在移除类之后）
-    container.style.left = '0px';  // 临时位置
-    container.style.top = '0px';   // 临时位置
+    // 重要：先设置窗口位置为(0,0)，确保后续计算正确
+    container.style.left = '0px';
+    container.style.top = '0px';
     container.style.width = targetWidth + 'px';
     container.style.height = targetHeight + 'px';
     container.style.right = 'auto';
@@ -538,63 +541,83 @@ class LowSkyAIChat {
     container.style.maxHeight = 'none';
     container.style.transform = 'none';
     
-    // 强制重绘，确保样式立即生效
+    // 3. 强制重绘，确保样式立即生效
     container.offsetHeight;
     
-    // 现在获取恢复后标题栏的尺寸（此时窗口已经是小窗口了）
-    const headerRect = this.modal.querySelector('.ai-chat-header').getBoundingClientRect();
-    
-    // 计算安全区域的边界
-    const controlsWidth = 46 * 3; // 138px
-    const titleWidth = headerRect.width * 0.6;
-    
-    const safeMarginLeft = titleWidth * 0.55;
-    const safeMarginRight = controlsWidth + 30;
-    const safeMinOffsetX = safeMarginLeft;
-    const safeMaxOffsetX = headerRect.width - safeMarginRight;
-    
-    // 策略：根据鼠标位置动态选择偏移量
-    // 1. 先尝试让鼠标落在安全区域中心
-    const safeCenterX = (safeMinOffsetX + safeMaxOffsetX) / 2;
-    let targetLeft = e.clientX - safeCenterX;
-    
-    // 2. 垂直方向：使用百分比保持相对位置
-    const newHeaderOffsetY = headerRect.height * this.maximizeHeaderPercentY;
-    let targetTop = e.clientY - newHeaderOffsetY;
-    
-    // 3. 边界检查：如果窗口会跑出屏幕，调整偏移量
+    // 4. 现在获取恢复后窗口的实际位置（此时窗口在0,0的位置）
+    const rect = container.getBoundingClientRect();
+        
+    // 5. 计算偏移量：鼠标位置 - 窗口位置
+    // 这样鼠标在窗口内的相对位置就保持不变了
+    let offsetX = e.clientX - rect.left;
+    let offsetY = e.clientY - rect.top;
+        
+    console.log('[Restore Debug] Window rect:', rect.left, rect.top);
+    console.log('[Restore Debug] Mouse position:', e.clientX, e.clientY);
+    console.log('[Restore Debug] Raw offset:', offsetX, offsetY);
+        
+    // 6. 计算窗口位置
+    let targetLeft = e.clientX - offsetX;
+    let targetTop = e.clientY - offsetY;
+        
+    // 7. 边界检查：确保窗口不会完全跑出屏幕
     const minVisibleWidth = targetWidth * 0.5;
     const minVisibleHeight = targetHeight * 0.5;
-    
+        
     if (targetLeft < 0) {
-      // 窗口会跑出左边界，让窗口贴左边，鼠标落在安全区域左边界
       targetLeft = 0;
-      this.adjustedDragOffsetX = safeMinOffsetX;
-    } else if (targetLeft > viewportWidth - minVisibleWidth) {
-      // 窗口会跑出右边界，让窗口贴右边，鼠标落在安全区域右边界
-      targetLeft = viewportWidth - minVisibleWidth;
-      this.adjustedDragOffsetX = safeMaxOffsetX;
-    } else {
-      // 窗口在合理位置，鼠标落在安全区域中心
-      this.adjustedDragOffsetX = safeCenterX;
+      offsetX = e.clientX - targetLeft;
     }
-    
-    // 垂直方向边界检查
     if (targetTop < 0) {
       targetTop = 0;
-      this.adjustedDragOffsetY = e.clientY - targetTop;
-    } else if (targetTop > viewportHeight - minVisibleHeight) {
-      targetTop = viewportHeight - minVisibleHeight;
-      this.adjustedDragOffsetY = e.clientY - targetTop;
-    } else {
-      this.adjustedDragOffsetY = newHeaderOffsetY;
+      offsetY = e.clientY - targetTop;
     }
-    
-    console.log('[Restore Debug] Safe margins L/R:', safeMinOffsetX, safeMaxOffsetX);
-    console.log('[Restore Debug] Safe center:', safeCenterX);
-    console.log('[Restore Debug] Mouse position:', e.clientX, e.clientY);
-    console.log('[Restore Debug] Final position:', targetLeft, targetTop);
+    if (targetLeft > viewportWidth - minVisibleWidth) {
+      targetLeft = viewportWidth - minVisibleWidth;
+      offsetX = e.clientX - targetLeft;
+    }
+    if (targetTop > viewportHeight - minVisibleHeight) {
+      targetTop = viewportHeight - minVisibleHeight;
+      offsetY = e.clientY - targetTop;
+    }
+        
+    // 8. 应用安全区域限制（只调整水平方向，确保鼠标不在标题或按钮上）
+    const headerRect = this.modal.querySelector('.ai-chat-header').getBoundingClientRect();
+    const titleWidth = headerRect.width * 0.6;
+
+    const controlsWidth = 46 * 3; // 138px
+        
+    const safeMarginLeft = titleWidth * 0.55;
+    const safeMarginRight = controlsWidth * 1;
+    //
+    // 如果鼠标在标题文字区域，调整窗口位置使得鼠标移到安全区域左边界
+    if (offsetX < safeMarginLeft) {
+      const adjustDelta = safeMarginLeft - offsetX;
+      offsetX = safeMarginLeft;
+      targetLeft = targetLeft - adjustDelta;
+    }
+    // 如果鼠标在控制按钮区域，调整窗口位置使得鼠标移到安全区域右边界
+    if (offsetX > headerRect.width - safeMarginRight) {
+      const adjustDelta = offsetX - (headerRect.width - safeMarginRight);
+      offsetX = headerRect.width - safeMarginRight;
+      targetLeft = targetLeft + adjustDelta;
+    }
+        
+    // 9. 再次边界检查（因为安全区域调整可能导致窗口跑出屏幕）
+    if (targetLeft < 0) {
+      targetLeft = 0;
+      offsetX = e.clientX - targetLeft;
+    }
+    if (targetLeft > viewportWidth - minVisibleWidth) {
+      targetLeft = viewportWidth - minVisibleWidth;
+      offsetX = e.clientX - targetLeft;
+    }
+        
+    this.adjustedDragOffsetX = offsetX;
+    this.adjustedDragOffsetY = offsetY;
+        
     console.log('[Restore Debug] Final offset:', this.adjustedDragOffsetX, this.adjustedDragOffsetY);
+    console.log('[Restore Debug] Final position:', targetLeft, targetTop);
     
     // 设置最终的窗口位置
     container.style.left = targetLeft + 'px';
