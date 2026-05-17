@@ -199,16 +199,23 @@
   <main class="container">
     <!-- 模块选择器 -->
     <div class="features-grid" id="module-selector">
-      <div class="feature-card" onclick="AdminApp.loadModule('policy')">
-        <span class="feature-icon">📚</span>
-        <h3>政策法规管理</h3>
-        <p>添加、编辑、删除政策法规</p>
-      </div>
+        
+     <div class="feature-card" onclick="AdminApp.loadModule('destination')">
+        <span class="feature-icon">🗺️</span>
+        <h3>旅游目的地管理</h3>
+        <p>维护低空旅游目的地与首页推荐内容</p>
+     </div>
 
       <div class="feature-card" onclick="AdminApp.loadModule('news')">
         <span class="feature-icon">📰</span>
         <h3>新闻资讯管理</h3>
         <p>发布和管理新闻资讯</p>
+      </div>
+        
+      <div class="feature-card" onclick="AdminApp.loadModule('policy')">
+        <span class="feature-icon">📚</span>
+        <h3>政策法规管理</h3>
+        <p>添加、编辑、删除政策法规</p>
       </div>
 
       <div class="feature-card" onclick="AdminApp.loadModule('safety')">
@@ -221,12 +228,6 @@
         <span class="feature-icon">📊</span>
         <h3>统计数据管理</h3>
         <p>录入和更新统计数据</p>
-      </div>
-
-      <div class="feature-card" onclick="AdminApp.loadModule('destination')">
-        <span class="feature-icon">🗺️</span>
-        <h3>旅游目的地管理</h3>
-        <p>维护低空旅游目的地与首页推荐内容</p>
       </div>
 
       <div class="feature-card" onclick="AdminApp.loadModule('message')">
