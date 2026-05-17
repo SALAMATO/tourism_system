@@ -1,5 +1,46 @@
 // 工具函数模块
 
+// 导航栏菜单配置（按照管理员后台管理顺序）
+const NAV_MENU_ITEMS = [
+  { name: '旅游目的地', url: '/destinations/', urlName: 'destinations' },
+  { name: '新闻资讯', url: '/news/', urlName: 'news' },
+  { name: '政策法规', url: '/policies/', urlName: 'policies' },
+  { name: '安全预警', url: '/safety/', urlName: 'safety' },
+  { name: '发展现状', url: '/statistics/', urlName: 'statistics' },
+  { name: '互动交流', url: '/community/', urlName: 'community' }
+];
+
+// 初始化导航栏菜单（动态生成）
+function initNavbarMenu() {
+  const navbarMenu = document.querySelector('.navbar-menu');
+  const mobileMenu = document.querySelector('.mobile-menu');
+  const footerLinks = document.querySelector('.footer-links');
+  
+  // 生成桌面端菜单HTML
+  if (navbarMenu) {
+    const desktopHtml = NAV_MENU_ITEMS.map(item => 
+      `<li><a href="${item.url}">${item.name}</a></li>`
+    ).join('');
+    navbarMenu.innerHTML = desktopHtml;
+  }
+  
+  // 生成移动端菜单HTML
+  if (mobileMenu) {
+    const mobileHtml = NAV_MENU_ITEMS.map(item => 
+      `<a href="${item.url}" class="mobile-menu-item">${item.name}</a>`
+    ).join('');
+    mobileMenu.innerHTML = mobileHtml;
+  }
+  
+  // 生成底部链接HTML
+  if (footerLinks) {
+    const footerHtml = NAV_MENU_ITEMS.map(item => 
+      `<a href="${item.url}">${item.name}</a>`
+    ).join('');
+    footerLinks.innerHTML = footerHtml;
+  }
+}
+
 // 日期格式化
 function formatDate(timestamp) {
   if (!timestamp) return '';
@@ -468,6 +509,9 @@ function showConfirm(options = {}) {
 
 // 初始化移动端汉堡菜单（Apple风格）
 document.addEventListener('DOMContentLoaded', function() {
+  // 初始化导航栏菜单
+  initNavbarMenu();
+  
   const navbarToggle = document.getElementById('navbar-toggle');
   const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
   const mobileMenuOverlay = document.getElementById('mobile-menu-overlay');

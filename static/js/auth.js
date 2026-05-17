@@ -241,15 +241,10 @@ updateMobileMenu() {
     mobileMenuOverlay.insertBefore(mobileMenuToggle, mobileMenuOverlay.firstChild);
   }
 
-  // 保留原有的导航链接 - 添加旅游目的地作为第一个选项
-  const navLinks = `
-    <a href="/destinations/" class="mobile-menu-item">旅游目的地</a>
-    <a href="/news/" class="mobile-menu-item">新闻资讯</a>
-    <a href="/policies/" class="mobile-menu-item">政策法规</a>
-    <a href="/safety/" class="mobile-menu-item">安全预警</a>
-    <a href="/statistics/" class="mobile-menu-item">发展现状</a>
-    <a href="/community/" class="mobile-menu-item">互动交流</a>
-  `;
+  // 保留原有的导航链接 - 使用 NAV_MENU_ITEMS 动态生成
+  const navLinks = typeof NAV_MENU_ITEMS !== 'undefined' 
+    ? NAV_MENU_ITEMS.map(item => `<a href="${item.url}" class="mobile-menu-item">${item.name}</a>`).join('\n')
+    : '';
 
   if (this.isAuthenticated() && this.user) {
     const adminLink = this.user.is_staff ? `
