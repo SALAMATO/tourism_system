@@ -547,20 +547,39 @@ class LowSkyAIChat {
     // 4. 现在获取恢复后窗口的实际位置（此时窗口在0,0的位置）
     const rect = container.getBoundingClientRect();
         
-    // 5. 计算偏移量：鼠标位置 - 窗口位置
-    // 这样鼠标在窗口内的相对位置就保持不变了
+    // 5. 计算原始偏移量：鼠标位置 - 窗口位置
     let offsetX = e.clientX - rect.left;
     let offsetY = e.clientY - rect.top;
-        
+    
     console.log('[Restore Debug] Window rect:', rect.left, rect.top);
     console.log('[Restore Debug] Mouse position:', e.clientX, e.clientY);
     console.log('[Restore Debug] Raw offset:', offsetX, offsetY);
+    
+    // 6. 应用安全区域限制（在计算窗口位置之前先调整偏移量）
+    const headerRect = this.modal.querySelector('.ai-chat-header').getBoundingClientRect();
+    const titleWidth = headerRect.width * 0.6;
+    const controlsWidth = 46 * 3; // 138px
+    const rightPadding = 30; // 控制按钮右边的空隙
+    
+    const safeMarginLeft = titleWidth * 0.55;
+    const safeMaxOffsetX = headerRect.width - controlsWidth - rightPadding;
+    
+    // 如果鼠标在标题文字区域，调整到安全区域左边界
+    if (offsetX < safeMarginLeft) {
+      offsetX = safeMarginLeft;
+    }
+    // 如果鼠标在控制按钮区域或右侧，调整到安全区域右边界（按钮左边缘）
+    if (offsetX > safeMaxOffsetX) {
+      offsetX = safeMaxOffsetX;
+    }
+    
+    console.log('[Restore Debug] Adjusted offset:', offsetX, offsetY);
         
-    // 6. 计算窗口位置
+    // 7. 计算窗口位置
     let targetLeft = e.clientX - offsetX;
     let targetTop = e.clientY - offsetY;
         
-    // 7. 边界检查：确保窗口不会完全跑出屏幕
+    // 8. 边界检查：确保窗口不会完全跑出屏幕
     const minVisibleWidth = targetWidth * 0.5;
     const minVisibleHeight = targetHeight * 0.5;
         
@@ -579,40 +598,6 @@ class LowSkyAIChat {
     if (targetTop > viewportHeight - minVisibleHeight) {
       targetTop = viewportHeight - minVisibleHeight;
       offsetY = e.clientY - targetTop;
-    }
-        
-    // 8. 应用安全区域限制（只调整水平方向，确保鼠标不在标题或按钮上）
-    const headerRect = this.modal.querySelector('.ai-chat-header').getBoundingClientRect();
-    const titleWidth = headerRect.width * 0.6;
-    
-    const controlsWidth = 46 * 3; // 138px
-    const rightPadding = 30; // 控制按钮右边的空隙
-    
-    const safeMarginLeft = titleWidth * 0.55;
-    // 安全区域右边界 = 窗口宽度 - 控制按钮宽度 - 右边距（按钮区域不可拖拽）
-    const safeMaxOffsetX = headerRect.width - controlsWidth - rightPadding;
-    //
-    // 如果鼠标在标题文字区域，调整窗口位置使得鼠标移到安全区域左边界
-    if (offsetX < safeMarginLeft) {
-      const adjustDelta = safeMarginLeft - offsetX;
-      offsetX = safeMarginLeft;
-      targetLeft = targetLeft - adjustDelta;
-    }
-    // 如果鼠标在控制按钮区域或右侧，调整窗口位置使得鼠标移到安全区域右边界（按钮左边缘）
-    if (offsetX > safeMaxOffsetX) {
-      const adjustDelta = offsetX - safeMaxOffsetX;
-      offsetX = safeMaxOffsetX;
-      targetLeft = targetLeft + adjustDelta;
-    }
-        
-    // 9. 再次边界检查（因为安全区域调整可能导致窗口跑出屏幕）
-    if (targetLeft < 0) {
-      targetLeft = 0;
-      offsetX = e.clientX - targetLeft;
-    }
-    if (targetLeft > viewportWidth - minVisibleWidth) {
-      targetLeft = viewportWidth - minVisibleWidth;
-      offsetX = e.clientX - targetLeft;
     }
         
     this.adjustedDragOffsetX = offsetX;
