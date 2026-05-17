@@ -575,10 +575,14 @@ class LowSkyAIChat {
     container.style.bottom = 'auto';
     container.style.transform = 'none';
       
-    // 重要：restore后重新计算真实拖拽offset（基于实际窗口位置）
-    // 这确保了鼠标坐标和窗口坐标系的一致性
-    this.adjustedDragOffsetX = e.clientX - targetLeft;
-    this.adjustedDragOffsetY = e.clientY - targetTop;
+    // 关键修复：强制浏览器重排后立即读取实际位置
+    // 因为CSS样式可能导致实际渲染位置与设置值不同
+    void container.offsetHeight; // 触发reflow
+    const actualRect = container.getBoundingClientRect();
+    
+    // 重要：基于实际渲染位置计算拖拽offset（而非理论值）
+    this.adjustedDragOffsetX = e.clientX - actualRect.left;
+    this.adjustedDragOffsetY = e.clientY - actualRect.top;
       
     // 更新 savedWindowState 为当前位置
     this.savedWindowState = {
