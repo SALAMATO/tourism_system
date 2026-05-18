@@ -355,6 +355,11 @@
   bottom: 0 !important;
 }
 
+/* AI窗口最大化时，隐藏网页滚动条 */
+body.ai-chat-maximized {
+  overflow: hidden !important;
+}
+
 .ai-chat-container.maximized .ai-chat-messages,
 .ai-chat-container.maximized .ai-chat-input-area {
   width: 100%;

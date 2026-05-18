@@ -1086,17 +1086,20 @@ class LowSkyAIChat {
   toggleMaximize() {
     const container = this.modal.querySelector('.ai-chat-container');
     const maximizeBtn = this.modal.querySelector('.ai-chat-maximize svg');
-      
+        
     if (container.classList.contains('maximized')) {
       // 还原 - 层叠方框
       this.isMaximized = false;
         
+      // 移除body的class，恢复网页滚动条
+      document.body.classList.remove('ai-chat-maximized');
+          
       // 获取当前最大化状态下的位置和尺寸（作为动画起点）
       const currentRect = container.getBoundingClientRect();
-        
+          
       // 先临时禁用transition，避免移除类时触发意外动画
       container.style.transition = 'none';
-        
+          
       // 先设置当前位置为起点（保持在全屏位置）
       container.style.left = currentRect.left + 'px';
       container.style.top = currentRect.top + 'px';
@@ -1104,14 +1107,14 @@ class LowSkyAIChat {
       container.style.height = currentRect.height + 'px';
       container.style.maxWidth = 'none';
       container.style.maxHeight = 'none';
-        
+          
       // 移除maximized类（此时transition已禁用，不会跳变）
       container.classList.remove('maximized');
       maximizeBtn.innerHTML = '<rect x="1" y="1" width="8" height="8" fill="none" stroke="currentColor" stroke-width="1"/>';
-        
+                
       // 计算目标位置
       let targetLeft, targetTop, targetWidth, targetHeight;
-        
+          
       // 如果保存了位置信息（非空字符串），则使用保存的位置
       if (this.savedWindowState && this.savedWindowState.left) {
         // 有保存的位置，直接使用
@@ -1123,7 +1126,7 @@ class LowSkyAIChat {
         // 没有保存的位置（首次打开或未拖拽过），计算居中位置
         const viewportWidth = window.innerWidth;
         const viewportHeight = window.innerHeight;
-          
+            
         // 如果有保存的尺寸，使用保存的尺寸；否则使用默认尺寸
         if (this.savedWindowState && this.savedWindowState.width) {
           targetWidth = this.savedWindowState.width;
@@ -1132,27 +1135,27 @@ class LowSkyAIChat {
           targetWidth = '';
           targetHeight = '';
         }
-          
+            
         // 计算居中位置（基于目标尺寸或默认尺寸）
         const finalWidth = targetWidth ? parseFloat(targetWidth) : Math.min(viewportWidth * 0.5, viewportWidth * 0.4);
         const finalHeight = targetHeight ? parseFloat(targetHeight) : Math.min(viewportHeight * 0.8, 700);
-          
+            
         targetLeft = (viewportWidth - finalWidth) / 2 + 'px';
         targetTop = (viewportHeight - finalHeight) / 2 + 'px';
       }
-        
+          
       // 立即设置目标位置（同步，不使用requestAnimationFrame）
       container.style.left = targetLeft;
       container.style.top = targetTop;
       if (targetWidth) container.style.width = targetWidth;
       if (targetHeight) container.style.height = targetHeight;
-        
+          
       // 恢复transition（用于后续的动画）
       container.style.transition = '';
     } else {
       // 最大化前保存当前状态
       const currentRect = container.getBoundingClientRect();
-        
+          
       // 保存当前的实际状态（使用实际渲染的尺寸，而不是inline style）
       this.savedWindowState = {
         left: container.style.left || '',
@@ -1160,23 +1163,27 @@ class LowSkyAIChat {
         width: container.style.width || (currentRect.width + 'px'),
         height: container.style.height || (currentRect.height + 'px')
       };
-        
+          
       // 临时禁用transition
       container.style.transition = 'none';
-        
+          
       // 确保当前位置被设置
       container.style.left = currentRect.left + 'px';
       container.style.top = currentRect.top + 'px';
       container.style.width = currentRect.width + 'px';
       container.style.height = currentRect.height + 'px';
-        
+          
       // 延迟一帧后最大化，触发动画
       requestAnimationFrame(() => {
         // 恢复transition
         container.style.transition = '';
-          
+            
         // 添加maximized类（CSS会处理所有位置和尺寸）
         container.classList.add('maximized');
+          
+        // 添加body的class，隐藏网页滚动条
+        document.body.classList.add('ai-chat-maximized');
+          
         maximizeBtn.innerHTML = '<rect x="3" y="1" width="6" height="6" fill="none" stroke="currentColor" stroke-width="1"/><rect x="1" y="3" width="6" height="6" fill="none" stroke="currentColor" stroke-width="1"/>';
         this.isMaximized = true;
       });
