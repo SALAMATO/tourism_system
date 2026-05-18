@@ -1318,7 +1318,7 @@ body.ai-chat-maximized {
     height: 16px;
   }
   
-  /* 移动端对话历史页面 - 底层 */
+  /* 移动端对话历史页面 - 底层（保持静止） */
   .ai-mobile-history-page {
     position: fixed;
     top: 0;
@@ -1326,20 +1326,17 @@ body.ai-chat-maximized {
     right: 0;
     bottom: 0;
     background: #f8f9fa;
-    z-index: 10001; /* 底层 */
+    z-index: 10000; /* 底层 */
     display: flex;
     flex-direction: column;
     pointer-events: auto;
-    transform: translateX(0); /* 初始在正常位置 */
-    transition: transform 0.35s cubic-bezier(0.25, 0.1, 0.25, 1);
+    transform: translateX(0) scale(1); /* 始终保持不变 */
+    border-radius: 0;
   }
   
-  /* 历史页面滑出状态 */
-  .ai-mobile-history-page.slide-out {
-    transform: translateX(-100%); /* 向左滑出 */
-  }
+  /* 历史页面不再需要slide-out状态，保持静止 */
   
-  /* 历史页面上的遮罩层 - iOS风格的暗色背景 */
+  /* 历史页面上的遮罩层 - 不需要暗色效果 */
   .ai-mobile-history-page::before {
     content: '';
     position: absolute;
@@ -1348,13 +1345,8 @@ body.ai-chat-maximized {
     right: 0;
     bottom: 0;
     background: rgba(0, 0, 0, 0);
-    transition: background 0.35s cubic-bezier(0.25, 0.1, 0.25, 1);
     pointer-events: none;
     z-index: -1;
-  }
-  
-  .ai-mobile-history-page.darken::before {
-    background: rgba(0, 0, 0, 0.3); /* 添加暗色背景 */
   }
   
   .ai-mobile-history-header {
@@ -1411,20 +1403,23 @@ body.ai-chat-maximized {
     padding-top: 70px; /* 为左上角新对话胶囊按钮留出空间 */
   }
   
-  /* 移动端聊天窗口动画 - iOS风格侧边栏覆盖 */
+  /* 移动端聊天窗口动画 - iOS风格卡片覆盖 */
   .ai-chat-container {
-    transition: transform 0.35s cubic-bezier(0.25, 0.1, 0.25, 1), 
-                border-radius 0.35s cubic-bezier(0.25, 0.1, 0.25, 1),
-                box-shadow 0.35s cubic-bezier(0.25, 0.1, 0.25, 1) !important;
+    transition: 
+      transform 0.65s cubic-bezier(0.32, 0.72, 0, 1), 
+      border-radius 0.55s cubic-bezier(0.32, 0.72, 0, 1),
+      box-shadow 0.65s cubic-bezier(0.32, 0.72, 0, 1) !important;
     border-radius: 0;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
     transform: translateX(0); /* 默认位置 */
+    z-index: 10001; /* 高层 */
+    will-change: transform, border-radius, box-shadow;
   }
   
   .ai-chat-container.history-visible {
     transform: translateX(75%) !important; /* 向右移动75%，露出左侧25% */
-    border-radius: 0 20px 20px 0 !important; /* 右侧圆角 */
-    box-shadow: -5px 0 30px rgba(0, 0, 0, 0.15) !important; /* 左侧阴影 */
+    border-radius: 20px !important; /* 圆角 */
+    box-shadow: -10px 0 40px rgba(0, 0, 0, 0.2) !important; /* 左侧阴影 */
   }
   
   /* 移动端：隐藏整个标题栏 - 彻底移除大白条 */

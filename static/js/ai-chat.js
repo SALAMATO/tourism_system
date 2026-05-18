@@ -2523,7 +2523,7 @@ class LowSkyAIChat {
   }
   
   /**
-   * 移动端切换侧栏显示状态 - 使用全屏页面切换（聊天页面覆盖历史页面）
+   * 移动端切换侧栏显示状态 - 使用iOS风格卡片动画（聊天页面覆盖历史页面）
    * Level 0: 历史页面（最底层）
    * Level 1: 聊天页面（最上层）
    */
@@ -2637,8 +2637,9 @@ class LowSkyAIChat {
         console.error('❌ 未找到新对话按钮');
       }
       
-      // 触发动画：聊天窗口向右移动，露出历史页面
+      // iOS风格卡片动画：底层历史页面保持静止，仅上层聊天窗口向右移动
       requestAnimationFrame(() => {
+        // 聊天窗口向右移动，形成覆盖效果（底层历史页面保持不变）
         chatContainer.classList.add('history-visible');
         this.currentLevel = 1; // 进入聊天页面层级
       });
@@ -2662,11 +2663,14 @@ class LowSkyAIChat {
     }
   }
   closeMobileHistoryPage(chatContainer, mobileHistoryPage) {
+    // iOS风格反向动画：仅聊天窗口滑回，底层历史页面保持静止
     chatContainer.classList.remove('history-visible');
+    
+    // 等待动画完成后移除元素
     setTimeout(() => {
       mobileHistoryPage.remove();
       document.body.style.overflow = '';
-    }, 350);
+    }, 650); // 与CSS transition时间一致
   }
 }
 
