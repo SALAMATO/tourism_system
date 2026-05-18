@@ -2234,13 +2234,27 @@ class LowSkyAIChat {
   /**
    * 切换会话下拉菜单
    */
-  toggleConversationDropdown(conversationId) {
-    const menu = document.getElementById(`conversation-menu-${conversationId}`);
+  toggleConversationDropdown(conversationId, isMobile = false) {
+    let menu;
+    
+    // 根据是否是移动端历史页面来选择ID格式
+    if (isMobile) {
+      menu = document.getElementById(`mobile-dropdown-${conversationId}`);
+    } else {
+      // 桌面端侧边栏
+      menu = document.getElementById(`conversation-menu-${conversationId}`);
+      
+      // 如果没找到，尝试 dropdown ID（兼容旧代码）
+      if (!menu) {
+        menu = document.getElementById(`dropdown-${conversationId}`);
+      }
+    }
+    
     if (!menu) return;
       
     // 关闭其他所有下拉菜单
     document.querySelectorAll('.dropdown-content').forEach(m => {
-      if (m.id !== `conversation-menu-${conversationId}`) {
+      if (m !== menu) {
         m.classList.remove('show');
       }
     });
@@ -2563,21 +2577,21 @@ class LowSkyAIChat {
                 </div>
                 <div class="ai-conversation-actions">
                   <!-- 下拉菜单：编辑名称、删除对话 -->
-                  <button class="dropdown-toggle" onclick="event.stopPropagation(); window.lowSkyAI.toggleConversationDropdown('${conv.id}')">
+                  <button class="dropdown-toggle" onclick="event.stopPropagation(); window.lowSkyAI.toggleConversationDropdown('${conv.id}', true)">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <circle cx="12" cy="12" r="1"/>
                       <circle cx="19" cy="12" r="1"/>
                       <circle cx="5" cy="12" r="1"/>
                     </svg>
                   </button>
-                  <div class="dropdown-content" id="dropdown-${conv.id}">
+                  <div class="dropdown-content" id="mobile-dropdown-${conv.id}">
                     <button class="dropdown-item" onclick="event.stopPropagation(); window.lowSkyAI.editConversationName('${conv.id}')">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
                       </svg>
                       编辑名称
                     </button>
-                    <button class="dropdown-item delete" onclick="event.stopPropagation(); window.lowSkyAI.deleteConversation('${conv.id}')">
+                    <button class="dropdown-item danger" onclick="event.stopPropagation(); window.lowSkyAI.deleteConversation('${conv.id}')">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <polyline points="3 6 5 6 21 6"/>
                         <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
@@ -2614,7 +2628,9 @@ class LowSkyAIChat {
       mobileHistoryPage.addEventListener('click', (e) => {
         // 如果点击的是按钮或其子元素，不关闭
         if (e.target.closest('.ai-mobile-history-new-btn') || 
-            e.target.closest('.ai-conversation-item')) {
+            e.target.closest('.ai-conversation-item') ||
+            e.target.closest('.dropdown-toggle') ||
+            e.target.closest('.dropdown-content')) {
           return;
         }
         
@@ -2634,20 +2650,14 @@ class LowSkyAIChat {
       // 绑定新对话按钮事件（在父容器事件之后绑定）
       const newConversationBtn = mobileHistoryPage.querySelector('.ai-mobile-history-new-btn');
       if (newConversationBtn) {
-        console.log('✅ 找到新对话按钮，绑定点击事件');
         newConversationBtn.addEventListener('click', (e) => {
-          console.log('🔘 新对话按钮被点击');
           e.stopPropagation();
           e.preventDefault();
           // 创建新对话并关闭历史页面
-          console.log('🚀 调用 startNewEmptyConversation');
           this.startNewEmptyConversation();
-          console.log('✅ startNewEmptyConversation 调用完成');
           this.closeMobileHistoryPage(chatContainer, mobileHistoryPage);
           this.currentLevel = 0; // 返回历史页面
         });
-      } else {
-        console.error('❌ 未找到新对话按钮');
       }
       
       // iOS风格卡片动画：底层历史页面保持静止，仅上层聊天窗口向右移动

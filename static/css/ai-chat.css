@@ -1408,6 +1408,12 @@ body.ai-chat-maximized {
     max-width: calc(85% - 24px); /* 限制最大宽度为85%减去左右padding */
   }
   
+  /* 移动端历史页面下拉菜单层级提升 - 确保不被聊天窗口覆盖 */
+  .ai-mobile-history-page .dropdown-content,
+  .ai-mobile-history-page [id^="mobile-dropdown-"] {
+    z-index: 10004 !important; /* 高于聊天容器的10001 */
+  }
+  
   /* 移动端聊天窗口动画 - iOS风格卡片覆盖 */
   .ai-chat-container {
     transition: 
