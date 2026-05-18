@@ -1480,7 +1480,7 @@ class MessageCommentViewSet(PublicModelViewSet):
 class LowSkyAIViewSet(viewsets.ViewSet):
     """LowSkyAI智能助手API"""
     authentication_classes = [TokenAuthentication]
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
     
     @action(detail=False, methods=['post'])
     def chat(self, request):
@@ -1527,7 +1527,6 @@ class LowSkyAIViewSet(viewsets.ViewSet):
         print(f"用户: {request.user.username if request.user.is_authenticated else '未登录'}")
         print(f"用户ID: {request.user.id if request.user.is_authenticated else 'N/A'}")
         print(f"会话ID: {conversation_id}")
-        print(f"会话ID是否是临时的: {conversation_id.startswith('temp_') if conversation_id else 'N/A'}")
         print(f"消息内容: {message[:50]}...")
         print(f"请求Headers中的Authorization: {request.headers.get('Authorization', '未设置')[:30] if request.headers.get('Authorization') else '未设置'}")
         print(f"==================\n")
@@ -1560,79 +1559,8 @@ class LowSkyAIViewSet(viewsets.ViewSet):
                         
                     # 保存AI回复
                     if request.user.is_authenticated and conversation_id:
-                        # 检查是否是临时ID
-                        if conversation_id.startswith('temp_'):
-                            print(f"⚠️ 会话ID是临时ID: {conversation_id}，跳过保存AI回复")
-                        else:
-                            try:
-                                from .models import AIConversation, AIConversationMessage
-                                print(f"尝试保存AI回复到会话 {conversation_id}, 内容长度: {len(full_response)}")
-                                
-                                # 验证会话是否存在且属于当前用户
-                                try:
-                                    conversation = AIConversation.objects.get(
-                                        id=conversation_id,
-                                        user=request.user
-                                    )
-                                    print(f"✅ 找到会话: {conversation.title}")
-                                except AIConversation.DoesNotExist:
-                                    print(f"❌ 会话不存在或不属于当前用户: {conversation_id}")
-                                    print(f"   当前用户: {request.user.username}")
-                                    # 尝试查找会话（不考虑用户归属，用于调试）
-                                    try:
-                                        debug_conv = AIConversation.objects.get(id=conversation_id)
-                                        print(f"   会话存在但属于其他用户: {debug_conv.user.username}")
-                                    except AIConversation.DoesNotExist:
-                                        print(f"   会话在数据库中完全不存在")
-                                    raise
-                                
-                                # 创建AI回复消息
-                                ai_message = AIConversationMessage.objects.create(
-                                    conversation=conversation,
-                                    role='assistant',
-                                    content=full_response
-                                )
-                                print(f"✅ AI回复消息创建成功，ID: {ai_message.id}")
-                                
-                                # 更新会话的更新时间
-                                conversation.save()
-                                print(f"✅ 已保存AI回复到会话 {conversation_id}")
-                                
-                            except Exception as e:
-                                print(f"❌ 保存AI回复失败: {e}")
-                                import traceback
-                                traceback.print_exc()
-                    else:
-                        if not request.user.is_authenticated:
-                            print("⚠️ 用户未认证，跳过保存AI回复")
-                        if not conversation_id:
-                            print("⚠️ 没有会话ID，跳过保存AI回复")
-                    return
-                    
-                # ── 联网搜索模式：在消息前加强制指令（使用系统级标记，不会被显示） ─
-                forced_message = message
-                if tool_mode == 'web_only':
-                    # 使用特殊的系统标记，AI会识别但不会在回复中重复
-                    forced_message = f'<SYSTEM_INSTRUCTION:FORCE_WEB_SEARCH>{message}'
-                    
-                # 收集AI的完整回复（用于保存到数据库）
-                full_response_parts = []
-                    
-                # ✅ 传递request对象和conversation_id以支持位置获取和会话保存
-                for chunk in lowsky_ai.chat_stream(forced_message, context, request=request, conversation_id=conversation_id):
-                    full_response_parts.append(chunk)
-                    yield f"data: {json.dumps({'content': chunk})}\n\n"
-                yield f"data: {json.dumps({'done': True})}\n\n"
-                    
-                # 保存AI回复到数据库
-                if request.user.is_authenticated and conversation_id:
-                    # 检查是否是临时ID
-                    if conversation_id.startswith('temp_'):
-                        print(f"⚠️ 会话ID是临时ID: {conversation_id}，跳过保存AI回复")
-                    else:
                         try:
                             from .models import AIConversation, AIConversationMessage
-                            full_response = ''.join(full_response_parts)
                             print(f"尝试保存AI回复到会话 {conversation_id}, 内容长度: {len(full_response)}")
                             
                             # 验证会话是否存在且属于当前用户
@@ -1669,6 +1597,69 @@ class LowSkyAIViewSet(viewsets.ViewSet):
                             print(f"❌ 保存AI回复失败: {e}")
                             import traceback
                             traceback.print_exc()
+                    else:
+                        if not request.user.is_authenticated:
+                            print("⚠️ 用户未认证，跳过保存AI回复")
+                        if not conversation_id:
+                            print("⚠️ 没有会话ID，跳过保存AI回复")
+                    return
+                    
+                # ── 联网搜索模式：在消息前加强制指令（使用系统级标记，不会被显示） ─
+                forced_message = message
+                if tool_mode == 'web_only':
+                    # 使用特殊的系统标记，AI会识别但不会在回复中重复
+                    forced_message = f'<SYSTEM_INSTRUCTION:FORCE_WEB_SEARCH>{message}'
+                    
+                # 收集AI的完整回复（用于保存到数据库）
+                full_response_parts = []
+                    
+                # ✅ 传递request对象和conversation_id以支持位置获取和会话保存
+                for chunk in lowsky_ai.chat_stream(forced_message, context, request=request, conversation_id=conversation_id):
+                    full_response_parts.append(chunk)
+                    yield f"data: {json.dumps({'content': chunk})}\n\n"
+                yield f"data: {json.dumps({'done': True})}\n\n"
+                    
+                # 保存AI回复到数据库
+                if request.user.is_authenticated and conversation_id:
+                    try:
+                        from .models import AIConversation, AIConversationMessage
+                        full_response = ''.join(full_response_parts)
+                        print(f"尝试保存AI回复到会话 {conversation_id}, 内容长度: {len(full_response)}")
+                        
+                        # 验证会话是否存在且属于当前用户
+                        try:
+                            conversation = AIConversation.objects.get(
+                                id=conversation_id,
+                                user=request.user
+                            )
+                            print(f"✅ 找到会话: {conversation.title}")
+                        except AIConversation.DoesNotExist:
+                            print(f"❌ 会话不存在或不属于当前用户: {conversation_id}")
+                            print(f"   当前用户: {request.user.username}")
+                            # 尝试查找会话（不考虑用户归属，用于调试）
+                            try:
+                                debug_conv = AIConversation.objects.get(id=conversation_id)
+                                print(f"   会话存在但属于其他用户: {debug_conv.user.username}")
+                            except AIConversation.DoesNotExist:
+                                print(f"   会话在数据库中完全不存在")
+                            raise
+                        
+                        # 创建AI回复消息
+                        ai_message = AIConversationMessage.objects.create(
+                            conversation=conversation,
+                            role='assistant',
+                            content=full_response
+                        )
+                        print(f"✅ AI回复消息创建成功，ID: {ai_message.id}")
+                        
+                        # 更新会话的更新时间
+                        conversation.save()
+                        print(f"✅ 已保存AI回复到会话 {conversation_id}")
+                        
+                    except Exception as e:
+                        print(f"❌ 保存AI回复失败: {e}")
+                        import traceback
+                        traceback.print_exc()
                 else:
                     if not request.user.is_authenticated:
                         print("⚠️ 用户未认证，跳过保存AI回复")

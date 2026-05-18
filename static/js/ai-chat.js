@@ -62,9 +62,6 @@ class LowSkyAIChat {
     this.resizeStartLeft = 0;
     this.resizeStartTop = 0;
     
-    // 待保存的消息（用于会话ID更新后重试）
-    this.pendingUserMessage = null;
-    
     this.init();
   }
   
@@ -786,6 +783,20 @@ class LowSkyAIChat {
   }
   
   openChat() {
+    // 检查用户是否已登录
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
+      alert('请先登录后再使用AI助手功能');
+      // 触发登录弹窗
+      if (window.authModal) {
+        window.authModal.open();
+      } else {
+        // 如果没有authModal，重定向到登录页面
+        window.location.href = '/auth/';
+      }
+      return;
+    }
+    
     const container = this.modal.querySelector('.ai-chat-container');
       
     // 检查是否是页面加载后第一次打开
@@ -803,11 +814,9 @@ class LowSkyAIChat {
       // 标记已经打开过一次
       this.hasOpenedBefore = true;
         
-      // 如果是关闭浏览器后重新打开（currentConversationId为null），不自动创建对话
-      // 等待用户发送第一条消息时再创建，避免无效会话占用数据库
+      // 如果没有当前会话，等待用户发送第一条消息时再创建
       if (!this.currentConversationId) {
         console.log('🆕 首次打开，currentConversationId为null，等待用户发送消息');
-        // 不调用 createNewConversation()，保持 currentConversationId 为 null
       } else {
         console.log('🔄 恢复之前的会话ID:', this.currentConversationId);
       }
@@ -1097,38 +1106,25 @@ class LowSkyAIChat {
     console.log('📤 当前会话ID:', this.currentConversationId);
     console.log('📤 消息内容:', message.substring(0, 50));
     
-    // 如果没有当前会话，或当前是临时ID，创建新会话
-    if (!this.currentConversationId || this.currentConversationId.startsWith('temp_')) {
-      console.log('🆕 需要创建新会话（当前ID:', this.currentConversationId || 'null', ')');
-      await this.createNewConversation(message);
-      console.log('✅ createNewConversation 完成，当前会话ID:', this.currentConversationId);
+    // 检查用户是否已登录
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
+      alert('请先登录后再使用AI助手功能');
+      // 触发登录弹窗
+      if (window.authModal) {
+        window.authModal.open();
+      } else {
+        // 如果没有authModal，重定向到登录页面
+        window.location.href = '/auth/';
+      }
+      return;
     }
     
-    // 如果当前会话ID是临时的，等待它更新为真实ID（最多等待5秒）
-    if (this.currentConversationId && this.currentConversationId.startsWith('temp_')) {
-      console.log('⏳ 等待会话ID更新...');
-      let waitTime = 0;
-      const maxWaitTime = 5000;
-      const checkInterval = 100;
-      
-      while (this.currentConversationId.startsWith('temp_') && waitTime < maxWaitTime) {
-        await new Promise(resolve => setTimeout(resolve, checkInterval));
-        waitTime += checkInterval;
-        
-        // 每1秒输出一次日志
-        if (waitTime % 1000 === 0) {
-          console.log(`⏳ 已等待 ${waitTime}ms...`);
-        }
-      }
-      
-      if (this.currentConversationId.startsWith('temp_')) {
-        console.error('❌ 等待会话ID更新超时');
-        console.error('❌ 最终会话ID:', this.currentConversationId);
-        // 即使超时，也继续执行，但标记需要重试
-        this.pendingUserMessage = message;
-      } else {
-        console.log('✅ 会话ID已更新:', this.currentConversationId);
-      }
+    // 如果没有当前会话，创建新会话
+    if (!this.currentConversationId) {
+      console.log('🆕 需要创建新会话');
+      await this.createNewConversation(message);
+      console.log('✅ createNewConversation 完成，当前会话ID:', this.currentConversationId);
     }
     
     // 保存用户消息到服务器（后台执行）
@@ -1268,26 +1264,9 @@ class LowSkyAIChat {
         
         // 调试：检查会话ID
         console.log('AI回复完成，当前会话ID:', this.currentConversationId);
-        console.log('会话ID是否是临时的:', this.currentConversationId.startsWith('temp_'));
         
-        // 如果会话ID仍然是临时的，说明有问题
-        if (this.currentConversationId.startsWith('temp_')) {
-          console.warn('⚠️ 警告：AI回复完成时会话ID仍是临时ID！');
-          console.warn('这可能导致AI回复没有被保存到数据库');
-          // 尝试重新保存用户消息和AI回复
-          setTimeout(() => {
-            if (this.pendingUserMessage) {
-              console.log('尝试重新保存用户消息...');
-              this.saveUserMessage(this.pendingUserMessage).catch(err => {
-                console.error('重试保存用户消息失败:', err);
-              });
-              this.pendingUserMessage = null;
-            }
-          }, 1000);
-        } else {
-          // 正常情况：保存AI回复到服务器
-          await this.saveAssistantMessage(fullContent);
-        }
+        // 保存AI回复到服务器
+        await this.saveAssistantMessage(fullContent);
       } else {
         contentDiv.innerHTML = this.parseMarkdown('抱歉，AI没有返回任何内容。');
       }
@@ -1609,56 +1588,63 @@ class LowSkyAIChat {
       console.trace('调用堆栈:'); // 打印调用堆栈，看看是谁调用的
       console.log('📝 firstMessage:', firstMessage ? `有 (${firstMessage.substring(0, 30)})` : '无');
       
-      // 生成一个临时ID用于前端显示
-      const tempId = 'temp_' + Date.now();
-      console.log('📝 生成临时ID:', tempId);
-      
       // 如果有第一条消息，使用它作为标题
       const title = firstMessage ? (firstMessage.substring(0, 30) + (firstMessage.length > 30 ? '...' : '')) : '新对话';
       console.log('📝 会话标题:', title);
       
-      // 添加到前端列表（乐观更新）
-      const tempConversation = {
-        id: tempId,
-        title: title,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        message_count: firstMessage ? 1 : 0,
-        last_message_preview: firstMessage || ''
-      };
-      
-      this.conversations.unshift(tempConversation);
-      this.currentConversationId = tempId;
-      this.currentConversationTitle = title;
-      
-      console.log('📝 已设置 currentConversationId:', this.currentConversationId);
-      
-      // 更新UI
-      this.renderConversationList();
-      
-      // 如果是空对话，清空消息区域
-      if (!firstMessage) {
-        this.clearHistory();
+      // 直接创建服务器端会话（不再使用临时ID）
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        console.warn('⚠️ 未登录，无法创建会话');
+        return null;
       }
       
-      // 异步保存到服务器，不等待完成（提升响应速度）
-      // 只有当有firstMessage时（即用户真正开始对话），才创建会话
-      if (firstMessage) {
-        console.log('📝 开始后台创建会话:', title);
-        this.saveConversationToServer(tempId, title).then(() => {
-          console.log('✅ 会话创建流程完成');
-        }).catch(err => {
-          console.error('❌ 后台保存会话失败:', err);
-        });
+      console.log('📤 正在创建会话:', title);
+      console.log('📤 请求URL: /api/ai-conversations/');
+      
+      const response = await fetch('/api/ai-conversations/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Token ${token}`
+        },
+        body: JSON.stringify({
+          title: title
+        })
+      });
+      
+      console.log('📥 响应状态:', response.status);
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ 会话创建成功，ID:', data.id);
+        
+        // 添加到前端列表
+        this.conversations.unshift(data);
+        this.currentConversationId = data.id;
+        this.currentConversationTitle = title;
+        
+        console.log('📝 已设置 currentConversationId:', this.currentConversationId);
+        
+        // 更新UI
+        this.renderConversationList();
+        
+        // 如果是空对话，清空消息区域
+        if (!firstMessage) {
+          this.clearHistory();
+        }
+        
+        console.log('📝 createNewConversation 即将返回');
+        return data.id;
       } else {
-        console.log('ℹ️ 空对话，暂不创建会话（等待用户发送第一条消息）');
+        const errorText = await response.text();
+        console.error('❌ 创建会话失败:', response.status, errorText);
+        return null;
       }
-      
-      console.log('📝 createNewConversation 即将返回');
-      return tempId;
     } catch (error) {
       console.error('❌ 创建会话失败:', error);
       console.error('错误堆栈:', error.stack);
+      return null;
     }
   }
   
@@ -1669,14 +1655,6 @@ class LowSkyAIChat {
     try {
       const token = localStorage.getItem('auth_token');
       if (!token || !this.currentConversationId) return; // 未登录或没有会话ID不保存
-      
-      // 如果还是临时ID，说明等待超时了
-      if (this.currentConversationId.startsWith('temp_')) {
-        console.warn('⚠️ 会话ID仍是临时ID，无法立即保存');
-        // 标记待重试，稍后会话ID更新后再保存
-        this.pendingUserMessage = content;
-        return;
-      }
       
       console.log('💾 正在保存用户消息...');
       
@@ -1703,95 +1681,12 @@ class LowSkyAIChat {
   }
   
   /**
-   * 保存会话到服务器
-   */
-  async saveConversationToServer(tempId, title) {
-    try {
-      const token = localStorage.getItem('auth_token');
-      console.log('🔑 检查Token:', token ? '已获取' : '未找到');
-      
-      if (!token) {
-        console.warn('⚠️ 未登录，跳过保存会话');
-        return;
-      }
-      
-      console.log('📤 正在创建会话:', title);
-      console.log('📤 请求URL: /api/ai-conversations/');
-      
-      const response = await fetch('/api/ai-conversations/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Token ${token}`
-        },
-        body: JSON.stringify({
-          title: title
-        })
-      });
-      
-      console.log('📥 响应状态:', response.status);
-      
-      if (response.ok) {
-        const data = await response.json();
-        console.log('✅ 会话创建成功，ID:', data.id);
-        console.log('🔄 当前临时ID:', tempId);
-        console.log('🔄 当前会话ID:', this.currentConversationId);
-        
-        // 替换临时ID为真实ID
-        const index = this.conversations.findIndex(c => c.id === tempId);
-        console.log('🔍 查找临时ID索引:', index);
-        
-        if (index !== -1) {
-          this.conversations[index] = data;
-          console.log('✅ 已更新会话列表中的会话');
-          
-          if (this.currentConversationId === tempId) {
-            this.currentConversationId = data.id;
-            console.log('✅ 已更新当前会话ID为:', data.id);
-            
-            // 会话ID更新后，检查是否有待保存的消息
-            if (this.pendingUserMessage) {
-              console.log('🔄 检测到待保存的用户消息，立即保存...');
-              setTimeout(() => {
-                this.saveUserMessage(this.pendingUserMessage).catch(err => {
-                  console.error('重试保存用户消息失败:', err);
-                });
-                this.pendingUserMessage = null;
-              }, 500);
-            }
-          } else {
-            console.warn('⚠️ 当前会话ID与临时ID不匹配');
-            console.warn('   currentConversationId:', this.currentConversationId);
-            console.warn('   tempId:', tempId);
-          }
-          this.renderConversationList();
-        } else {
-          console.error('❌ 未找到临时ID在会话列表中');
-        }
-      } else {
-        const errorText = await response.text();
-        console.error('❌ 创建会话失败:', response.status, errorText);
-      }
-    } catch (error) {
-      console.error('❌ 保存会话异常:', error);
-      console.error('错误详情:', error.message);
-      console.error('错误堆栈:', error.stack);
-    }
-  }
-  
-  /**
    * 保存AI助手消息到服务器
    */
   async saveAssistantMessage(content) {
     try {
       const token = localStorage.getItem('auth_token');
       if (!token || !this.currentConversationId) return;
-      
-      // 如果是临时ID，不保存
-      if (this.currentConversationId.startsWith('temp_')) {
-        console.warn('⚠️ 会话ID仍是临时ID，无法保存AI回复');
-        return;
-      }
       
       const response = await fetch(`/api/ai-conversations/${this.currentConversationId}/messages/`, {
         method: 'POST',
@@ -1885,9 +1780,16 @@ class LowSkyAIChat {
         if (this.conversations.length > 0 && !this.currentConversationId) {
           await this.switchConversation(this.conversations[0].id);
         }
+      } else {
+        // 如果获取失败（可能是token过期），清空会话列表
+        console.warn('加载会话列表失败，可能是token过期');
+        this.conversations = [];
+        this.renderConversationList();
       }
     } catch (error) {
       console.error('加载会话列表失败:', error);
+      this.conversations = [];
+      this.renderConversationList();
     }
   }
   
@@ -1911,13 +1813,8 @@ class LowSkyAIChat {
       // 更新UI高亮
       this.renderConversationList();
       
-      // 只有非临时ID才加载消息历史
-      if (!conversationId.startsWith('temp_')) {
-        await this.loadConversationMessages(conversationId);
-      } else {
-        // 临时会话，清空消息区域显示欢迎信息
-        this.clearHistory();
-      }
+      // 加载消息历史
+      await this.loadConversationMessages(conversationId);
     } catch (error) {
       console.error('切换会话失败:', error);
     }
@@ -1930,12 +1827,6 @@ class LowSkyAIChat {
     try {
       const token = localStorage.getItem('auth_token');
       if (!token) return;
-      
-      // 如果是临时ID，不尝试从服务器加载消息
-      if (conversationId.startsWith('temp_')) {
-        console.log('临时会话ID，跳过加载消息');
-        return;
-      }
       
       const response = await fetch(`/api/ai-conversations/${conversationId}/messages/`, {
         headers: {
