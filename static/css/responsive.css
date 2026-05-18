@@ -333,7 +333,8 @@
   }
   
   .ai-chat-header {
-    padding: 12px 16px;
+    height: 48px;
+    padding: 0 16px;
   }
   
   .ai-chat-header h3 {
@@ -406,6 +407,21 @@
     height: 60px;
     display: flex;
     align-items: center;
+  }
+  
+  /* AI聊天窗口标题栏在超小屏幕下也使用60px */
+  .ai-chat-header {
+    height: 60px;
+    padding: 0 12px;
+  }
+  
+  .ai-chat-header h3 {
+    font-size: 14px;
+  }
+  
+  .ai-chat-header h3 img {
+    width: 18px !important;
+    height: 18px !important;
   }
   
   .navbar-toggle {
