@@ -117,6 +117,14 @@ class LowSkyAIChat {
     modal.className = 'ai-chat-modal';
     modal.innerHTML = `
       <div class="ai-chat-container">
+        <!-- 侧边栏收起/展开按钮 - 固定在左上角 -->
+        <button class="ai-sidebar-toggle-btn" id="ai-sidebar-toggle-btn" title="收起侧边栏">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+            <line x1="9" y1="3" x2="9" y2="21"/>
+          </svg>
+        </button>
+        
         <!-- 左侧会话列表 -->
         <div class="ai-chat-sidebar" id="ai-chat-sidebar">
           <div class="ai-sidebar-header">
@@ -139,12 +147,6 @@ class LowSkyAIChat {
         <div class="ai-chat-main">
           <div class="ai-chat-header">
           <div class="ai-chat-header-left">
-            <button class="ai-sidebar-toggle-btn" id="ai-sidebar-toggle-btn" title="收起侧边栏">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                <line x1="9" y1="3" x2="9" y2="21"/>
-              </svg>
-            </button>
             <h3><img src="/static/images/AI-icon-Black.png" alt="AI" style="width: 20px; height: 20px; margin-right: 8px;"> LowSkyAI 智能助手</h3>
           </div>
           <div class="ai-chat-controls">

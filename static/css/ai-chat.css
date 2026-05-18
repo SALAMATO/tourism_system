@@ -66,6 +66,35 @@
   z-index: 10;
 }
 
+/* 侧边栏收起/展开按钮 - 固定在左上角 */
+.ai-sidebar-toggle-btn {
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 100;
+}
+
+.ai-sidebar-toggle-btn:hover {
+  background: rgba(102, 126, 234, 0.1);
+  color: #667eea;
+}
+
+.ai-sidebar-toggle-btn:active {
+  transform: scale(0.95);
+}
+
 .resize-nw {
   top: -5px;
   left: -5px;
@@ -844,30 +873,6 @@
   display: flex;
   align-items: center;
   gap: 8px;
-}
-
-.ai-sidebar-toggle-btn {
-  width: 32px;
-  height: 32px;
-  background: transparent;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-primary);
-  transition: all 0.2s ease;
-  flex-shrink: 0;
-}
-
-.ai-sidebar-toggle-btn:hover {
-  background: rgba(102, 126, 234, 0.1);
-  color: #667eea;
-}
-
-.ai-sidebar-toggle-btn:active {
-  transform: scale(0.95);
 }
 
 .ai-sidebar-header h3 {
