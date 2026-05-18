@@ -134,6 +134,30 @@ class LowSkyAIChat {
           </svg>
         </button>
         
+        <!-- 移动端胶囊按钮组 - 固定在右上角 -->
+        <div class="ai-chat-mobile-controls">
+          <button class="ai-chat-mobile-sidebar" data-tooltip="侧栏">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="3" y1="12" x2="21" y2="12"/>
+              <line x1="3" y1="6" x2="21" y2="6"/>
+              <line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+          </button>
+          <button class="ai-chat-mobile-new-conversation" data-tooltip="新建对话">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+              <line x1="17" y1="8" x2="17" y2="14"/>
+              <line x1="14" y1="11" x2="20" y2="11"/>
+            </svg>
+          </button>
+          <button class="ai-chat-close" data-tooltip="关闭">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+        
         <!-- 左侧会话列表 -->
         <div class="ai-chat-sidebar" id="ai-chat-sidebar">
           <div class="ai-sidebar-header">
@@ -316,9 +340,11 @@ class LowSkyAIChat {
   }
   
   bindEvents() {
-    // 关闭按钮
-    const closeBtn = this.modal.querySelector('.ai-chat-close');
-    closeBtn.onclick = () => this.closeChat();
+    // 关闭按钮（桌面端）- 使用更精确的选择器
+    const closeBtn = this.modal.querySelector('.ai-chat-controls .ai-chat-close');
+    if (closeBtn) {
+      closeBtn.onclick = () => this.closeChat();
+    }
       
     // 最小化按钮 - 直接关闭对话框
     const minimizeBtn = this.modal.querySelector('.ai-chat-minimize');
@@ -354,11 +380,46 @@ class LowSkyAIChat {
       };
     }
     
-    // 侧边栏收起/展开按钮
+    // 侧边栏收起/展开按钮（桌面端）
     const sidebarToggleBtn = this.modal.querySelector('#ai-sidebar-toggle-btn');
     
     if (sidebarToggleBtn) {
       sidebarToggleBtn.onclick = () => this.toggleSidebar();
+    }
+    
+    // 移动端侧栏按钮
+    const mobileSidebarBtn = this.modal.querySelector('.ai-chat-mobile-sidebar');
+    if (mobileSidebarBtn) {
+      mobileSidebarBtn.onclick = () => {
+        // 在移动端，侧栏是隐藏的，可以弹出或忽略
+        // 这里暂时不做处理，或者可以显示一个提示
+        console.log('移动端侧栏按钮点击');
+      };
+    }
+    
+    // 移动端新建对话按钮
+    const mobileNewConversationBtn = this.modal.querySelector('.ai-chat-mobile-new-conversation');
+    if (mobileNewConversationBtn) {
+      mobileNewConversationBtn.onclick = () => {
+        // 判断是否已处于新对话状态
+        const isNewConversation = !this.currentConversationId || 
+          (this.currentConversationTitle === '新对话' && 
+           this.messagesContainer.querySelectorAll('.ai-message').length === 0);
+        
+        if (isNewConversation) {
+          console.log('⚠️ 当前已处于新对话状态');
+          return;
+        }
+        
+        // 不创建数据库记录，只清空UI进入空白对话状态
+        this.startNewEmptyConversation();
+      };
+    }
+    
+    // 移动端关闭按钮
+    const mobileCloseBtn = this.modal.querySelector('.ai-chat-mobile-controls .ai-chat-close');
+    if (mobileCloseBtn) {
+      mobileCloseBtn.onclick = () => this.closeChat();
     }
       
     // 快速查询按钮
