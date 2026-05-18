@@ -95,6 +95,40 @@
   transform: scale(0.95);
 }
 
+/* 新对话按钮 - 固定在左上角（侧边栏按钮右侧） */
+.ai-new-conversation-btn-fixed {
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  position: absolute;
+  top: 8px;
+  left: 48px;
+  z-index: 100;
+}
+
+.ai-new-conversation-btn-fixed:hover {
+  background: rgba(102, 126, 234, 0.1);
+  color: #667eea;
+}
+
+.ai-new-conversation-btn-fixed:active {
+  transform: scale(0.95);
+}
+
+.ai-new-conversation-btn-fixed svg {
+  width: 16px;
+  height: 16px;
+}
+
 .resize-nw {
   top: -5px;
   left: -5px;
@@ -880,30 +914,6 @@
   font-weight: 600;
   color: var(--text-primary);
   margin: 0;
-}
-
-.ai-new-conversation-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 13px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-}
-
-.ai-new-conversation-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-}
-
-.ai-new-conversation-btn:active {
-  transform: translateY(0);
 }
 
 .ai-conversation-list {

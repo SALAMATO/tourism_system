@@ -125,18 +125,19 @@ class LowSkyAIChat {
           </svg>
         </button>
         
+        <!-- 新对话按钮 - 固定在左上角（侧边栏按钮下方） -->
+        <button class="ai-new-conversation-btn-fixed" id="ai-new-conversation-btn" title="新建对话">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            <line x1="17" y1="8" x2="17" y2="14"/>
+            <line x1="14" y1="11" x2="20" y2="11"/>
+          </svg>
+        </button>
+        
         <!-- 左侧会话列表 -->
         <div class="ai-chat-sidebar" id="ai-chat-sidebar">
           <div class="ai-sidebar-header">
             <h3>对话历史</h3>
-            <div class="ai-sidebar-actions">
-              <button class="ai-new-conversation-btn" id="ai-new-conversation-btn" title="新建对话">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M12 5v14M5 12h14"/>
-                </svg>
-                新对话
-              </button>
-            </div>
           </div>
           <div class="ai-conversation-list" id="ai-conversation-list">
             <!-- 会话列表将在这里动态生成 -->
