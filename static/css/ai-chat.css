@@ -599,7 +599,7 @@ body.ai-chat-maximized {
 .ai-chat-input-area {
   position: absolute;
   bottom: 0;
-  left: 0;
+  left: 260px; /* 从侧边栏右侧开始 */
   right: 0;
   padding: 16px 20px;
   background: transparent;
@@ -1118,6 +1118,12 @@ body.ai-chat-maximized {
 }
 
 /* 侧边栏收起时，主内容区域不需要特别处理，因为侧边栏使用了transform滑出 */
+
+/* 侧边栏收起时，输入区域扩展到整个宽度 */
+.ai-chat-sidebar.collapsed ~ .ai-chat-input-area {
+  left: 0; /* 侧边栏收起时从左侧开始 */
+  transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
 
 /* ============================================
    编辑对话名称弹窗样式（Apple风格）
