@@ -26,8 +26,8 @@
 }
 
 .ai-chat-container {
-  width: 50vw;
-  max-width: 40vw;
+  width: calc(50vw + 260px);
+  max-width: calc(40vw + 260px);
   height: 80vh;
   max-height: 700px;
   background:white;
