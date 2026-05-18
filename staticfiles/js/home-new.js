@@ -1,0 +1,384 @@
+
+document.addEventListener('DOMContentLoaded', () => {
+  const hotContainer = document.getElementById('destinations-container');
+  if (hotContainer) {
+    loadHotDestinations();
+  }
+  loadHomepageDestinationModules();
+  loadLatestNewsList(); // 加载最新资讯
+  loadLatestPolicy(); // 加载最新政策法规
+  loadStatistics();
+});
+
+async function loadHomepageDestinationModules() {
+  const nearbyContainer = document.getElementById('nearby-destination-content');
+  const managedContainer = document.getElementById('managed-destination-content');
+
+  if (!nearbyContainer || !managedContainer) {
+    return;
+  }
+
+  try {
+    // 加载周边目的地（使用周边模式）
+    const nearbyResponse = await api.request('/api/destinations/nearby_by_ip/');
+    console.log('首页周边推荐API响应:', nearbyResponse);
+    
+    if (nearbyResponse && nearbyResponse.destinations) {
+      console.log(`周边推荐原始数据量: ${nearbyResponse.destinations.length}`);
+      const nearbyDestinations = nearbyResponse.destinations.slice(0, 4); // 只显示前4个
+      console.log(`首页周边推荐：实际显示 ${nearbyDestinations.length} 个目的地`);
+      renderHomepageDestinationModule('nearby', nearbyDestinations, nearbyContainer, nearbyResponse.user_city);
+    } else {
+      nearbyContainer.innerHTML = '<div class="loading"><div>暂无周边推荐</div></div>';
+    }
+    
+    // 加载精选目的地（使用智能推荐 - 不限制国内外）
+    const allResponse = await api.request('/api/destinations/smart_recommend/');
+    console.log('首页智能推荐API响应:', allResponse);
+    
+    if (allResponse && Array.isArray(allResponse)) {
+      console.log(`智能推荐原始数据量: ${allResponse.length}`);
+      const allDestinations = allResponse.slice(0, 4); // 只显示前4个
+      console.log(`首页智能推荐：实际显示 ${allDestinations.length} 个目的地`);
+      renderHomepageDestinationModule('all', allDestinations, managedContainer, null);
+    } else {
+      managedContainer.innerHTML = '<div class="loading"><div>暂无推荐内容</div></div>';
+    }
+    
+    // 触发周边模块加载完成事件
+    window.dispatchEvent(new CustomEvent('homepageContentLoaded', { detail: 'nearby' }));
+    
+    // 触发精选模块加载完成事件
+    window.dispatchEvent(new CustomEvent('homepageContentLoaded', { detail: 'featured' }));
+  } catch (error) {
+    console.error('加载首页目的地模块失败:', error);
+    nearbyContainer.innerHTML = '<div class="loading"><div>加载失败，请稍后重试</div></div>';
+    managedContainer.innerHTML = '<div class="loading"><div>加载失败，请稍后重试</div></div>';
+    window.dispatchEvent(new CustomEvent('homepageContentLoaded', { detail: 'nearby' }));
+    window.dispatchEvent(new CustomEvent('homepageContentLoaded', { detail: 'featured' }));
+  }
+}
+
+function renderHomepageDestinationModule(type, destinations, container, userCity) {
+  if (!destinations || destinations.length === 0) {
+    container.innerHTML = '<div class="loading"><div>暂无推荐内容</div></div>';
+    return;
+  }
+
+  // 生成目的地卡片 HTML
+  const itemsHtml = destinations.map(item => {
+    // 根据类型确定位置显示格式
+    let locationText;
+    if (type === 'nearby') {
+      // 周边模式：显示 省份 · 具体位置
+      locationText = `${escapeHtml(item.state || item.city)} · ${escapeHtml(item.location || '')}`;
+    } else if (type === 'all') {
+      // 显示全部模式：国内显示省份，海外显示国家
+      if (item.is_domestic) {
+        locationText = `${escapeHtml(item.state || item.city)} · ${escapeHtml(item.location || '')}`;
+      } else {
+        locationText = `${escapeHtml(item.country)} · ${escapeHtml(item.location || '')}`; // 显示国家和地理位置
+      }
+    } else {
+      // 默认：城市 · 位置
+      locationText = `${escapeHtml(item.city)} · ${escapeHtml(item.location || '')}`;
+    }
+    
+    // 获取详细介绍，如果是HTML则转换为纯文本
+    let richContent = item.description || item.features_rich_text || item.features_display || '';
+    // 如果内容包含HTML标签，去除标签只保留文本
+    if (richContent && richContent.includes('<')) {
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = richContent;
+      richContent = tempDiv.textContent || tempDiv.innerText || '';
+    }
+    return `
+    <a href="/destination-detail.html?id=${item.id}" class="destination-explore-card">
+      <div class="destination-explore-image-wrap">
+        <img src="${escapeHtml(item.cover_image_url || item.cover_image || '')}" alt="${escapeHtml(item.name)}" class="destination-explore-image">
+      </div>
+      <div class="destination-explore-body">
+        <div class="destination-explore-title-row">
+          <h3>${escapeHtml(item.name)}</h3>
+          <span><i class="fas fa-star" style="color:#ef4444;"></i> ${Number(item.rating || 0).toFixed(1)}</span>
+        </div>
+        <div class="destination-explore-location"><i class="fas fa-location-dot"></i> ${locationText}</div>
+        <div class="destination-explore-desc">${escapeHtml(richContent)}</div>
+        <div class="destination-explore-meta">
+          <span>${escapeHtml(item.duration || '')}</span>
+          <strong>${escapeHtml(item.price_range || '')}</strong>
+        </div>
+      </div>
+    </a>
+  `}).join('');
+
+  // 生成标题和描述
+  let title, subtitle, tagText;
+  if (type === 'nearby') {
+    tagText = 'AROUND YOU';
+    title = '周边低空旅行';
+    subtitle = userCity 
+      ? `推荐您当前所在城市——${escapeHtml(userCity)}附近的低空旅行目的地`
+      : '结合城市维度展示更贴近当前浏览者的低空旅行灵感，让每一座城市都拥有独特的云端风景。';
+  } else if (type === 'all') {
+    tagText = "EDITOR'S PICK";
+    title = '精选低空旅行';
+    subtitle = '呈现更值得关注的空中观光、热气球与飞行体验目的地。';
+  }
+
+  container.innerHTML = `
+    <div class="destination-explore-panel">
+      <div class="homepage-destination-heading">
+        <div>
+          <div class="recommend-tag">${tagText}</div>
+          <h2>${title}</h2>
+          <p>${subtitle}</p>
+        </div>
+      </div>
+      <div class="destination-explore-grid">
+        ${itemsHtml}
+      </div>
+      <div style="text-align: center; margin-top: 32px;">
+        <a href="/destinations/" class="btn btn-primary destination-more-btn">查看更多目的地</a>
+      </div>
+    </div>
+  `;
+}
+
+// 加载热门目的地
+async function loadHotDestinations() {
+  const container = document.getElementById('destinations-container');
+  if (!container) return;
+  
+  try {
+    showLoading(container);
+    const response = await fetch('/api/destinations/hot/');
+    
+    if (response.ok) {
+      const destinations = await response.json();
+      renderDestinations(container, destinations);
+    } else {
+      container.innerHTML = '<div class="loading"><div>暂无目的地数据</div></div>';
+    }
+  } catch (error) {
+    console.error('加载目的地失败:', error);
+    container.innerHTML = '<div class="loading"><div>加载失败，请稍后重试</div></div>';
+  }
+}
+
+// 渲染目的地列表
+function renderDestinations(container, destinations) {
+  if (!destinations || destinations.length === 0) {
+    container.innerHTML = '<div class="loading"><div>暂无热门目的地</div></div>';
+    return;
+  }
+
+  const html = destinations.map(dest => `
+    <a href="destination-detail.html?id=${dest.id}" class="destination-card">
+      <div class="destination-image">
+        ${dest.cover_image_url || dest.cover_image ? 
+          `<img src="${dest.cover_image_url || dest.cover_image}" alt="${escapeHtml(dest.name)}" style="width: 100%; height: 100%; object-fit: cover;">` :
+          `<i class="fas fa-helicopter"></i>`
+        }
+      </div>
+      <div class="destination-content">
+        <h3 class="destination-title">${escapeHtml(dest.name)}</h3>
+        <div class="destination-location">
+          <i class="fas fa-map-marker-alt"></i> ${escapeHtml(dest.city)} · ${escapeHtml(dest.location)}
+        </div>
+        <p class="destination-desc">${truncateText(escapeHtml(dest.description), 80)}</p>
+        <div class="destination-meta">
+          <div class="destination-rating">
+            <i class="fas fa-star"></i>
+            <span>${Number(dest.rating || 0).toFixed(1)}</span>
+            <span style="color: var(--text-secondary); margin-left: 8px; font-size: 14px;">
+              ${dest.views} 人浏览
+            </span>
+          </div>
+          <div class="destination-price">
+            ${escapeHtml(dest.price_range)}
+          </div>
+        </div>
+      </div>
+    </a>
+  `).join('');
+  
+  container.innerHTML = html;
+}
+
+// 加载最新资讯
+async function loadLatestNewsList() {
+  const container = document.getElementById('latest-news-content');
+  if (!container) return;
+
+  try {
+    showLoading(container);
+    console.log('[home-new] 开始加载最新资讯...');
+    const response = await api.getNews({ limit: 4, sort: '-created_at' });
+    console.log('[home-new] 资讯API响应:', response);
+
+    if (response.data && response.data.length > 0) {
+      console.log('[home-new] 获取到资讯数据:', response.data.length, '条');
+      renderNewsListModule(container, response.data);
+    } else {
+      console.log('[home-new] 没有获取到资讯数据');
+      container.innerHTML = '<div class="loading"><div>暂无最新资讯</div></div>';
+    }
+    
+    // 触发加载完成事件
+    window.dispatchEvent(new CustomEvent('homepageContentLoaded', { detail: 'news' }));
+  } catch (error) {
+    console.error('[home-new] 加载最新资讯失败:', error);
+    showError(container);
+    window.dispatchEvent(new CustomEvent('homepageContentLoaded', { detail: 'news' }));
+  }
+}
+
+// 渲染资讯模块
+function renderNewsListModule(container, newsItems) {
+  // 生成新闻卡片 HTML
+  const itemsHtml = newsItems.map(item => {
+    // 提取纯文本内容
+    let contentText = item.content || '';
+    if (contentText && contentText.includes('<')) {
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = contentText;
+      contentText = tempDiv.textContent || tempDiv.innerText || '';
+    }
+    
+    return `
+    <a href="/news-detail.html?id=${item.id}" class="destination-explore-card">
+      <div class="destination-explore-image-wrap">
+        ${item.cover_image_url || item.cover_image ? 
+          `<img src="${escapeHtml(item.cover_image_url || item.cover_image)}" alt="${escapeHtml(item.title)}" class="destination-explore-image">` :
+          `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);color:white;font-size:48px;"><i class="fas fa-newspaper"></i></div>`
+        }
+      </div>
+      <div class="destination-explore-body">
+        <div class="destination-explore-title-row">
+          <h3>${escapeHtml(item.title)}</h3>
+        </div>
+        <div class="destination-explore-location">
+          <i class="fas fa-tag"></i> ${escapeHtml(item.category || '未分类')}
+        </div>
+        <div class="destination-explore-desc">${truncateText(escapeHtml(contentText), 100)}</div>
+        <div class="destination-explore-meta">
+          <span><i class="fas fa-clock"></i> ${formatDate(item.publish_date)}</span>
+          <strong><i class="fas fa-eye"></i> ${item.views || 0} 浏览</strong>
+        </div>
+      </div>
+    </a>
+  `}).join('');
+
+  container.innerHTML = `
+    <div class="destination-explore-panel">
+      <div class="homepage-destination-heading">
+        <div>
+          <div class="recommend-tag">LATEST NEWS</div>
+          <h2>最新资讯</h2>
+          <p>了解低空旅游行业动态与最新发展</p>
+        </div>
+      </div>
+      <div class="destination-explore-grid">
+        ${itemsHtml}
+      </div>
+      <div style="text-align: center; margin-top: 32px;">
+        <a href="/news/" class="btn btn-primary destination-more-btn">查看更多资讯</a>
+      </div>
+    </div>
+  `;
+}
+
+// 加载最新政策法规
+async function loadLatestPolicy() {
+  const container = document.getElementById('latest-policy-container');
+  if (!container) return;
+
+  try {
+    showLoading(container);
+    console.log('[home-new] 开始加载政策法规...');
+    const response = await api.getPolicies({ limit: 3, sort: '-created_at' });
+    console.log('[home-new] 政策API响应:', response);
+
+    if (response.data && response.data.length > 0) {
+      console.log('[home-new] 获取到政策法规数据:', response.data.length, '条');
+      renderPolicyList(container, response.data);
+    } else {
+      console.log('[home-new] 没有获取到政策法规数据');
+      container.innerHTML = '<div class="loading"><div>暂无政策法规</div></div>';
+    }
+    
+    // 触发加载完成事件
+    window.dispatchEvent(new CustomEvent('homepageContentLoaded', { detail: 'policy' }));
+  } catch (error) {
+    console.error('[home-new] 加载政策法规失败:', error);
+    showError(container);
+    window.dispatchEvent(new CustomEvent('homepageContentLoaded', { detail: 'policy' }));
+  }
+}
+
+// 渲染政策法规列表
+function renderPolicyList(container, policyItems) {
+  const html = policyItems.map(item => `
+    <div class="list-item" onclick="location.href='policy-detail.html?id=${item.id}'">
+      <h3>${escapeHtml(item.title)}</h3>
+      <div class="list-item-meta">
+        <span><i class="fas fa-tag"></i> ${escapeHtml(item.level || '未分类')}</span>
+        <span><i class="fas fa-building"></i> ${escapeHtml(item.department || '未知')}</span>
+        <span><i class="fas fa-calendar"></i> ${formatDate(item.publish_date)}</span>
+        <span><i class="fas fa-eye"></i> ${item.views || 0} 次浏览</span>
+      </div>
+      <div class="list-item-content">
+        ${truncateText(stripHtml(item.content), 150)}
+      </div>
+      ${item.tags && item.tags.length > 0 ? `
+        <div style="margin-top: 12px;">
+          ${item.tags.map(tag => `<span class="tag">${escapeHtml(tag)}</span>`).join('')}
+        </div>
+      ` : ''}
+    </div>
+  `).join('');
+  
+  container.innerHTML = html;
+}
+
+// 去除HTML标签
+function stripHtml(html) {
+  if (!html) return '';
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+  return tmp.textContent || tmp.innerText || '';
+}
+
+// 加载统计数据
+async function loadStatistics() {
+  try {
+    const response = await api.getStatistics({ limit: 100 });
+    
+    if (response.data && response.data.length > 0) {
+      // 计算总数
+      let totalTourists = 0;
+      let totalRevenue = 0;
+      let totalFlights = 0;
+      let avgGrowth = 0;
+
+      response.data.forEach(item => {
+        totalTourists += item.tourist_count || 0;
+        totalRevenue += item.revenue || 0;
+        totalFlights += item.flight_count || 0;
+        avgGrowth += item.growth_rate || 0;
+      });
+
+      avgGrowth = response.data.length > 0 ? (avgGrowth / response.data.length).toFixed(1) : 0;
+      totalRevenue = (totalRevenue / 10000).toFixed(2); // 转换为亿元
+
+      // 更新显示
+      document.getElementById('stat-tourists').textContent = totalTourists.toLocaleString();
+      document.getElementById('stat-revenue').textContent = totalRevenue;
+      document.getElementById('stat-flights').textContent = totalFlights.toLocaleString();
+      document.getElementById('stat-growth').textContent = avgGrowth;
+    }
+  } catch (error) {
+    console.error('加载统计数据失败:', error);
+  }
+}

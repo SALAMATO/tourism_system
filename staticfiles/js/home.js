@@ -1,0 +1,128 @@
+
+document.addEventListener('DOMContentLoaded', () => {
+  const destinationContainer = document.getElementById('destinations-container');
+  if (destinationContainer) {
+    loadHotDestinations();
+    loadStatistics();
+  }
+});
+
+//检测 hero 是否在屏幕中
+document.addEventListener('DOMContentLoaded', () => {
+  const hero = document.querySelector('.hero-large');
+  const navbar = document.querySelector('.navbar');
+
+  if (!hero || !navbar) return;
+
+  const observer = new IntersectionObserver(
+    ([entry]) => {
+      if (entry.isIntersecting) {
+        navbar.classList.add('hero-active');
+      } else {
+        navbar.classList.remove('hero-active');
+      }
+    },
+    {
+      root: null,
+      threshold: 0.1
+    }
+  );
+
+  observer.observe(hero);
+});
+
+async function loadHotDestinations() {
+  const container = document.getElementById('destinations-container');
+  if (!container) return;
+
+  try {
+    showLoading(container);
+    const response = await fetch('/api/destinations/hot/');
+
+    if (response.ok) {
+      const destinations = await response.json();
+      renderDestinations(container, destinations);
+    } else {
+      container.innerHTML = '<div class="loading"><div>暂无目的地数据</div></div>';
+    }
+  } catch (error) {
+    console.error('加载目的地失败:', error);
+    container.innerHTML = '<div class="loading"><div>加载失败，请稍后重试</div></div>';
+  }
+}
+
+function renderDestinations(container, destinations) {
+  if (!destinations || destinations.length === 0) {
+    container.innerHTML = '<div class="loading"><div>暂无热门目的地</div></div>';
+    return;
+  }
+
+  const html = destinations.map(dest => `
+    <a href="destination-detail.html?id=${dest.id}" class="destination-card">
+      <div class="destination-image">
+        ${dest.cover_image_url || dest.cover_image ?
+          `<img src="${dest.cover_image_url || dest.cover_image}" alt="${escapeHtml(dest.name)}" style="width: 100%; height: 100%; object-fit: cover;">` :
+          `<i class="fas fa-helicopter"></i>`
+        }
+      </div>
+      <div class="destination-content">
+        <h3 class="destination-title">${escapeHtml(dest.name)}</h3>
+        <div class="destination-location">
+          <i class="fas fa-map-marker-alt"></i> ${escapeHtml(dest.city)} · ${escapeHtml(dest.location)}
+        </div>
+        <p class="destination-desc">${truncateText(escapeHtml(dest.description), 80)}</p>
+        <div class="destination-meta">
+          <div class="destination-rating">
+            <i class="fas fa-star"></i>
+            <span>${Number(dest.rating || 0).toFixed(1)}</span>
+            <span style="color: var(--text-secondary); margin-left: 8px; font-size: 14px;">
+              ${dest.views} 人浏览
+            </span>
+          </div>
+          <div class="destination-price">
+            ${escapeHtml(dest.price_range)}
+          </div>
+        </div>
+      </div>
+    </a>
+  `).join('');
+
+  container.innerHTML = html;
+}
+
+function stripHtml(html) {
+  if (!html) return '';
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+  return tmp.textContent || tmp.innerText || '';
+}
+
+async function loadStatistics() {
+  try {
+    const response = await api.getStatistics({ limit: 100 });
+
+    if (response.data && response.data.length > 0) {
+      let totalTourists = 0;
+      let totalRevenue = 0;
+      let totalFlights = 0;
+      let avgGrowth = 0;
+
+      response.data.forEach(item => {
+        totalTourists += item.tourist_count || 0;
+        totalRevenue += item.revenue || 0;
+        totalFlights += item.flight_count || 0;
+        avgGrowth += item.growth_rate || 0;
+      });
+
+      avgGrowth = response.data.length > 0 ? (avgGrowth / response.data.length).toFixed(1) : 0;
+      totalRevenue = (totalRevenue / 10000).toFixed(2);
+
+      document.getElementById('stat-tourists').textContent = totalTourists.toLocaleString();
+      document.getElementById('stat-revenue').textContent = totalRevenue;
+      document.getElementById('stat-flights').textContent = totalFlights.toLocaleString();
+      document.getElementById('stat-growth').textContent = avgGrowth;
+    }
+  } catch (error) {
+    console.error('加载统计数据失败:', error);
+  }
+}

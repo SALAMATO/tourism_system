@@ -11,6 +11,9 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # 本地开发静态文件目录
 STATICFILES_DIRS = [BASE_DIR / 'static']
 
+# 生产环境静态文件收集目录
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
 # 指向你的 urls.py 文件
 ROOT_URLCONF = 'tourism_system.urls'
 
@@ -121,6 +124,6 @@ AUTH_USER_MODEL = 'api.User'
 LANGUAGE_CODE = 'zh-hans'
 TIME_ZONE = 'Asia/Shanghai'
 USE_TZ = True
-DEBUG = True
+DEBUG = False
 ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 

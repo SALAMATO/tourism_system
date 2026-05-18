@@ -43,4 +43,11 @@ urlpatterns = [
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+else:
+    # 生产环境下提供静态文件和媒体文件服务
+    from django.views.static import serve
+    urlpatterns += [
+        path('static/<path:path>', serve, {'document_root': settings.STATIC_ROOT}),
+        path('media/<path:path>', serve, {'document_root': settings.MEDIA_ROOT}),
+    ]
 
