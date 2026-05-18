@@ -96,7 +96,7 @@ class LowSkyAIChat {
     modal.innerHTML = `
       <div class="ai-chat-container">
         <div class="ai-chat-header">
-          <h3><img src="/static/images/AI-icon.png" alt="AI" style="width: 24px; height: 24px; margin-right: 8px;"> LowSkyAI 智能助手</h3>
+          <h3><img src="/static/images/AI-icon-Black.png" alt="AI" style="width: 20px; height: 20px; margin-right: 8px;"> LowSkyAI 智能助手</h3>
           <div class="ai-chat-controls">
             <button class="ai-chat-minimize" title="最小化">
               <svg width="10" height="1" viewBox="0 0 10 1">

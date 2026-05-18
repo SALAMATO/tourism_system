@@ -30,7 +30,9 @@
   max-width: 40vw;
   height: 80vh;
   max-height: 700px;
-  background: #ffffff;
+  background: var(--ai-chat-bg);
+  backdrop-filter: var(--ai-chat-blur);
+  -webkit-backdrop-filter: var(--ai-chat-blur);
   border-radius: 20px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   display: flex;
@@ -151,22 +153,23 @@
 }
 
 .ai-chat-header {
-  padding: 20px 24px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  height: 48px;
+  padding: 0 24px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   cursor: default;
   user-select: none;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .ai-chat-header h3 {
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 600;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  margin: 0;
 }
 
 .ai-chat-controls {
@@ -180,9 +183,9 @@
 .ai-chat-close {
   background: transparent;
   border: none;
-  color: white;
+  color: var(--text-primary);
   cursor: pointer;
-  width: 46px;
+  width: 36px;
   height: 36px;
   display: flex;
   align-items: center;
@@ -217,17 +220,18 @@
 
 .ai-chat-minimize:hover,
 .ai-chat-maximize:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.05);
 }
 
 .ai-chat-close:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 59, 48, 0.1);
+  color: #ff3b30;
 }
 
 .ai-chat-minimize:active,
 .ai-chat-maximize:active,
 .ai-chat-close:active {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.08);
 }
 
 /* 最大化状态 */

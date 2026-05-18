@@ -25,9 +25,14 @@
   /* 字体 */
   --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
   
-  /* 导航栏毛玻璃效果 - 统一定义 */
-  --navbar-bg: rgba(255, 255, 255, 0.72);
-  --navbar-blur: saturate(180%) blur(30px);
+  /* 毛玻璃效果 - 统一定义 */
+  --navbar-bg: rgba(255, 255, 255, 0.65);           /* 导航栏/AI标题栏背景：65%透明度 */
+  --navbar-blur: saturate(180%) blur(40px);          /* 模糊强度：40px */
+  
+  /* AI聊天窗口容器毛玻璃效果 */
+  --ai-chat-bg: rgba(255, 255, 255, 0.90);          /* AI容器背景：75%透明度（更透） */
+  --ai-chat-header-bg: var(--navbar-bg);             /* AI标题栏使用与导航栏相同的背景 */
+  --ai-chat-blur: var(--navbar-blur);                /* AI标题栏使用与导航栏相同的模糊 */
   
   /* Apple 动画变量 */
   --apple-ease: cubic-bezier(0.4, 0, 0.2, 1);
