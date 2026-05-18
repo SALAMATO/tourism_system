@@ -1095,7 +1095,11 @@ class LowSkyAIChat {
     }
       
     this.isOpen = true;
-    this.input.focus();
+    
+    // 只在桌面端自动聚焦输入框，移动端不自动聚焦以避免弹出输入法
+    if (!isMobile) {
+      this.input.focus();
+    }
   }
   
   closeChat() {
