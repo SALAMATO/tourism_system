@@ -118,7 +118,7 @@ class LowSkyAIChat {
     modal.innerHTML = `
       <div class="ai-chat-container">
         <!-- 侧边栏收起/展开按钮 - 固定在左上角 -->
-        <button class="ai-sidebar-toggle-btn" id="ai-sidebar-toggle-btn" title="收起侧边栏">
+        <button class="ai-sidebar-toggle-btn" id="ai-sidebar-toggle-btn" data-tooltip="收起侧边栏">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
             <line x1="9" y1="3" x2="9" y2="21"/>
@@ -126,7 +126,7 @@ class LowSkyAIChat {
         </button>
         
         <!-- 新对话按钮 - 固定在左上角（侧边栏按钮下方） -->
-        <button class="ai-new-conversation-btn-fixed" id="ai-new-conversation-btn" title="新建对话">
+        <button class="ai-new-conversation-btn-fixed" id="ai-new-conversation-btn" data-tooltip="新建对话">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
             <line x1="17" y1="8" x2="17" y2="14"/>
@@ -151,17 +151,17 @@ class LowSkyAIChat {
             <h3><img src="/static/images/AI-icon-Black.png" alt="AI" style="width: 20px; height: 20px; margin-right: 8px;"> LowSkyAI 智能助手</h3>
           </div>
           <div class="ai-chat-controls">
-            <button class="ai-chat-minimize" title="最小化">
+            <button class="ai-chat-minimize" data-tooltip="最小化">
               <svg width="10" height="1" viewBox="0 0 10 1">
                 <rect width="10" height="1" fill="currentColor"/>
               </svg>
             </button>
-            <button class="ai-chat-maximize" title="最大化">
+            <button class="ai-chat-maximize" data-tooltip="最大化">
               <svg width="10" height="10" viewBox="0 0 10 10">
                 <rect x="1" y="1" width="8" height="8" fill="none" stroke="currentColor" stroke-width="1"/>
               </svg>
             </button>
-            <button class="ai-chat-close" title="关闭">
+            <button class="ai-chat-close" data-tooltip="关闭">
               <svg width="10" height="10" viewBox="0 0 10 10">
                 <line x1="0" y1="0" x2="10" y2="10" stroke="currentColor" stroke-width="1"/>
                 <line x1="10" y1="0" x2="0" y2="10" stroke="currentColor" stroke-width="1"/>
@@ -236,7 +236,7 @@ class LowSkyAIChat {
               ></textarea>
               <div class="ai-chat-input-actions">
                 <div class="ai-tool-menu-wrap">
-                  <button class="ai-tool-btn" id="ai-tool-btn" title="选择工具模式">
+                  <button class="ai-tool-btn" id="ai-tool-btn" data-tooltip="选择工具模式">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
                     </svg>
@@ -419,6 +419,43 @@ class LowSkyAIChat {
           m.classList.remove('show');
         });
       }
+    });
+    
+    // 初始化自定义tooltip（无文本按钮提示框）
+    const tooltipButtons = this.modal.querySelectorAll('[data-tooltip]');
+    tooltipButtons.forEach(btn => {
+      let tooltip = null;
+
+      btn.addEventListener('mouseenter', () => {
+        tooltip = document.createElement('div');
+        tooltip.className = 'ai-tooltip';
+        tooltip.textContent = btn.dataset.tooltip;
+        document.body.appendChild(tooltip);
+
+        // 计算位置，显示在按钮正下方
+        const rect = btn.getBoundingClientRect();
+        const tooltipRect = tooltip.getBoundingClientRect();
+        tooltip.style.top = (rect.bottom + 8) + 'px';
+        tooltip.style.left = (rect.left + rect.width / 2 - tooltipRect.width / 2) + 'px';
+
+        // 使用requestAnimationFrame确保样式应用后添加show类
+        requestAnimationFrame(() => {
+          tooltip.classList.add('show');
+        });
+      });
+
+      btn.addEventListener('mouseleave', () => {
+        if (tooltip) {
+          tooltip.classList.remove('show');
+          // 等待transition结束后移除元素
+          setTimeout(() => {
+            if (tooltip && tooltip.parentNode) {
+              tooltip.parentNode.removeChild(tooltip);
+            }
+            tooltip = null;
+          }, 200); // 对应CSS中的transition时间
+        }
+      });
     });
       
     // 绑定拖拽功能

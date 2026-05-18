@@ -3,6 +3,29 @@
    包含：AI聊天窗口、消息气泡、输入区域等
    ============================================ */
 
+/* Tooltip 样式（无文本按钮提示框） */
+.ai-tooltip {
+  position: absolute;
+  background: rgba(40, 40, 40, 0.95);
+  color: #ffffff;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.4;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(-8px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 10000;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.ai-tooltip.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 /* AI助手对话框样式 */
 .ai-chat-modal {
   display: none;
