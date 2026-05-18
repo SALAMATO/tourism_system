@@ -259,9 +259,10 @@
   transition: padding 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* 侧边栏收起时，标题栏增加左侧留白 */
+/* 侧边栏收起时，标题栏增加左侧留白（因为按钮还在） */
 .ai-chat-sidebar.collapsed ~ .ai-chat-main .ai-chat-header {
   padding-left: 96px;
+  transition: padding-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .ai-chat-header-left {
@@ -919,17 +920,24 @@
 
 .ai-chat-sidebar {
   width: 260px;
+  min-width: 260px; /* 确保宽度不会被压缩 */
   background: #f8f9fa;
   border-right: 1px solid rgba(0, 0, 0, 0.08);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+              opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateX(0);
+  opacity: 1;
 }
 
-/* 侧边栏收起状态 */
+/* 侧边栏收起状态 - 向左滑出视野 */
 .ai-chat-sidebar.collapsed {
-  width: 0;
+  transform: translateX(-100%);
+  opacity: 0;
+  margin-left: -260px; /* 完全移除占位空间 */
   border-right: none;
 }
 
@@ -1093,7 +1101,10 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+/* 侧边栏收起时，主内容区域不需要特别处理，因为侧边栏使用了transform滑出 */
 
 /* ============================================
    编辑对话名称弹窗样式（Apple风格）
