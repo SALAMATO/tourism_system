@@ -776,17 +776,25 @@ class LowSkyAIChat {
       quickQueries.style.display = this.toolMode === 'db_only' ? 'block' : 'none';
     }
     
-    // 设置初始缩放状态（从当前位置缩小）
-    container.style.transform = 'scale(0.95)';
+    // 移动端使用淡入动画，桌面端使用缩放动画
+    const isMobile = window.innerWidth <= 768;
     
-    // 强制重绘后显示
-    requestAnimationFrame(() => {
+    if (isMobile) {
+      // 移动端：直接显示，使用CSS opacity过渡
       this.modal.classList.add('show');
-      // 延迟一帧后恢复正常大小，实现从当前位置展开的动画
+    } else {
+      // 桌面端：设置初始缩放状态（从当前位置缩小）
+      container.style.transform = 'scale(0.95)';
+      
+      // 强制重绘后显示
       requestAnimationFrame(() => {
-        container.style.transform = 'scale(1)';
+        this.modal.classList.add('show');
+        // 延迟一帧后恢复正常大小，实现从当前位置展开的动画
+        requestAnimationFrame(() => {
+          container.style.transform = 'scale(1)';
+        });
       });
-    });
+    }
     
     this.isOpen = true;
     this.input.focus();
@@ -805,16 +813,14 @@ class LowSkyAIChat {
     }
     
     const container = this.modal.querySelector('.ai-chat-container');
+    const isMobile = window.innerWidth <= 768;
     
-    // 先缩小到当前位置
-    container.style.transform = 'scale(0.95)';
-    
-    // 延迟后隐藏modal
-    setTimeout(() => {
+    if (isMobile) {
+      // 移动端：直接隐藏modal，使用CSS opacity过渡
       this.modal.classList.remove('show');
       this.isOpen = false;
       
-      // 等待动画完成后再清理状态（350ms与CSS动画时间一致）
+      // 等待动画完成后再清理状态（与CSS动画时间一致）
       setTimeout(() => {
         // 清除最小化和最大化状态
         container.classList.remove('minimized', 'maximized');
@@ -822,11 +828,30 @@ class LowSkyAIChat {
         // 重置最大化按钮图标
         const maximizeBtn = this.modal.querySelector('.ai-chat-maximize svg');
         maximizeBtn.innerHTML = '<rect x="1" y="1" width="8" height="8" fill="none" stroke="currentColor" stroke-width="1"/>';
+      }, 420); // 与--apple-med时间一致
+    } else {
+      // 桌面端：先缩小到当前位置
+      container.style.transform = 'scale(0.95)';
+      
+      // 延迟后隐藏modal
+      setTimeout(() => {
+        this.modal.classList.remove('show');
+        this.isOpen = false;
         
-        // 清除transform
-        container.style.transform = '';
-      }, 350);
-    }, 50);
+        // 等待动画完成后再清理状态（350ms与CSS动画时间一致）
+        setTimeout(() => {
+          // 清除最小化和最大化状态
+          container.classList.remove('minimized', 'maximized');
+          
+          // 重置最大化按钮图标
+          const maximizeBtn = this.modal.querySelector('.ai-chat-maximize svg');
+          maximizeBtn.innerHTML = '<rect x="1" y="1" width="8" height="8" fill="none" stroke="currentColor" stroke-width="1"/>';
+          
+          // 清除transform
+          container.style.transform = '';
+        }, 350);
+      }, 50);
+    }
   }
   
   minimizeChat() {

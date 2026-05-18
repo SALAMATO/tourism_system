@@ -268,13 +268,14 @@
     display: none;
   }
   
-  /* 移动端AI聊天窗口 - 完全覆盖页面 */
+  /* 移动端AI聊天窗口 - Apple级完整动画 */
   .ai-chat-modal {
     top: 0 !important;
     padding-top: 0 !important;
     align-items: stretch !important;
   }
   
+  /* 容器层：整体淡入+展开 */
   .ai-chat-container {
     width: 100% !important;
     height: 100vh !important;
@@ -282,11 +283,46 @@
     max-width: 100% !important;
     border-radius: 0 !important;
     margin: 0 !important;
-    transform: translateY(100%);
+    opacity: 0;
+    transform: translateY(-12px);
+    transition: 
+      opacity var(--apple-med) var(--apple-ease),
+      transform var(--apple-med) var(--apple-ease);
   }
   
   .ai-chat-modal.show .ai-chat-container {
+    opacity: 1;
     transform: translateY(0);
+  }
+  
+  /* 内容区域：Apple级stagger动画 */
+  .ai-chat-header,
+  .ai-chat-messages,
+  .ai-chat-input-area {
+    opacity: 0;
+    transform: translateY(-12px);
+    transition: 
+      opacity var(--apple-med) var(--apple-ease),
+      transform var(--apple-med) var(--apple-ease);
+  }
+  
+  /* Stagger延迟节奏：从0.10s开始，每项递增0.05s */
+  .ai-chat-modal.show .ai-chat-header {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 0.10s;
+  }
+  
+  .ai-chat-modal.show .ai-chat-messages {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 0.15s;
+  }
+  
+  .ai-chat-modal.show .ai-chat-input-area {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 0.20s;
   }
   
   .ai-chat-container .ai-chat-messages,
