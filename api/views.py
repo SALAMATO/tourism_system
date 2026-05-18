@@ -507,6 +507,9 @@ class DestinationViewSet(PublicModelViewSet):
         # 高德地图API密钥
         amap_key = '8fe3ebb5ad6cfbb67e7394f20668e0c7'
         
+        # 初始化 ip 变量，避免后续引用时未定义
+        ip = None
+        
         # 检查用户是否已登录且有缓存的位置信息
         user_city = None
         user_province = None

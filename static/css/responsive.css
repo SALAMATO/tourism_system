@@ -288,11 +288,15 @@
     transition: 
       opacity var(--apple-med) var(--apple-ease),
       transform var(--apple-med) var(--apple-ease);
+    /* 确保移动端立即显示，不需要缩小页面 */
+    visibility: visible;
   }
   
   .ai-chat-modal.show .ai-chat-container {
     opacity: 1;
     transform: translateY(0);
+    /* 确保show状态下完全可见 */
+    visibility: visible !important;
   }
   
   /* 内容区域：Apple级stagger动画 */
