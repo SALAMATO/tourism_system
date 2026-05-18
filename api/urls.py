@@ -4,7 +4,7 @@ from . import views
 from .views import (
     PolicyViewSet, NewsViewSet, SafetyAlertViewSet,
     MessageViewSet, MessageCommentViewSet, StatisticViewSet, DestinationViewSet,
-    UserViewSet, LowSkyAIViewSet
+    UserViewSet, LowSkyAIViewSet, AIConversationViewSet, AIConversationMessageViewSet
 )
 
 
@@ -18,6 +18,7 @@ router.register(r'statistics', StatisticViewSet, basename='statistic')
 router.register(r'destinations', DestinationViewSet, basename='destination')
 router.register(r'user', UserViewSet, basename='user')
 router.register(r'ai', LowSkyAIViewSet, basename='lowsky-ai')
+router.register(r'ai-conversations', AIConversationViewSet, basename='ai-conversation')
 
 
 # 兼容前端：/api/auth/* 作为纯 API（返回 JSON），不再返回 HTML 模板
@@ -28,6 +29,7 @@ auth_me_view = UserViewSet.as_view({'get': 'me'})
 
 urlpatterns = [
     path('ai/clear_history/', views.clear_ai_history, name='clear_ai_history'),
+    path('ai-conversations/<uuid:conversation_id>/messages/', AIConversationMessageViewSet.as_view({'get': 'list', 'post': 'create'}), name='ai-conversation-messages'),
 
     path('auth/register/', auth_register_view, name='auth_register'),
     path('auth/login/', auth_login_view, name='auth_login'),

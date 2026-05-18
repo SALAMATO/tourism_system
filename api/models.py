@@ -1,3 +1,4 @@
+import uuid
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.db.models.signals import post_delete
@@ -481,3 +482,61 @@ class AICache(models.Model):
         """检查缓存是否过期"""
         from django.utils import timezone
         return timezone.now() > self.expires_at
+
+
+class AIConversation(models.Model):
+    """AI聊天会话模型"""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, verbose_name='会话ID')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='ai_conversations', verbose_name='用户')
+    title = models.CharField(max_length=200, verbose_name='会话标题', default='新对话')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
+    
+    class Meta:
+        db_table = 'ai_conversations'
+        verbose_name = 'AI会话'
+        verbose_name_plural = 'AI会话列表'
+        ordering = ['-updated_at']
+        indexes = [
+            models.Index(fields=['user', '-updated_at']),
+        ]
+    
+    def __str__(self):
+        return f"{self.title} - {self.user.username}"
+    
+    def get_message_count(self):
+        """获取消息数量"""
+        return self.messages.count()
+
+
+class AIConversationMessage(models.Model):
+    """AI聊天消息模型"""
+    ROLE_CHOICES = [
+        ('user', '用户'),
+        ('assistant', 'AI助手'),
+        ('system', '系统'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, verbose_name='消息ID')
+    conversation = models.ForeignKey(
+        AIConversation, 
+        on_delete=models.CASCADE, 
+        related_name='messages',
+        verbose_name='所属会话'
+    )
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, verbose_name='角色')
+    content = models.TextField(verbose_name='消息内容')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+    
+    class Meta:
+        db_table = 'ai_conversation_messages'
+        verbose_name = '聊天消息'
+        verbose_name_plural = '聊天消息列表'
+        ordering = ['created_at']
+        indexes = [
+            models.Index(fields=['conversation', 'created_at']),
+        ]
+    
+    def __str__(self):
+        content_preview = self.content[:50] + '...' if len(self.content) > 50 else self.content
+        return f"[{self.get_role_display()}] {content_preview}"

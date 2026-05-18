@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.utils import timezone
 from django.contrib.auth import get_user_model
-from .models import Policy, News, SafetyAlert, Message, MessageComment, MessageLike, Statistic, Destination
+from .models import Policy, News, SafetyAlert, Message, MessageComment, MessageLike, Statistic, Destination, AIConversation, AIConversationMessage
 from .media_manager import MediaFileManager
 
 User = get_user_model()
@@ -424,5 +424,34 @@ class StatisticSerializer(serializers.ModelSerializer):
     class Meta:
         model = Statistic
         fields = '__all__'
+
+
+class AIConversationSerializer(serializers.ModelSerializer):
+    """AI会话序列化器"""
+    message_count = serializers.SerializerMethodField(read_only=True)
+    last_message_preview = serializers.SerializerMethodField(read_only=True)
+    
+    class Meta:
+        model = AIConversation
+        fields = ['id', 'title', 'created_at', 'updated_at', 'message_count', 'last_message_preview']
+        read_only_fields = ['created_at', 'updated_at']
+    
+    def get_message_count(self, obj):
+        return obj.get_message_count()
+    
+    def get_last_message_preview(self, obj):
+        last_message = obj.messages.last()
+        if last_message:
+            content = last_message.content[:100]
+            return content + '...' if len(last_message.content) > 100 else content
+        return ''
+
+
+class AIConversationMessageSerializer(serializers.ModelSerializer):
+    """AI会话消息序列化器"""
+    class Meta:
+        model = AIConversationMessage
+        fields = ['id', 'role', 'content', 'created_at']
+        read_only_fields = ['created_at']
 
 

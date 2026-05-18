@@ -8,12 +8,13 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate, get_user_model
-from .models import Policy, News, SafetyAlert, Message, MessageComment, MessageLike, Statistic, Destination, ChinaCity
+from .models import Policy, News, SafetyAlert, Message, MessageComment, MessageLike, Statistic, Destination, ChinaCity, AIConversation, AIConversationMessage
 from .serializers import (
     PolicySerializer, NewsSerializer, SafetyAlertSerializer,
     MessageSerializer, MessageCommentSerializer, MessageLikeSerializer,
     StatisticSerializer, DestinationSerializer,
-    UserSerializer, UserRegisterSerializer
+    UserSerializer, UserRegisterSerializer,
+    AIConversationSerializer, AIConversationMessageSerializer
 )
 from ai import lowsky_ai
 from ai.config import DB_MODEL
@@ -1500,31 +1501,36 @@ class LowSkyAIViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['post'])
     def chat_stream(self, request):
         """与AI对话（流式）
-        
+            
         支持 tool_mode 参数：
           - 'auto'     : 默认，AI 自行决定是否调用工具
           - 'db_only'  : 强制只查询本地数据库（db_query 工具）
           - 'web_only' : 强制只使用联网搜索（search_web 工具）
+            
+        支持 conversation_id 参数：
+          - 如果提供，则在指定会话中继续对话
+          - 如果不提供，则使用当前临时会话
         """
         from django.http import StreamingHttpResponse
         import json
-        
+            
         message = request.data.get('message')
         context = request.data.get('context', {})
         tool_mode = request.data.get('tool_mode', 'auto')  # 新增：工具模式
-        
+        conversation_id = request.data.get('conversation_id')  # 会话ID
+            
         if not message:
             return Response({'error': '消息不能为空'}, status=status.HTTP_400_BAD_REQUEST)
-        
+                
         def event_stream():
             try:
                 # ── 本地数据库模式：使用带缓存的 DatabaseQueryTool ────────────────
                 if tool_mode == 'db_only':
                     from ai.db_tools import get_db_tool
                     from ai.config import QIANWEN_API_KEY, QIANWEN_BASE_URL
-                    
-                    yield f"data: {json.dumps({'content': '🔍 正在查询本地数据库...'})}\n\n"
-                    
+                        
+                    yield f"data: {json.dumps({'content': '🔍 正在查询本地数据库...' })}\n\n"
+                        
                     # 使用带缓存的 DatabaseQueryTool（而不是直接使用 SQLDatabaseChain）
                     llm_config = {
                         'api_key': QIANWEN_API_KEY,
@@ -1532,27 +1538,73 @@ class LowSkyAIViewSet(viewsets.ViewSet):
                     }
                     db_tool = get_db_tool(llm_config)
                     result = db_tool.query(message)  # 这里会使用缓存！
-                    
+                        
+                    # 收集完整回复以便保存
+                    full_response = result
+                        
                     # 分块输出结果（模拟流式）
                     chunk_size = 20
                     for i in range(0, len(result), chunk_size):
                         yield f"data: {json.dumps({'content': result[i:i+chunk_size]})}\n\n"
                     yield f"data: {json.dumps({'done': True})}\n\n"
+                        
+                    # 保存AI回复
+                    if request.user.is_authenticated and conversation_id:
+                        try:
+                            from .models import AIConversation, AIConversationMessage
+                            conversation = AIConversation.objects.get(
+                                id=conversation_id,
+                                user=request.user
+                            )
+                            AIConversationMessage.objects.create(
+                                conversation=conversation,
+                                role='assistant',
+                                content=full_response
+                            )
+                            # 更新会话的更新时间
+                            conversation.save()
+                            print(f"✅ 已保存AI回复到会话 {conversation_id}")
+                        except Exception as e:
+                            print(f"❌ 保存AI回复失败: {e}")
                     return
-                
-                # ── 联网搜索模式：在消息前加强制指令（使用系统级标记，不会被显示） ──
+                    
+                # ── 联网搜索模式：在消息前加强制指令（使用系统级标记，不会被显示） ─
                 forced_message = message
                 if tool_mode == 'web_only':
                     # 使用特殊的系统标记，AI会识别但不会在回复中重复
                     forced_message = f'<SYSTEM_INSTRUCTION:FORCE_WEB_SEARCH>{message}'
-                
-                # ✅ 传递request对象以支持位置获取
-                for chunk in lowsky_ai.chat_stream(forced_message, context, request=request):
+                    
+                # 收集AI的完整回复（用于保存到数据库）
+                full_response_parts = []
+                    
+                # ✅ 传递request对象和conversation_id以支持位置获取和会话保存
+                for chunk in lowsky_ai.chat_stream(forced_message, context, request=request, conversation_id=conversation_id):
+                    full_response_parts.append(chunk)
                     yield f"data: {json.dumps({'content': chunk})}\n\n"
                 yield f"data: {json.dumps({'done': True})}\n\n"
+                    
+                # 保存AI回复到数据库
+                if request.user.is_authenticated and conversation_id:
+                    try:
+                        from .models import AIConversation, AIConversationMessage
+                        full_response = ''.join(full_response_parts)
+                        conversation = AIConversation.objects.get(
+                            id=conversation_id,
+                            user=request.user
+                        )
+                        AIConversationMessage.objects.create(
+                            conversation=conversation,
+                            role='assistant',
+                            content=full_response
+                        )
+                        # 更新会话的更新时间
+                        conversation.save()
+                        print(f"✅ 已保存AI回复到会话 {conversation_id}")
+                    except Exception as e:
+                        print(f"❌ 保存AI回复失败: {e}")
             except Exception as e:
                 yield f"data: {json.dumps({'error': str(e)})}\n\n"
-        
+            
         response = StreamingHttpResponse(event_stream(), content_type='text/event-stream')
         response['Cache-Control'] = 'no-cache'
         response['X-Accel-Buffering'] = 'no'
@@ -1755,4 +1807,47 @@ def clear_ai_history(request):
             'success': False,
             'error': str(e)
         }, status=500)
+
+
+# AI会话管理视图集
+class AIConversationViewSet(viewsets.ModelViewSet):
+    """AI会话管理视图集"""
+    queryset = AIConversation.objects.all()
+    serializer_class = AIConversationSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        """只返回当前用户的会话"""
+        return self.queryset.filter(user=self.request.user).order_by('-updated_at')
+    
+    def perform_create(self, serializer):
+        """创建会话时自动关联当前用户"""
+        serializer.save(user=self.request.user)
+
+
+class AIConversationMessageViewSet(viewsets.ModelViewSet):
+    """AI会话消息视图集"""
+    queryset = AIConversationMessage.objects.all()
+    serializer_class = AIConversationMessageSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        """返回指定会话的消息"""
+        conversation_id = self.kwargs.get('conversation_id')
+        return self.queryset.filter(
+            conversation_id=conversation_id,
+            conversation__user=self.request.user
+        ).order_by('created_at')
+    
+    def perform_create(self, serializer):
+        """创建消息时验证会话归属"""
+        conversation_id = self.kwargs.get('conversation_id')
+        try:
+            conversation = AIConversation.objects.get(
+                id=conversation_id,
+                user=self.request.user
+            )
+            serializer.save(conversation=conversation)
+        except AIConversation.DoesNotExist:
+            raise serializers.ValidationError('会话不存在或无权访问')
 

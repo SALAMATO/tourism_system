@@ -16,6 +16,11 @@ class LowSkyAIChat {
     this.isMaximized = false; // 记住最大化状态
     this.hasOpenedBefore = false; // 标记是否是页面刷新后第一次打开
     
+    // 会话管理相关
+    this.currentConversationId = null; // 当前会话ID
+    this.conversations = []; // 会话列表
+    this.currentConversationTitle = '新对话'; // 当前会话标题
+    
     // 拖拽相关
     this.isDragging = false;
     this.dragOffsetX = 0;  // 鼠标相对于容器左上角的X偏移
@@ -95,7 +100,25 @@ class LowSkyAIChat {
     modal.className = 'ai-chat-modal';
     modal.innerHTML = `
       <div class="ai-chat-container">
-        <div class="ai-chat-header">
+        <!-- 左侧会话列表 -->
+        <div class="ai-chat-sidebar" id="ai-chat-sidebar">
+          <div class="ai-sidebar-header">
+            <h3>对话历史</h3>
+            <button class="ai-new-conversation-btn" id="ai-new-conversation-btn" title="新建对话">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 5v14M5 12h14"/>
+              </svg>
+              新对话
+            </button>
+          </div>
+          <div class="ai-conversation-list" id="ai-conversation-list">
+            <!-- 会话列表将在这里动态生成 -->
+          </div>
+        </div>
+        
+        <!-- 右侧聊天区域 -->
+        <div class="ai-chat-main">
+          <div class="ai-chat-header">
           <h3><img src="/static/images/AI-icon-Black.png" alt="AI" style="width: 20px; height: 20px; margin-right: 8px;"> LowSkyAI 智能助手</h3>
           <div class="ai-chat-controls">
             <button class="ai-chat-minimize" title="最小化">
@@ -258,27 +281,35 @@ class LowSkyAIChat {
     this.stopBtn = modal.querySelector('#ai-chat-stop');
     this.toolBtn = modal.querySelector('#ai-tool-btn');
     this.toolMenu = modal.querySelector('#ai-tool-menu');
+    this.sidebar = modal.querySelector('#ai-chat-sidebar');
+    this.conversationList = modal.querySelector('#ai-conversation-list');
   }
   
   bindEvents() {
     // 关闭按钮
     const closeBtn = this.modal.querySelector('.ai-chat-close');
     closeBtn.onclick = () => this.closeChat();
-    
+      
     // 最小化按钮 - 直接关闭对话框
     const minimizeBtn = this.modal.querySelector('.ai-chat-minimize');
     minimizeBtn.onclick = () => this.closeChat();
-    
+      
     // 最大化/还原按钮
     const maximizeBtn = this.modal.querySelector('.ai-chat-maximize');
     maximizeBtn.onclick = () => this.toggleMaximize();
-    
+      
     // 发送按钮
     this.sendBtn.onclick = () => this.sendMessage();
-    
+      
     // 停止按钮
     this.stopBtn.onclick = () => this.stopGeneration();
-    
+      
+    // 新建对话按钮
+    const newConversationBtn = this.modal.querySelector('#ai-new-conversation-btn');
+    if (newConversationBtn) {
+      newConversationBtn.onclick = () => this.createNewConversation();
+    }
+      
     // 快速查询按钮
     this.messagesContainer.addEventListener('click', (e) => {
       const quickQueryBtn = e.target.closest('.ai-quick-query-item');
@@ -290,7 +321,7 @@ class LowSkyAIChat {
         }
       }
     });
-    
+      
     // 输入框回车发送
     this.input.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && !e.shiftKey) {
@@ -298,13 +329,13 @@ class LowSkyAIChat {
         this.sendMessage();
       }
     });
-    
+      
     // 自动调整输入框高度
     this.input.addEventListener('input', () => {
       this.input.style.height = 'auto';
       this.input.style.height = this.input.scrollHeight + 'px';
     });
-    
+      
     // ESC键关闭
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && this.isOpen) {
@@ -315,8 +346,8 @@ class LowSkyAIChat {
         }
       }
     });
-
-    // 工具模式按鈕
+  
+    // 工具模式按钮
     this.toolBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       this.toolMenu.classList.toggle('show');
@@ -332,7 +363,7 @@ class LowSkyAIChat {
         this.toolMenu.classList.remove('show');
       }
     });
-    
+      
     // 绑定拖拽功能
     this.bindDragEvents();
   }
@@ -776,6 +807,9 @@ class LowSkyAIChat {
       quickQueries.style.display = this.toolMode === 'db_only' ? 'block' : 'none';
     }
     
+    // 加载会话列表
+    this.loadConversations();
+    
     // 移动端使用淡入动画，桌面端使用缩放动画
     const isMobile = window.innerWidth <= 768;
     
@@ -985,6 +1019,14 @@ class LowSkyAIChat {
     const message = this.input.value.trim();
     if (!message || this.isGenerating) return;
     
+    // 如果没有当前会话，先创建一个新会话
+    if (!this.currentConversationId) {
+      await this.createNewConversation(message);
+    }
+    
+    // 保存用户消息到服务器
+    await this.saveUserMessage(message);
+    
     // 清空输入框
     this.input.value = '';
     this.input.style.height = 'auto';
@@ -1030,6 +1072,7 @@ class LowSkyAIChat {
         body: JSON.stringify({
           message: message,
           tool_mode: this.toolMode,
+          conversation_id: this.currentConversationId, // 传递会话ID
           context: {
             page: window.location.pathname,
             timestamp: new Date().toISOString()
@@ -1407,6 +1450,333 @@ class LowSkyAIChat {
     
     // 保存到历史
     this.messages.push({ role, content, timestamp: new Date() });
+  }
+  
+  // ========== 会话管理方法 ==========
+  
+  /**
+   * 创建新会话
+   */
+  async createNewConversation(firstMessage = null) {
+    try {
+      // 生成一个临时ID用于前端显示
+      const tempId = 'temp_' + Date.now();
+      
+      // 如果有第一条消息，使用它作为标题
+      const title = firstMessage ? (firstMessage.substring(0, 30) + (firstMessage.length > 30 ? '...' : '')) : '新对话';
+      
+      // 添加到前端列表（乐观更新）
+      const tempConversation = {
+        id: tempId,
+        title: title,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        message_count: firstMessage ? 1 : 0,
+        last_message_preview: firstMessage || ''
+      };
+      
+      this.conversations.unshift(tempConversation);
+      this.currentConversationId = tempId;
+      this.currentConversationTitle = title;
+      
+      // 更新UI
+      this.renderConversationList();
+      
+      // 如果是空对话，清空消息区域
+      if (!firstMessage) {
+        this.clearHistory();
+      }
+      
+      // 异步保存到服务器，并等待完成
+      if (firstMessage) {
+        await this.saveConversationToServer(tempId, title);
+      }
+      
+      return tempId;
+    } catch (error) {
+      console.error('创建会话失败:', error);
+    }
+  }
+  
+  /**
+   * 保存用户消息到服务器
+   */
+  async saveUserMessage(content) {
+    try {
+      const token = localStorage.getItem('auth_token');
+      if (!token || !this.currentConversationId) return; // 未登录或没有会话ID不保存
+      
+      // 如果是临时ID，等待会话创建完成
+      if (this.currentConversationId.startsWith('temp_')) {
+        console.log('等待会话创建完成...');
+        // 最多等待5秒，每次检查间隔100ms
+        let waitTime = 0;
+        const maxWaitTime = 5000;
+        const checkInterval = 100;
+        
+        while (this.currentConversationId.startsWith('temp_') && waitTime < maxWaitTime) {
+          await new Promise(resolve => setTimeout(resolve, checkInterval));
+          waitTime += checkInterval;
+        }
+        
+        // 如果还是临时ID，说明会话创建失败
+        if (this.currentConversationId.startsWith('temp_')) {
+          console.error('会话创建超时，无法保存用户消息');
+          return;
+        }
+        
+        console.log('会话创建完成，继续保存消息');
+      }
+      
+      const response = await fetch(`/api/ai-conversations/${this.currentConversationId}/messages/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Token ${token}`
+        },
+        body: JSON.stringify({
+          role: 'user',
+          content: content
+        })
+      });
+      
+      if (!response.ok) {
+        console.error('保存用户消息失败:', response.status, await response.text());
+      } else {
+        console.log('用户消息保存成功');
+      }
+    } catch (error) {
+      console.error('保存用户消息异常:', error);
+    }
+  }
+  
+  /**
+   * 保存会话到服务器
+   */
+  async saveConversationToServer(tempId, title) {
+    try {
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        console.warn('未登录，跳过保存会话');
+        return;
+      }
+      
+      console.log('正在创建会话:', title);
+      
+      const response = await fetch('/api/ai-conversations/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Token ${token}`
+        },
+        body: JSON.stringify({
+          title: title
+        })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('会话创建成功，ID:', data.id);
+        
+        // 替换临时ID为真实ID
+        const index = this.conversations.findIndex(c => c.id === tempId);
+        if (index !== -1) {
+          this.conversations[index] = data;
+          if (this.currentConversationId === tempId) {
+            this.currentConversationId = data.id;
+            console.log('已更新当前会话ID为:', data.id);
+          }
+          this.renderConversationList();
+        }
+      } else {
+        console.error('创建会话失败:', response.status, await response.text());
+      }
+    } catch (error) {
+      console.error('保存会话异常:', error);
+    }
+  }
+  
+  /**
+   * 加载会话列表
+   */
+  async loadConversations() {
+    try {
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        // 未登录用户不加载历史记录
+        this.conversations = [];
+        this.renderConversationList();
+        return;
+      }
+      
+      const response = await fetch('/api/ai-conversations/', {
+        headers: {
+          'Authorization': `Token ${token}`
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        this.conversations = data.results || data;
+        this.renderConversationList();
+        
+        // 如果有会话，默认选中第一个
+        if (this.conversations.length > 0 && !this.currentConversationId) {
+          await this.switchConversation(this.conversations[0].id);
+        }
+      }
+    } catch (error) {
+      console.error('加载会话列表失败:', error);
+    }
+  }
+  
+  /**
+   * 切换会话
+   */
+  async switchConversation(conversationId) {
+    try {
+      const token = localStorage.getItem('auth_token');
+      if (!token) return;
+      
+      // 更新当前会话ID
+      this.currentConversationId = conversationId;
+      
+      // 获取会话标题
+      const conversation = this.conversations.find(c => c.id === conversationId);
+      if (conversation) {
+        this.currentConversationTitle = conversation.title;
+      }
+      
+      // 更新UI高亮
+      this.renderConversationList();
+      
+      // 只有非临时ID才加载消息历史
+      if (!conversationId.startsWith('temp_')) {
+        await this.loadConversationMessages(conversationId);
+      } else {
+        // 临时会话，清空消息区域显示欢迎信息
+        this.clearHistory();
+      }
+    } catch (error) {
+      console.error('切换会话失败:', error);
+    }
+  }
+  
+  /**
+   * 加载会话消息
+   */
+  async loadConversationMessages(conversationId) {
+    try {
+      const token = localStorage.getItem('auth_token');
+      if (!token) return;
+      
+      // 如果是临时ID，不尝试从服务器加载消息
+      if (conversationId.startsWith('temp_')) {
+        console.log('临时会话ID，跳过加载消息');
+        return;
+      }
+      
+      const response = await fetch(`/api/ai-conversations/${conversationId}/messages/`, {
+        headers: {
+          'Authorization': `Token ${token}`
+        }
+      });
+      
+      if (response.ok) {
+        const messages = await response.json();
+        
+        // 清空当前显示
+        this.messagesContainer.innerHTML = '';
+        this.messages = [];
+        
+        // 显示所有消息
+        if (messages.results) {
+          messages.results.forEach(msg => {
+            const messageDiv = this.createMessageElement(msg.role, msg.content);
+            this.messagesContainer.appendChild(messageDiv);
+            this.messages.push({ role: msg.role, content: msg.content, timestamp: new Date(msg.created_at) });
+          });
+        } else if (Array.isArray(messages)) {
+          messages.forEach(msg => {
+            const messageDiv = this.createMessageElement(msg.role, msg.content);
+            this.messagesContainer.appendChild(messageDiv);
+            this.messages.push({ role: msg.role, content: msg.content, timestamp: new Date(msg.created_at) });
+          });
+        }
+        
+        // 滚动到底部
+        if (this.messages.length > 0) {
+          this.smoothScrollToBottom();
+        }
+      }
+    } catch (error) {
+      console.error('加载消息失败:', error);
+    }
+  }
+  
+  /**
+   * 渲染会话列表
+   */
+  renderConversationList() {
+    const listElement = this.conversationList;
+    if (!listElement) return;
+    
+    listElement.innerHTML = '';
+    
+    if (this.conversations.length === 0) {
+      listElement.innerHTML = '<div class="ai-empty-conversations">暂无对话历史</div>';
+      return;
+    }
+    
+    this.conversations.forEach(conv => {
+      const item = document.createElement('div');
+      item.className = 'ai-conversation-item' + (conv.id === this.currentConversationId ? ' active' : '');
+      item.dataset.id = conv.id;
+      
+      // 生成预览文本
+      const preview = conv.last_message_preview || conv.title || '新对话';
+      const time = conv.updated_at ? this.formatTime(conv.updated_at) : '';
+      
+      item.innerHTML = `
+        <div class="ai-conversation-title">${conv.title || '新对话'}</div>
+        <div class="ai-conversation-preview">${preview}</div>
+        <div class="ai-conversation-time">${time}</div>
+      `;
+      
+      item.onclick = () => this.switchConversation(conv.id);
+      listElement.appendChild(item);
+    });
+  }
+  
+  /**
+   * 格式化时间
+   */
+  formatTime(dateStr) {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diff = now - date;
+    
+    // 小于1小时，显示"x分钟前"
+    if (diff < 3600000) {
+      const minutes = Math.floor(diff / 60000);
+      return minutes === 0 ? '刚刚' : `${minutes}分钟前`;
+    }
+    
+    // 小于24小时，显示"x小时前"
+    if (diff < 86400000) {
+      const hours = Math.floor(diff / 3600000);
+      return `${hours}小时前`;
+    }
+    
+    // 小于7天，显示"x天前"
+    if (diff < 604800000) {
+      const days = Math.floor(diff / 86400000);
+      return `${days}天前`;
+    }
+    
+    // 否则显示日期
+    return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
   }
   
   clearHistory() {

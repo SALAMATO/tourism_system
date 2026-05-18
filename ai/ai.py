@@ -41,6 +41,7 @@ class LowSkyAI:
         self.conversation_history: List[Dict[str, str]] = []
         self.system_prompt = self._get_system_prompt()
         self.tools = None
+        self._current_conversation_id = None  # 当前会话ID
         self._init_tools()
         
     def _init_tools(self):
@@ -183,7 +184,8 @@ Be professional and friendly."""
         message: str,
         context: Optional[Dict[str, Any]] = None,
         stream: bool = True,
-        request=None
+        request=None,
+        conversation_id: str = None
     ) -> Dict[str, Any]:
         """Send message and get AI reply"""
         if not self.current_model or self.current_model not in self.models:
@@ -234,7 +236,8 @@ Be professional and friendly."""
         self,
         message: str,
         context: Optional[Dict[str, Any]] = None,
-        request=None
+        request=None,
+        conversation_id: str = None
     ) -> Generator[str, None, None]:
         """Streaming chat generator - 使用官方流式输出方法，实时格式化"""
         if not self.current_model or self.current_model not in self.models:
