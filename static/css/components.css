@@ -776,7 +776,7 @@
   min-width: 160px;
   box-shadow: var(--shadow-lg);
   border-radius: 12px;
-  z-index: 1000;
+  z-index: 10002; /* 提高z-index，确保在移动端历史页面中不被聊天容器覆盖 */
   margin-top: 4px;
   overflow: hidden;
   border: 1px solid var(--border-color);

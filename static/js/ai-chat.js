@@ -2622,9 +2622,9 @@ class LowSkyAIChat {
         const clickX = e.clientX;
         const viewportWidth = window.innerWidth;
         
-        // 如果点击在聊天窗口的可见区域内（右侧25%），关闭历史页面
-        // 聊天窗口向右移动了75%，所以可见区域是从 25% 到 100%
-        if (clickX > viewportWidth * 0.25) {
+        // 如果点击在聊天窗口的可见区域内（右侧85%），关闭历史页面
+        // 聊天窗口向右移动了85%，所以可见区域是从 15% 到 100%
+        if (clickX > viewportWidth * 0.15) {
           // 点击在聊天窗口可见区域，关闭历史页面
           this.closeMobileHistoryPage(chatContainer, mobileHistoryPage);
           this.currentLevel = 0; // 返回主聊天页面

@@ -1054,7 +1054,7 @@ body.ai-chat-maximized {
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   min-width: 160px;
-  z-index: 1000;
+  z-index: 10002; /* 提高z-index，确保在移动端历史页面中不被聊天容器覆盖 */
   overflow: hidden;
 }
 
@@ -1323,7 +1323,7 @@ body.ai-chat-maximized {
     position: fixed;
     top: 0;
     left: 0;
-    right: 0;
+    width: 100%; /* 占据85%的宽度，右侧留出15%给聊天窗口 */
     bottom: 0;
     background: #f8f9fa;
     z-index: 10000; /* 底层 */
@@ -1403,6 +1403,11 @@ body.ai-chat-maximized {
     padding-top: 70px; /* 为左上角新对话胶囊按钮留出空间 */
   }
   
+  /* 移动端历史页面会话项宽度限制 - 避免被聊天窗口覆盖 */
+  .ai-conversation-item {
+    max-width: calc(85% - 24px); /* 限制最大宽度为85%减去左右padding */
+  }
+  
   /* 移动端聊天窗口动画 - iOS风格卡片覆盖 */
   .ai-chat-container {
     transition: 
@@ -1417,7 +1422,7 @@ body.ai-chat-maximized {
   }
   
   .ai-chat-container.history-visible {
-    transform: translateX(75%) !important; /* 向右移动75%，露出左侧25% */
+    transform: translateX(85%) !important; /* 向右移动85%，露出左侧15% */
     border-radius: 20px !important; /* 圆角 */
     box-shadow: -10px 0 40px rgba(0, 0, 0, 0.2) !important; /* 左侧阴影 */
   }
