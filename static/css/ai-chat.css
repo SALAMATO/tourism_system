@@ -1043,6 +1043,149 @@
   overflow: hidden;
 }
 
+/* ============================================
+   编辑对话名称弹窗样式（Apple风格）
+   ============================================ */
+
+.ai-edit-name-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 10001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.ai-edit-name-modal {
+  background: white;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 480px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: modalSlideIn 0.3s ease;
+  overflow: hidden;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.ai-edit-name-header {
+  padding: 20px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ai-edit-name-header h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.ai-edit-name-close {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ai-edit-name-close:hover {
+  color: var(--text-primary);
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 8px;
+}
+
+.ai-edit-name-body {
+  padding: 24px;
+}
+
+.ai-edit-name-input {
+  width: 100%;
+  padding: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  font-size: 16px;
+  font-family: var(--font-family);
+  resize: vertical;
+  line-height: 1.5;
+  color: var(--text-primary);
+  background: #f5f5f7;
+  transition: all 0.3s ease;
+  min-height: 80px;
+}
+
+.ai-edit-name-input:focus {
+  outline: none;
+  border-color: rgba(102, 126, 234, 0.5);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  background: white;
+}
+
+.ai-edit-name-input::placeholder {
+  color: #999;
+}
+
+.ai-edit-name-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.ai-edit-name-cancel,
+.ai-edit-name-confirm {
+  padding: 10px 24px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.ai-edit-name-cancel {
+  background: #f5f5f7;
+  color: var(--text-primary);
+}
+
+.ai-edit-name-cancel:hover {
+  background: #e5e5e7;
+}
+
+.ai-edit-name-confirm {
+  background: var(--text-primary);
+  color: white;
+}
+
+.ai-edit-name-confirm:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
 /* 移动端响应式：隐藏侧边栏 */
 @media (max-width: 768px) {
   .ai-chat-sidebar {

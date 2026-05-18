@@ -21,6 +21,9 @@ class LowSkyAIChat {
     this.conversations = []; // 会话列表
     this.currentConversationTitle = '新对话'; // 当前会话标题
     
+    // 编辑名称相关
+    this.editConversationId = null; // 当前正在编辑的会话ID
+    
     // 检查是否是关闭浏览器后重新打开（使用sessionStorage）
     // sessionStorage在关闭标签页后会自动清除
     const hasVisitedBefore = sessionStorage.getItem('ai-chat-visited');
@@ -1909,6 +1912,13 @@ class LowSkyAIChat {
               </svg>
             </button>
             <div class="dropdown-content" id="conversation-menu-${conv.id}">
+              <button class="dropdown-item" onclick="event.stopPropagation(); window.lowSkyAI.editConversationName('${conv.id}')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+                编辑名称
+              </button>
               <button class="dropdown-item danger" onclick="event.stopPropagation(); window.lowSkyAI.deleteConversation('${conv.id}')">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
@@ -1973,6 +1983,161 @@ class LowSkyAIChat {
     menu.classList.toggle('show');
   }
     
+  /**
+   * 编辑对话名称
+   */
+  editConversationName(conversationId) {
+    // 关闭下拉菜单
+    document.querySelectorAll('.dropdown-content').forEach(m => {
+      m.classList.remove('show');
+    });
+    
+    // 获取当前会话
+    const conversation = this.conversations.find(c => c.id === conversationId);
+    if (!conversation) return;
+    
+    // 创建编辑名称弹窗
+    this.showEditNameModal(conversation);
+  }
+  
+  /**
+   * 显示编辑名称弹窗
+   */
+  showEditNameModal(conversation) {
+    // 移除已有的弹窗
+    this.removeEditNameModal();
+    
+    // 创建弹窗HTML
+    const modalHTML = `
+      <div class="ai-edit-name-overlay" id="ai-edit-name-overlay">
+        <div class="ai-edit-name-modal">
+          <div class="ai-edit-name-header">
+            <h3>编辑对话名称</h3>
+            <button class="ai-edit-name-close" onclick="window.lowSkyAI.removeEditNameModal()">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+          <div class="ai-edit-name-body">
+            <textarea class="ai-edit-name-input" id="ai-edit-name-input" rows="3" placeholder="请输入对话名称">${conversation.title || '新对话'}</textarea>
+            <div class="ai-edit-name-footer">
+              <button class="ai-edit-name-cancel" onclick="window.lowSkyAI.removeEditNameModal()">取消</button>
+              <button class="ai-edit-name-confirm" onclick="window.lowSkyAI.saveConversationName('${conversation.id}')">确认</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    // 添加到页面
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    document.body.style.overflow = 'hidden';
+    
+    // 聚焦到输入框并选中所有文本
+    setTimeout(() => {
+      const input = document.getElementById('ai-edit-name-input');
+      if (input) {
+        input.focus();
+        input.select();
+      }
+    }, 100);
+    
+    // ESC键关闭弹窗
+    const handleEscKey = (e) => {
+      if (e.key === 'Escape') {
+        this.removeEditNameModal();
+        document.removeEventListener('keydown', handleEscKey);
+      }
+    };
+    document.addEventListener('keydown', handleEscKey);
+    
+    // 点击遮罩层关闭
+    const overlay = document.getElementById('ai-edit-name-overlay');
+    if (overlay) {
+      overlay.onclick = (e) => {
+        if (e.target === overlay) {
+          this.removeEditNameModal();
+        }
+      };
+    }
+  }
+  
+  /**
+   * 移除编辑名称弹窗
+   */
+  removeEditNameModal() {
+    const overlay = document.getElementById('ai-edit-name-overlay');
+    if (overlay) {
+      overlay.remove();
+      document.body.style.overflow = '';
+    }
+  }
+  
+  /**
+   * 保存对话名称
+   */
+  async saveConversationName(conversationId) {
+    const input = document.getElementById('ai-edit-name-input');
+    if (!input) return;
+    
+    const newTitle = input.value.trim();
+    if (!newTitle) {
+      showNotification('对话名称不能为空', 'error');
+      return;
+    }
+    
+    try {
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        showNotification('请先登录', 'error');
+        return;
+      }
+      
+      const response = await fetch(`/api/ai-conversations/${conversationId}/`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Token ${token}`
+        },
+        body: JSON.stringify({
+          title: newTitle
+        })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        
+        // 更新本地数据
+        const conversation = this.conversations.find(c => c.id === conversationId);
+        if (conversation) {
+          conversation.title = data.title;
+        }
+        
+        // 如果修改的是当前会话，更新标题
+        if (this.currentConversationId === conversationId) {
+          this.currentConversationTitle = data.title;
+        }
+        
+        // 重新渲染列表
+        this.renderConversationList();
+        
+        // 关闭弹窗
+        this.removeEditNameModal();
+        
+        showNotification('名称修改成功', 'success');
+      } else {
+        const errorText = await response.text();
+        console.error('修改名称失败:', response.status, errorText);
+        showNotification('修改失败，请稍后重试', 'error');
+      }
+    } catch (error) {
+      console.error('修改名称异常:', error);
+      showNotification('修改失败，请稍后重试', 'error');
+    }
+  }
+  
   /**
    * 删除对话
    */
