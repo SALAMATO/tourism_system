@@ -1453,7 +1453,7 @@ body.ai-chat-maximized {
     background: #f5f5f7;
     border-radius: 24px;
     padding: 6px;
-    gap: 0;
+    gap: 8px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   }
   
