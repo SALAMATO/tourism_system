@@ -1121,7 +1121,7 @@ body.ai-chat-maximized {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.4);
+  
   z-index: 10001;
   display: flex;
   align-items: center;
@@ -1318,7 +1318,7 @@ body.ai-chat-maximized {
     height: 16px;
   }
   
-  /* 移动端对话历史页面 - 位于聊天窗口下层 */
+  /* 移动端对话历史页面 - 中间层 */
   .ai-mobile-history-page {
     position: fixed;
     top: 0;
@@ -1326,12 +1326,17 @@ body.ai-chat-maximized {
     right: 0;
     bottom: 0;
     background: #f8f9fa;
-    z-index: 10002; /* 低于聊天窗口 */
+    z-index: 10002; /* 中间层 */
     display: flex;
     flex-direction: column;
-    pointer-events: auto; /* 确保能接收点击事件 */
-    transform: translateX(0); /* 历史页面始终在原始位置 */
-    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(-100%); /* 初始在左侧外面 */
+    transition: transform 0.35s cubic-bezier(0.25, 0.1, 0.25, 1);
+  }
+  
+  /* 历史页面滑入状态 */
+  .ai-mobile-history-page.slide-in {
+    transform: translateX(0);
   }
   
   /* 历史页面上的遮罩层 - iOS风格的暗色背景 */
@@ -1348,9 +1353,7 @@ body.ai-chat-maximized {
     z-index: -1;
   }
   
-  .ai-mobile-history-page.visible::before {
-     /* iOS风格的遮罩透明度 */
-  }
+  .ai-mobile-history-page.darken::before
   
   .ai-mobile-history-header {
     display: none !important;

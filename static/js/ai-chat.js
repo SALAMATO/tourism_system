@@ -21,6 +21,10 @@ class LowSkyAIChat {
     this.conversations = []; // 会话列表
     this.currentConversationTitle = '新对话'; // 当前会话标题
     
+    // 三层页面层级管理
+    this.currentLevel = 0; // 0=主页面, 1=历史页面, 2=聊天页面
+    this.isChatOpen = false; // 聊天窗口是否打开
+    
     // 编辑名称相关
     this.editConversationId = null; // 当前正在编辑的会话ID
     
@@ -2519,7 +2523,10 @@ class LowSkyAIChat {
   }
   
   /**
-   * 移动端切换侧栏显示状态 - 使用全屏页面切换（对话历史在下层）
+   * 移动端切换侧栏显示状态 - 使用全屏页面切换（对话历史在中间层）
+   * Level 0: 主页面（最底层）
+   * Level 1: 历史页面（中间层）
+   * Level 2: 聊天页面（最上层）
    */
   toggleMobileSidebar() {
     // 在移动端，创建一个全屏的对话历史页面（位于聊天窗口下层）
@@ -2532,11 +2539,8 @@ class LowSkyAIChat {
     
     if (mobileHistoryPage) {
       // 如果已经存在，关闭它（聊天窗口滑回覆盖）
-      chatContainer.classList.remove('history-visible');
-      setTimeout(() => {
-        mobileHistoryPage.remove();
-        document.body.style.overflow = '';
-      }, 300);
+      this.closeMobileHistoryPage(chatContainer, mobileHistoryPage);
+      this.currentLevel = 0; // 返回主页面
     } else {
       // 创建移动端对话历史页面（插入到聊天容器之前，确保在下层）
       mobileHistoryPage = document.createElement('div');
@@ -2555,30 +2559,28 @@ class LowSkyAIChat {
                   <div class="ai-conversation-time">${time}</div>
                 </div>
                 <div class="ai-conversation-actions">
-                  <div class="dropdown-menu">
-                    <button class="dropdown-toggle" onclick="event.stopPropagation(); window.lowSkyAI.toggleConversationDropdown('${conv.id}')">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                        <circle cx="12" cy="5" r="2"/>
-                        <circle cx="12" cy="12" r="2"/>
-                        <circle cx="12" cy="19" r="2"/>
+                  <!-- 下拉菜单：编辑名称、删除对话 -->
+                  <button class="dropdown-toggle" onclick="event.stopPropagation(); window.lowSkyAI.toggleConversationDropdown('${conv.id}')">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="1"/>
+                      <circle cx="19" cy="12" r="1"/>
+                      <circle cx="5" cy="12" r="1"/>
+                    </svg>
+                  </button>
+                  <div class="dropdown-content" id="dropdown-${conv.id}">
+                    <button class="dropdown-item" onclick="event.stopPropagation(); window.lowSkyAI.editConversationName('${conv.id}')">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
                       </svg>
+                      编辑名称
                     </button>
-                    <div class="dropdown-content" id="conversation-menu-${conv.id}">
-                      <button class="dropdown-item" onclick="event.stopPropagation(); window.lowSkyAI.editConversationName('${conv.id}')">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                        </svg>
-                        编辑名称
-                      </button>
-                      <button class="dropdown-item danger" onclick="event.stopPropagation(); window.lowSkyAI.deleteConversation('${conv.id}')">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <polyline points="3 6 5 6 21 6"/>
-                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                        </svg>
-                        删除对话
-                      </button>
-                    </div>
+                    <button class="dropdown-item delete" onclick="event.stopPropagation(); window.lowSkyAI.deleteConversation('${conv.id}')">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="3 6 5 6 21 6"/>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                      </svg>
+                      删除对话
+                    </button>
                   </div>
                 </div>
               </div>
@@ -2630,17 +2632,20 @@ class LowSkyAIChat {
           this.startNewEmptyConversation();
           console.log('✅ startNewEmptyConversation 调用完成');
           this.closeMobileHistoryPage(chatContainer, mobileHistoryPage);
+          this.currentLevel = 0; // 返回主页面
         });
       } else {
         console.error('❌ 未找到新对话按钮');
       }
       
-      // 触发动画：先显示历史页面，然后聊天窗口向右移动
+      // 触发动画：历史页面滑入 + 聊天窗口向右移动
       requestAnimationFrame(() => {
-        mobileHistoryPage.classList.add('visible');
+        mobileHistoryPage.classList.add('slide-in');
         setTimeout(() => {
+          mobileHistoryPage.classList.add('darken');
           chatContainer.classList.add('history-visible');
-        }, 50); // 稍微延迟，让历史页面先淡入
+          this.currentLevel = 1; // 进入历史页面层级
+        }, 50);
       });
       
       // 绑定会话点击事件
@@ -2653,8 +2658,9 @@ class LowSkyAIChat {
           const conversationId = item.parentElement.dataset.id;
           if (conversationId) {
             await this.switchConversation(conversationId);
-            // 关闭历史页面（聊天窗口滑回覆盖）
+            // 关闭历史页面
             this.closeMobileHistoryPage(chatContainer, mobileHistoryPage);
+            this.currentLevel = 2; // 进入聊天页面层级
           }
         });
       });
@@ -2663,21 +2669,25 @@ class LowSkyAIChat {
       this.bindSwipeEvents(mobileHistoryPage, chatContainer);
     }
   }
-  
-  /**
-   * 关闭移动端历史页面
-   */
   closeMobileHistoryPage(chatContainer, mobileHistoryPage) {
     chatContainer.classList.remove('history-visible');
-    mobileHistoryPage.classList.remove('visible');
+    mobileHistoryPage.classList.remove('darken');
     setTimeout(() => {
-      mobileHistoryPage.remove();
-      document.body.style.overflow = '';
-    }, 300);
+      mobileHistoryPage.classList.remove('slide-in');
+      setTimeout(() => {
+        mobileHistoryPage.remove();
+        document.body.style.overflow = '';
+      }, 350);
+    }, 50);
   }
   
   /**
-   * 绑定左右滑动事件
+   * 绑定左右滑动事件 - 支持三层页面切换
+   * Level 0: 主页面（最底层）
+   * Level 1: 历史页面（中间层）
+   * Level 2: 聊天页面（最上层）
+   * 从左往右滑 = 降低层级 (2→1→0)
+   * 从右往左滑 = 增加层级 (0→1→2)
    */
   bindSwipeEvents(mobileHistoryPage, chatContainer) {
     let startX = 0;
@@ -2695,6 +2705,7 @@ class LowSkyAIChat {
       
       // 禁用过渡动画，实现实时跟随（手势打断）
       chatContainer.style.transition = 'none';
+      mobileHistoryPage.style.transition = 'none';
     }, { passive: true });
     
     // 触摸移动
@@ -2708,26 +2719,47 @@ class LowSkyAIChat {
       // 如果垂直移动大于水平移动，不处理（避免干扰滚动）
       if (deltaY > Math.abs(deltaX)) return;
       
-      // 限制滑动范围：只移动聊天窗口
-      let progress;
+      // 根据当前层级计算滑动
+      const screenWidth = window.innerWidth;
+      
       if (deltaX > 0) {
-        // 向右滑动（关闭历史页面）
-        progress = Math.min(deltaX / (window.innerWidth * 0.3), 1);
-        const translateX = progress * 30;
-        chatContainer.style.transform = `translateX(${translateX}%)`;
-        
-        // 实时更新阴影，增强层次感
-        const shadowIntensity = (1 - progress) * 10;
-        chatContainer.style.boxShadow = `-${shadowIntensity}px 0 ${40 - progress * 20}px rgba(0, 0, 0, ${0.2 - progress * 0.1})`;
+        // 从左往右滑 = 降低层级
+        if (this.currentLevel === 2) {
+          // Level 2 → Level 1: 聊天窗口向左滑回
+          const progress = Math.min(deltaX / (screenWidth * 0.75), 1);
+          const translateX = 75 * (1 - progress);
+          chatContainer.style.transform = `translateX(${translateX}%)`;
+          
+          // 阴影变化
+          const shadowBlur = 30 * progress;
+          chatContainer.style.boxShadow = `-${5 * (1-progress)}px 0 ${shadowBlur}px rgba(0, 0, 0, ${0.15 * (1-progress)})`;
+        } else if (this.currentLevel === 1) {
+          // Level 1 → Level 0: 历史页面向左滑出
+          const progress = Math.min(deltaX / (screenWidth * 0.75), 1);
+          const translateX = -100 * progress;
+          mobileHistoryPage.style.transform = `translateX(${translateX}%)`;
+        }
       } else {
-        // 向左滑动（不能超过原始位置）
-        progress = Math.max(deltaX / (window.innerWidth * 0.3), -1);
-        const translateX = 30 + progress * 30;
-        chatContainer.style.transform = `translateX(${translateX}%)`;
-        
-        // 实时更新阴影
-        const shadowIntensity = 10 + progress * 10;
-        chatContainer.style.boxShadow = `-${shadowIntensity}px 0 ${20 - progress * 10}px rgba(0, 0, 0, ${0.1 - progress * 0.05})`;
+        // 从右往左滑 = 增加层级
+        if (this.currentLevel === 0 && this.isChatOpen) {
+          // Level 0 → Level 2: 聊天窗口向右滑出
+          const progress = Math.min(Math.abs(deltaX) / (screenWidth * 0.75), 1);
+          const translateX = 75 * progress;
+          chatContainer.style.transform = `translateX(${translateX}%)`;
+          
+          // 阴影变化
+          const shadowBlur = 30 * progress;
+          chatContainer.style.boxShadow = `-${5 * progress}px 0 ${shadowBlur}px rgba(0, 0, 0, ${0.15 * progress})`;
+        } else if (this.currentLevel === 1) {
+          // Level 1 → Level 2: 聊天窗口向右滑出
+          const progress = Math.min(Math.abs(deltaX) / (screenWidth * 0.75), 1);
+          const translateX = 75 * progress;
+          chatContainer.style.transform = `translateX(${translateX}%)`;
+          
+          // 阴影变化
+          const shadowBlur = 30 * progress;
+          chatContainer.style.boxShadow = `-${5 * progress}px 0 ${shadowBlur}px rgba(0, 0, 0, ${0.15 * progress})`;
+        }
       }
       
       e.preventDefault();
@@ -2739,19 +2771,58 @@ class LowSkyAIChat {
       isSwiping = false;
       
       // 恢复过渡动画
-      chatContainer.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+      chatContainer.style.transition = 'transform 0.35s cubic-bezier(0.25, 0.1, 0.25, 1), box-shadow 0.35s cubic-bezier(0.25, 0.1, 0.25, 1)';
+      mobileHistoryPage.style.transition = 'transform 0.35s cubic-bezier(0.25, 0.1, 0.25, 1)';
       chatContainer.style.boxShadow = ''; // 清除inline样式，使用CSS类
+      mobileHistoryPage.style.transform = ''; // 清除inline样式
       
       const deltaX = currentX - startX;
       
       if (Math.abs(deltaX) > threshold) {
-        // 滑动超过阈值，关闭历史页面
-        this.closeMobileHistoryPage(chatContainer, mobileHistoryPage);
+        if (deltaX > 0) {
+          // 从左往右滑超过阈值 = 降低层级
+          if (this.currentLevel === 2) {
+            // Level 2 → Level 1: 不应该发生，因为Level 2时历史页面已关闭
+            console.log('⚠️ Level 2 不应该有手势操作');
+          } else if (this.currentLevel === 1) {
+            // Level 1 → Level 0: 关闭历史页面
+            this.closeMobileHistoryPage(chatContainer, mobileHistoryPage);
+            this.currentLevel = 0;
+          }
+        } else {
+          // 从右往左滑超过阈值 = 增加层级
+          if (this.currentLevel === 1) {
+            // Level 1 → Level 2: 关闭历史页面，进入聊天页面
+            chatContainer.classList.remove('history-visible');
+            mobileHistoryPage.classList.remove('slide-in');
+            mobileHistoryPage.classList.remove('darken');
+            setTimeout(() => {
+              mobileHistoryPage.remove();
+              document.body.style.overflow = '';
+            }, 300);
+            this.currentLevel = 2;
+          }
+        }
       } else {
-        // 未达到阈值，恢复到原始状态
-        chatContainer.classList.add('history-visible');
+        // 未达到阈值，恢复到当前层级状态
+        this.restoreToCurrentLevel(chatContainer, mobileHistoryPage);
       }
     });
+  }
+  
+  /**
+   * 恢复到当前层级的状态
+   */
+  restoreToCurrentLevel(chatContainer, mobileHistoryPage) {
+    if (this.currentLevel === 2) {
+      chatContainer.classList.add('history-visible');
+    } else if (this.currentLevel === 1) {
+      chatContainer.classList.remove('history-visible');
+      mobileHistoryPage.classList.add('slide-in');
+      mobileHistoryPage.classList.add('darken');
+    } else {
+      chatContainer.classList.remove('history-visible');
+    }
   }
 }
 
