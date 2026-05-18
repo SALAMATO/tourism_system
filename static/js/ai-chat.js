@@ -1794,9 +1794,6 @@ class LowSkyAIChat {
     // 清空消息区域
     this.clearHistory();
     
-    // 显示欢迎界面
-    this.showWelcomeScreen();
-    
     // 更新UI状态
     this.renderConversationList();
     
@@ -2589,6 +2586,16 @@ class LowSkyAIChat {
           }).join('');
       
       mobileHistoryPage.innerHTML = `
+        <div class="ai-mobile-history-new-conversation-capsule">
+          <button class="ai-mobile-history-new-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+              <line x1="17" y1="8" x2="17" y2="14"/>
+              <line x1="14" y1="11" x2="20" y2="11"/>
+            </svg>
+            <span>新对话</span>
+          </button>
+        </div>
         <div class="ai-mobile-history-list">
           ${conversationsHtml}
         </div>
@@ -2598,18 +2605,39 @@ class LowSkyAIChat {
       this.modal.insertBefore(mobileHistoryPage, chatContainer);
       document.body.style.overflow = 'hidden';
       
-      // 阻止所有点击和触摸事件穿透到下层
-      const preventPenetration = (e) => {
-        e.stopPropagation();
-        if (e.cancelable) {
-          e.preventDefault();
+      // 阻止空白区域的点击穿透到下层（使用冒泡阶段）
+      mobileHistoryPage.addEventListener('click', (e) => {
+        // 如果点击的是按钮或其子元素，不阻止
+        if (e.target.closest('.ai-mobile-history-new-btn') || 
+            e.target.closest('.ai-conversation-item')) {
+          return;
         }
-      };
+        // 阻止空白区域的点击
+        e.stopPropagation();
+        e.preventDefault();
+      });
       
-      mobileHistoryPage.addEventListener('click', preventPenetration, true);
-      mobileHistoryPage.addEventListener('touchstart', preventPenetration, true);
-      mobileHistoryPage.addEventListener('touchend', preventPenetration, true);
-      mobileHistoryPage.addEventListener('mousedown', preventPenetration, true);
+      // 绑定新对话按钮事件（在父容器事件之后绑定）
+      const newConversationBtn = mobileHistoryPage.querySelector('.ai-mobile-history-new-btn');
+      if (newConversationBtn) {
+        console.log('✅ 找到新对话按钮，绑定点击事件');
+        newConversationBtn.addEventListener('click', (e) => {
+          console.log('🔘 新对话按钮被点击');
+          e.stopPropagation();
+          e.preventDefault();
+          // 创建新对话并关闭历史页面
+          console.log('🚀 调用 startNewEmptyConversation');
+          this.startNewEmptyConversation();
+          console.log('✅ startNewEmptyConversation 调用完成');
+          chatContainer.classList.remove('history-visible');
+          setTimeout(() => {
+            mobileHistoryPage.remove();
+            document.body.style.overflow = '';
+          }, 300);
+        });
+      } else {
+        console.error('❌ 未找到新对话按钮');
+      }
       
       // 触发动画：聊天窗口向右滑出，露出下层的对话历史
       requestAnimationFrame(() => {
