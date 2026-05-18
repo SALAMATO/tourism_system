@@ -914,6 +914,10 @@
   cursor: pointer;
   transition: all 0.2s ease;
   border: 1px solid transparent;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
 }
 
 .ai-conversation-item:hover {
@@ -926,6 +930,12 @@
   border-color: rgba(102, 126, 234, 0.3);
 }
 
+.ai-conversation-item-content {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
 .ai-conversation-title {
   font-size: 14px;
   font-weight: 500;
@@ -936,18 +946,86 @@
   white-space: nowrap;
 }
 
-.ai-conversation-preview {
-  font-size: 12px;
-  color: var(--text-secondary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  margin-bottom: 4px;
-}
-
 .ai-conversation-time {
   font-size: 11px;
   color: #999;
+}
+
+.ai-conversation-actions {
+  position: relative;
+  flex-shrink: 0;
+}
+
+/* 下拉菜单样式 */
+.dropdown-menu {
+  position: relative;
+}
+
+.dropdown-toggle {
+  background: transparent;
+  border: none;
+  padding: 4px 8px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+}
+
+.dropdown-toggle:hover {
+  background: rgba(102, 126, 234, 0.1);
+  color: var(--text-primary);
+}
+
+.dropdown-content {
+  display: none;
+  position: absolute;
+  right: 0;
+  top: 100%;
+  margin-top: 4px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 160px;
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.dropdown-content.show {
+  display: block;
+}
+
+.dropdown-item {
+  width: 100%;
+  padding: 10px 16px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  font-size: 13px;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.2s ease;
+}
+
+.dropdown-item:hover {
+  background: rgba(102, 126, 234, 0.08);
+}
+
+.dropdown-item.danger {
+  color: #ff3b30;
+}
+
+.dropdown-item.danger:hover {
+  background: rgba(255, 59, 48, 0.08);
+}
+
+.dropdown-item svg {
+  flex-shrink: 0;
 }
 
 .ai-empty-conversations {

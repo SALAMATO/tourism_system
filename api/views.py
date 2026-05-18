@@ -1886,6 +1886,16 @@ class AIConversationViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         """创建会话时自动关联当前用户"""
         serializer.save(user=self.request.user)
+    
+    def perform_destroy(self, instance):
+        """删除会话时验证归属并级联删除消息"""
+        # 验证会话属于当前用户
+        if instance.user != self.request.user:
+            raise serializers.ValidationError('无权删除此会话')
+        
+        # 级联删除消息（Django会自动处理，因为设置了on_delete=CASCADE）
+        print(f"✅ 正在删除会话 {instance.id} 及其所有消息")
+        instance.delete()
 
 
 class AIConversationMessageViewSet(viewsets.ModelViewSet):

@@ -393,6 +393,12 @@ class LowSkyAIChat {
       if (!this.toolBtn.contains(e.target) && !this.toolMenu.contains(e.target)) {
         this.toolMenu.classList.remove('show');
       }
+      // 关闭会话下拉菜单
+      if (!e.target.closest('.ai-conversation-actions')) {
+        document.querySelectorAll('.dropdown-content').forEach(m => {
+          m.classList.remove('show');
+        });
+      }
     });
       
     // 绑定拖拽功能
@@ -1885,17 +1891,34 @@ class LowSkyAIChat {
       item.className = 'ai-conversation-item' + (conv.id === this.currentConversationId ? ' active' : '');
       item.dataset.id = conv.id;
       
-      // 生成预览文本
-      const preview = conv.last_message_preview || conv.title || '新对话';
       const time = conv.updated_at ? this.formatTime(conv.updated_at) : '';
       
       item.innerHTML = `
-        <div class="ai-conversation-title">${conv.title || '新对话'}</div>
-        <div class="ai-conversation-preview">${preview}</div>
-        <div class="ai-conversation-time">${time}</div>
+        <div class="ai-conversation-item-content" onclick="window.lowSkyAI.switchConversation('${conv.id}')">
+          <div class="ai-conversation-title">${conv.title || '新对话'}</div>
+          <div class="ai-conversation-time">${time}</div>
+        </div>
+        <div class="ai-conversation-actions">
+          <div class="dropdown-menu">
+            <button class="dropdown-toggle" onclick="event.stopPropagation(); window.lowSkyAI.toggleConversationDropdown('${conv.id}')">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <circle cx="12" cy="5" r="2"/>
+                <circle cx="12" cy="12" r="2"/>
+                <circle cx="12" cy="19" r="2"/>
+              </svg>
+            </button>
+            <div class="dropdown-content" id="conversation-menu-${conv.id}">
+              <button class="dropdown-item danger" onclick="event.stopPropagation(); window.lowSkyAI.deleteConversation('${conv.id}')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                </svg>
+                删除对话
+              </button>
+            </div>
+          </div>
+        </div>
       `;
       
-      item.onclick = () => this.switchConversation(conv.id);
       listElement.appendChild(item);
     });
   }
@@ -1908,29 +1931,109 @@ class LowSkyAIChat {
     const date = new Date(dateStr);
     const now = new Date();
     const diff = now - date;
-    
-    // 小于1小时，显示"x分钟前"
+      
+    // 小于1小时，显示“x分钟前”
     if (diff < 3600000) {
       const minutes = Math.floor(diff / 60000);
       return minutes === 0 ? '刚刚' : `${minutes}分钟前`;
     }
-    
-    // 小于24小时，显示"x小时前"
+      
+    // 小于24小时，显示“x小时前”
     if (diff < 86400000) {
       const hours = Math.floor(diff / 3600000);
       return `${hours}小时前`;
     }
-    
-    // 小于7天，显示"x天前"
+      
+    // 小于7天，显示“x天前”
     if (diff < 604800000) {
       const days = Math.floor(diff / 86400000);
       return `${days}天前`;
     }
-    
+      
     // 否则显示日期
     return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
   }
-  
+    
+  /**
+   * 切换会话下拉菜单
+   */
+  toggleConversationDropdown(conversationId) {
+    const menu = document.getElementById(`conversation-menu-${conversationId}`);
+    if (!menu) return;
+      
+    // 关闭其他所有下拉菜单
+    document.querySelectorAll('.dropdown-content').forEach(m => {
+      if (m.id !== `conversation-menu-${conversationId}`) {
+        m.classList.remove('show');
+      }
+    });
+      
+    // 切换当前菜单
+    menu.classList.toggle('show');
+  }
+    
+  /**
+   * 删除对话
+   */
+  async deleteConversation(conversationId) {
+    // 关闭下拉菜单
+    document.querySelectorAll('.dropdown-content').forEach(m => {
+      m.classList.remove('show');
+    });
+    
+    // 使用项目统一的确认对话框
+    const confirmed = await showConfirm({
+      title: '删除对话',
+      message: '确定要删除这个对话吗？删除后将无法恢复。',
+      confirmText: '删除',
+      cancelText: '取消',
+      type: 'danger'
+    });
+    
+    if (!confirmed) return;
+    
+    try {
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        alert('请先登录');
+        return;
+      }
+      
+      const response = await fetch(`/api/ai-conversations/${conversationId}/`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Token ${token}`
+        }
+      });
+      
+      if (response.ok) {
+        // 从列表中移除
+        this.conversations = this.conversations.filter(c => c.id !== conversationId);
+        
+        // 如果删除的是当前会话，清空聊天区域
+        if (this.currentConversationId === conversationId) {
+          this.currentConversationId = null;
+          this.currentConversationTitle = '新对话';
+          this.clearHistory();
+        }
+        
+        // 重新渲染列表
+        this.renderConversationList();
+        
+        // 显示成功提示
+        showNotification('删除成功', 'success');
+        console.log('✅ 对话删除成功');
+      } else {
+        const errorText = await response.text();
+        console.error('❌ 删除对话失败:', response.status, errorText);
+        showNotification('删除失败，请稍后重试', 'error');
+      }
+    } catch (error) {
+      console.error('❌ 删除对话异常:', error);
+      showNotification('删除失败，请稍后重试', 'error');
+    }
+  }
+    
   clearHistory() {
     this.messages = [];
     const quickQueriesDisplay = this.toolMode === 'db_only' ? 'block' : 'none';
