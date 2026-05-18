@@ -2629,19 +2629,18 @@ class LowSkyAIChat {
           console.log('🚀 调用 startNewEmptyConversation');
           this.startNewEmptyConversation();
           console.log('✅ startNewEmptyConversation 调用完成');
-          chatContainer.classList.remove('history-visible');
-          setTimeout(() => {
-            mobileHistoryPage.remove();
-            document.body.style.overflow = '';
-          }, 300);
+          this.closeMobileHistoryPage(chatContainer, mobileHistoryPage);
         });
       } else {
         console.error('❌ 未找到新对话按钮');
       }
       
-      // 触发动画：聊天窗口向右滑出，露出下层的对话历史
+      // 触发动画：先显示历史页面，然后聊天窗口向右移动
       requestAnimationFrame(() => {
-        chatContainer.classList.add('history-visible');
+        mobileHistoryPage.classList.add('visible');
+        setTimeout(() => {
+          chatContainer.classList.add('history-visible');
+        }, 50); // 稍微延迟，让历史页面先淡入
       });
       
       // 绑定会话点击事件
@@ -2655,15 +2654,104 @@ class LowSkyAIChat {
           if (conversationId) {
             await this.switchConversation(conversationId);
             // 关闭历史页面（聊天窗口滑回覆盖）
-            chatContainer.classList.remove('history-visible');
-            setTimeout(() => {
-              mobileHistoryPage.remove();
-              document.body.style.overflow = '';
-            }, 300);
+            this.closeMobileHistoryPage(chatContainer, mobileHistoryPage);
           }
         });
       });
+      
+      // 添加左右滑动支持
+      this.bindSwipeEvents(mobileHistoryPage, chatContainer);
     }
+  }
+  
+  /**
+   * 关闭移动端历史页面
+   */
+  closeMobileHistoryPage(chatContainer, mobileHistoryPage) {
+    chatContainer.classList.remove('history-visible');
+    mobileHistoryPage.classList.remove('visible');
+    setTimeout(() => {
+      mobileHistoryPage.remove();
+      document.body.style.overflow = '';
+    }, 300);
+  }
+  
+  /**
+   * 绑定左右滑动事件
+   */
+  bindSwipeEvents(mobileHistoryPage, chatContainer) {
+    let startX = 0;
+    let startY = 0;
+    let currentX = 0;
+    let isSwiping = false;
+    const threshold = 50; // 滑动阈值
+    
+    // 触摸开始
+    mobileHistoryPage.addEventListener('touchstart', (e) => {
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      currentX = startX;
+      isSwiping = true;
+      
+      // 禁用过渡动画，实现实时跟随（手势打断）
+      chatContainer.style.transition = 'none';
+    }, { passive: true });
+    
+    // 触摸移动
+    mobileHistoryPage.addEventListener('touchmove', (e) => {
+      if (!isSwiping) return;
+      
+      currentX = e.touches[0].clientX;
+      const deltaX = currentX - startX;
+      const deltaY = Math.abs(e.touches[0].clientY - startY);
+      
+      // 如果垂直移动大于水平移动，不处理（避免干扰滚动）
+      if (deltaY > Math.abs(deltaX)) return;
+      
+      // 限制滑动范围：只移动聊天窗口
+      let progress;
+      if (deltaX > 0) {
+        // 向右滑动（关闭历史页面）
+        progress = Math.min(deltaX / (window.innerWidth * 0.3), 1);
+        const translateX = progress * 30;
+        chatContainer.style.transform = `translateX(${translateX}%)`;
+        
+        // 实时更新阴影，增强层次感
+        const shadowIntensity = (1 - progress) * 10;
+        chatContainer.style.boxShadow = `-${shadowIntensity}px 0 ${40 - progress * 20}px rgba(0, 0, 0, ${0.2 - progress * 0.1})`;
+      } else {
+        // 向左滑动（不能超过原始位置）
+        progress = Math.max(deltaX / (window.innerWidth * 0.3), -1);
+        const translateX = 30 + progress * 30;
+        chatContainer.style.transform = `translateX(${translateX}%)`;
+        
+        // 实时更新阴影
+        const shadowIntensity = 10 + progress * 10;
+        chatContainer.style.boxShadow = `-${shadowIntensity}px 0 ${20 - progress * 10}px rgba(0, 0, 0, ${0.1 - progress * 0.05})`;
+      }
+      
+      e.preventDefault();
+    }, { passive: false });
+    
+    // 触摸结束
+    mobileHistoryPage.addEventListener('touchend', (e) => {
+      if (!isSwiping) return;
+      isSwiping = false;
+      
+      // 恢复过渡动画
+      chatContainer.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+      chatContainer.style.boxShadow = ''; // 清除inline样式，使用CSS类
+      
+      const deltaX = currentX - startX;
+      
+      if (Math.abs(deltaX) > threshold) {
+        // 滑动超过阈值，关闭历史页面
+        this.closeMobileHistoryPage(chatContainer, mobileHistoryPage);
+      } else {
+        // 未达到阈值，恢复到原始状态
+        chatContainer.classList.add('history-visible');
+      }
+    });
   }
 }
 

@@ -1326,10 +1326,17 @@ body.ai-chat-maximized {
     right: 0;
     bottom: 0;
     background: #f8f9fa;
-    z-index: 10002; /* 高于胶囊按钮，低于聊天窗口 */
+    z-index: 10002; /* 低于聊天窗口 */
     display: flex;
     flex-direction: column;
     pointer-events: auto; /* 确保能接收点击事件 */
+    transform: translateX(0); /* 历史页面始终在原始位置 */
+    opacity: 0;
+    transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .ai-mobile-history-page.visible {
+    opacity: 1;
   }
   
   .ai-mobile-history-header {
@@ -1386,13 +1393,15 @@ body.ai-chat-maximized {
     padding-top: 70px; /* 为左上角新对话胶囊按钮留出空间 */
   }
   
-  /* 移动端聊天窗口动画 - 向右滑出露出下层的对话历史 */
+  /* 移动端聊天窗口动画 - 覆盖在对话历史页面上 */
   .ai-chat-container {
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   }
   
   .ai-chat-container.history-visible {
-    transform: translateX(100%) !important;
+    transform: translateX(30%) !important; /* 向右移动，露出下层历史页面 */
+    box-shadow: -10px 0 40px rgba(0, 0, 0, 0.2) !important; /* 左侧阴影增强层次感 */
   }
   
   /* 移动端：隐藏整个标题栏 - 彻底移除大白条 */
