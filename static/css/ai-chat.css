@@ -371,6 +371,7 @@ body.ai-chat-maximized {
 .ai-chat-messages {
   flex: 1;
   padding: 24px;
+  padding-bottom: 160px; /* 为浮动输入区域留出空间 */
   overflow-y: auto;
   background: transparent;
 }
@@ -596,9 +597,14 @@ body.ai-chat-maximized {
 }
 
 .ai-chat-input-area {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
   padding: 16px 20px;
   background: transparent;
   border-top: none;
+  z-index: 100; /* 提高z-index，确保在所有内容之上 */
 }
 
 .ai-chat-input-wrapper {
@@ -1107,6 +1113,8 @@ body.ai-chat-maximized {
   flex-direction: column;
   overflow: hidden;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative; /* 确保内部元素的定位上下文 */
+  z-index: 1; /* 低于输入区域的z-index */
 }
 
 /* 侧边栏收起时，主内容区域不需要特别处理，因为侧边栏使用了transform滑出 */
@@ -1421,10 +1429,13 @@ body.ai-chat-maximized {
       border-radius 0.55s cubic-bezier(0.32, 0.72, 0, 1),
       box-shadow 0.65s cubic-bezier(0.32, 0.72, 0, 1) !important;
     border-radius: 0;
+    background: white; /* 添加白色背景 */
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
     transform: translateX(0); /* 默认位置 */
     z-index: 10001; /* 高层 */
     will-change: transform, border-radius, box-shadow;
+    position: relative; /* 确保子元素的绝对定位相对于容器 */
+    overflow: hidden; /* 防止内容溢出，但输入区域通过z-index浮动在上层 */
   }
   
   .ai-chat-container.history-visible {
@@ -1508,6 +1519,35 @@ body.ai-chat-maximized {
   /* 移动端：AI消息气泡圆角调整 */
   .ai-message.assistant .ai-message-content {
     border-radius: 16px 16px 16px 4px;
+  }
+  
+  /* 移动端：输入区域浮动样式优化 */
+  .ai-chat-input-area {
+    position: fixed; /* 固定定位，相对于视口 */
+    bottom: 0;
+    left: 0;
+    width: 85%; /* 占据85%宽度，留出15%给历史页面 */
+    padding: 12px 16px;
+    background: transparent; /* 删除白色背景 */
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border-top: none;
+    z-index: 10002; /* 高于聊天容器的10001 */
+    box-shadow: none;
+  }
+  
+  /* 移动端：输入框容器添加背景和毛玻璃效果 */
+  .ai-chat-input-container {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 20px;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+  }
+  
+  /* 移动端：消息区域底部留白 */
+  .ai-chat-messages {
+    padding-bottom: 140px;
   }
 }
 
