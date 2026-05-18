@@ -134,7 +134,7 @@ class LowSkyAIChat {
           </svg>
         </button>
         
-        <!-- 移动端胶囊按钮组 - 固定在右上角 -->
+        <!-- 移动端胶囊按钮组 - 固定在左上角 -->
         <div class="ai-chat-mobile-controls">
           <button class="ai-chat-mobile-sidebar" data-tooltip="侧栏">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -150,13 +150,15 @@ class LowSkyAIChat {
               <line x1="14" y1="11" x2="20" y2="11"/>
             </svg>
           </button>
-          <button class="ai-chat-close" data-tooltip="关闭">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="18" y1="6" x2="6" y2="18"/>
-              <line x1="6" y1="6" x2="18" y2="18"/>
-            </svg>
-          </button>
         </div>
+        
+        <!-- 移动端右上角关闭按钮 -->
+        <button class="ai-chat-mobile-close" data-tooltip="关闭">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
         
         <!-- 左侧会话列表 -->
         <div class="ai-chat-sidebar" id="ai-chat-sidebar">
@@ -391,9 +393,8 @@ class LowSkyAIChat {
     const mobileSidebarBtn = this.modal.querySelector('.ai-chat-mobile-sidebar');
     if (mobileSidebarBtn) {
       mobileSidebarBtn.onclick = () => {
-        // 在移动端，侧栏是隐藏的，可以弹出或忽略
-        // 这里暂时不做处理，或者可以显示一个提示
-        console.log('移动端侧栏按钮点击');
+        // 在移动端，切换侧栏的显示状态
+        this.toggleMobileSidebar();
       };
     }
     
@@ -417,7 +418,7 @@ class LowSkyAIChat {
     }
     
     // 移动端关闭按钮
-    const mobileCloseBtn = this.modal.querySelector('.ai-chat-mobile-controls .ai-chat-close');
+    const mobileCloseBtn = this.modal.querySelector('.ai-chat-mobile-close');
     if (mobileCloseBtn) {
       mobileCloseBtn.onclick = () => this.closeChat();
     }
@@ -482,86 +483,91 @@ class LowSkyAIChat {
       }
     });
     
-    // 初始化自定义tooltip（无文本按钮提示框）
-    // 创建一个全局的tooltip元素，避免反复创建/销毁导致残余
-    const globalTooltip = document.createElement('div');
-    globalTooltip.className = 'ai-tooltip';
-    globalTooltip.style.display = 'none';
-    document.body.appendChild(globalTooltip);
+    // 初始化自定义tooltip（无文本按钮提示框）- 仅桌面端
+    // 检测是否为移动端
+    const isMobile = window.matchMedia('(max-width: 768px)').matches;
     
-    // 用于管理tooltip显示/隐藏的定时器和状态
-    let hideTooltipTimer = null;
-    let isHoveringButton = false; // 标记是否有按钮正在被悬停
+    if (!isMobile) {
+      // 创建一个全局的tooltip元素，避免反复创建/销毁导致残余
+      const globalTooltip = document.createElement('div');
+      globalTooltip.className = 'ai-tooltip';
+      globalTooltip.style.display = 'none';
+      document.body.appendChild(globalTooltip);
+      
+      // 用于管理tooltip显示/隐藏的定时器和状态
+      let hideTooltipTimer = null;
+      let isHoveringButton = false; // 标记是否有按钮正在被悬停
 
-    const tooltipButtons = this.modal.querySelectorAll('[data-tooltip]');
-    tooltipButtons.forEach(btn => {
-      btn.addEventListener('mouseenter', (e) => {
-        // 标记为正在悬停
-        isHoveringButton = true;
-        
-        // 清除之前的隐藏定时器，防止闪烁
-        if (hideTooltipTimer) {
-          clearTimeout(hideTooltipTimer);
-          hideTooltipTimer = null;
-        }
-        
-        // 立即显示新的tooltip
-        globalTooltip.style.display = 'block';
-        globalTooltip.classList.remove('show');
-        globalTooltip.textContent = btn.dataset.tooltip;
+      const tooltipButtons = this.modal.querySelectorAll('[data-tooltip]');
+      tooltipButtons.forEach(btn => {
+        btn.addEventListener('mouseenter', (e) => {
+          // 标记为正在悬停
+          isHoveringButton = true;
+          
+          // 清除之前的隐藏定时器，防止闪烁
+          if (hideTooltipTimer) {
+            clearTimeout(hideTooltipTimer);
+            hideTooltipTimer = null;
+          }
+          
+          // 立即显示新的tooltip
+          globalTooltip.style.display = 'block';
+          globalTooltip.classList.remove('show');
+          globalTooltip.textContent = btn.dataset.tooltip;
 
-        // 计算位置，显示在按钮正下方
-        const rect = btn.getBoundingClientRect();
-        const viewportWidth = window.innerWidth;
-        const tooltipWidth = globalTooltip.offsetWidth || 100; // 估算宽度
-        
-        // 计算水平位置，确保不超出视口边界
-        let leftPosition = rect.left + rect.width / 2 + window.scrollX;
-        
-        // 检查是否会超出左边界
-        if (leftPosition - tooltipWidth / 2 < 10) {
-          // 如果会超出左边界，调整为左对齐并留出边距
-          leftPosition = 10 + tooltipWidth / 2;
-        }
-        
-        // 检查是否会超出右边界
-        if (leftPosition + tooltipWidth / 2 > viewportWidth - 10) {
-          // 如果会超出右边界，调整为右对齐并留出边距
-          leftPosition = viewportWidth - 10 - tooltipWidth / 2;
-        }
-        
-        globalTooltip.style.top = (rect.bottom + 8 + window.scrollY) + 'px';
-        globalTooltip.style.left = leftPosition + 'px';
-        globalTooltip.style.transform = 'translateX(-50%) translateY(-8px)';
+          // 计算位置，显示在按钮正下方
+          const rect = btn.getBoundingClientRect();
+          const viewportWidth = window.innerWidth;
+          const tooltipWidth = globalTooltip.offsetWidth || 100; // 估算宽度
+          
+          // 计算水平位置，确保不超出视口边界
+          let leftPosition = rect.left + rect.width / 2 + window.scrollX;
+          
+          // 检查是否会超出左边界
+          if (leftPosition - tooltipWidth / 2 < 10) {
+            // 如果会超出左边界，调整为左对齐并留出边距
+            leftPosition = 10 + tooltipWidth / 2;
+          }
+          
+          // 检查是否会超出右边界
+          if (leftPosition + tooltipWidth / 2 > viewportWidth - 10) {
+            // 如果会超出右边界，调整为右对齐并留出边距
+            leftPosition = viewportWidth - 10 - tooltipWidth / 2;
+          }
+          
+          globalTooltip.style.top = (rect.bottom + 8 + window.scrollY) + 'px';
+          globalTooltip.style.left = leftPosition + 'px';
+          globalTooltip.style.transform = 'translateX(-50%) translateY(-8px)';
 
-        // 使用requestAnimationFrame确保样式应用后添加show类
-        requestAnimationFrame(() => {
-          globalTooltip.style.transform = 'translateX(-50%) translateY(0)';
-          globalTooltip.classList.add('show');
+          // 使用requestAnimationFrame确保样式应用后添加show类
+          requestAnimationFrame(() => {
+            globalTooltip.style.transform = 'translateX(-50%) translateY(0)';
+            globalTooltip.classList.add('show');
+          });
+        });
+
+        btn.addEventListener('mouseleave', () => {
+          // 标记为不再悬停
+          isHoveringButton = false;
+          
+          // 延迟隐藏，给鼠标移动到下一个按钮留出时间
+          hideTooltipTimer = setTimeout(() => {
+            // 再次检查，确保没有新的按钮被悬停
+            if (!isHoveringButton) {
+              globalTooltip.classList.remove('show');
+              globalTooltip.style.transform = 'translateX(-50%) translateY(-8px)';
+              setTimeout(() => {
+                // 最终确认，仍然没有悬停才隐藏
+                if (!isHoveringButton) {
+                  globalTooltip.style.display = 'none';
+                }
+              }, 200);
+            }
+            hideTooltipTimer = null;
+          }, 150); // 稍微延长到150ms，提高稳定性
         });
       });
-
-      btn.addEventListener('mouseleave', () => {
-        // 标记为不再悬停
-        isHoveringButton = false;
-        
-        // 延迟隐藏，给鼠标移动到下一个按钮留出时间
-        hideTooltipTimer = setTimeout(() => {
-          // 再次检查，确保没有新的按钮被悬停
-          if (!isHoveringButton) {
-            globalTooltip.classList.remove('show');
-            globalTooltip.style.transform = 'translateX(-50%) translateY(-8px)';
-            setTimeout(() => {
-              // 最终确认，仍然没有悬停才隐藏
-              if (!isHoveringButton) {
-                globalTooltip.style.display = 'none';
-              }
-            }, 200);
-          }
-          hideTooltipTimer = null;
-        }, 150); // 稍微延长到150ms，提高稳定性
-      });
-    });
+    }
       
     // 绑定拖拽功能
     this.bindDragEvents();
@@ -2513,6 +2519,64 @@ class LowSkyAIChat {
         </div>
       </div>
     `;
+  }
+  
+  /**
+   * 移动端切换侧栏显示状态
+   */
+  toggleMobileSidebar() {
+    // 在移动端，侧栏默认是隐藏的（display: none）
+    // 这里可以创建一个覆盖层来显示侧栏内容
+    const sidebar = this.modal.querySelector('#ai-chat-sidebar');
+    if (!sidebar) return;
+    
+    // 检查是否已经有移动端侧栏覆盖层
+    let mobileOverlay = this.modal.querySelector('.ai-mobile-sidebar-overlay');
+    
+    if (mobileOverlay) {
+      // 如果已经存在，关闭它
+      mobileOverlay.remove();
+      document.body.style.overflow = '';
+    } else {
+      // 创建移动端侧栏覆盖层
+      mobileOverlay = document.createElement('div');
+      mobileOverlay.className = 'ai-mobile-sidebar-overlay';
+      mobileOverlay.innerHTML = `
+        <div class="ai-mobile-sidebar-content">
+          <div class="ai-mobile-sidebar-header">
+            <h3>对话历史</h3>
+            <button class="ai-mobile-sidebar-close">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+          <div class="ai-mobile-sidebar-list">
+            ${this.conversationList.innerHTML}
+          </div>
+        </div>
+      `;
+      
+      // 添加关闭按钮事件
+      const closeBtn = mobileOverlay.querySelector('.ai-mobile-sidebar-close');
+      closeBtn.onclick = () => {
+        mobileOverlay.remove();
+        document.body.style.overflow = '';
+      };
+      
+      // 点击覆盖层背景关闭
+      mobileOverlay.onclick = (e) => {
+        if (e.target === mobileOverlay) {
+          mobileOverlay.remove();
+          document.body.style.overflow = '';
+        }
+      };
+      
+      // 添加到modal中
+      this.modal.appendChild(mobileOverlay);
+      document.body.style.overflow = 'hidden';
+    }
   }
 }
 
