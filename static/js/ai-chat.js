@@ -1270,9 +1270,10 @@ class LowSkyAIChat {
         
         // 调试：检查会话ID
         console.log('AI回复完成，当前会话ID:', this.currentConversationId);
+        console.log('✅ AI回复已由后端自动保存到数据库');
         
-        // 保存AI回复到服务器
-        await this.saveAssistantMessage(fullContent);
+        // 注意：不再需要前端保存，后端chat_stream已自动保存AI回复
+        // await this.saveAssistantMessage(fullContent);  // 已移除，避免重复保存
       } else {
         contentDiv.innerHTML = this.parseMarkdown('抱歉，AI没有返回任何内容。');
       }
