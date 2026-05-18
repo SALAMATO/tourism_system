@@ -147,7 +147,7 @@
   
   /* 移动端菜单项优化 */
   .mobile-menu-item {
-    padding: 18px 30px;
+    padding: 14px 30px;
     font-size: 24px;
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
@@ -156,6 +156,7 @@
   
   .mobile-menu {
     padding: 80px 30px 30px;
+    gap: 12px;
   }
   
   .mobile-menu-toggle {
@@ -487,13 +488,14 @@
   }
   
   .mobile-menu-item {
-    padding: 16px 25px;
+    padding: 12px 25px;
     font-size: 20px;
     color: #1d1d1f;
   }
   
   .mobile-menu {
     padding: 80px 25px 30px;
+    gap: 10px;
   }
   
   .mobile-menu-toggle {
