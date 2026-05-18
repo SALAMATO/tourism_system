@@ -533,6 +533,7 @@
   font-size: 14px;
   color: var(--text-secondary);
   margin-bottom: 12px;
+  flex-wrap: wrap;
 }
 
 .list-item-content {
