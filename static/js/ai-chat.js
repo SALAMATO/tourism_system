@@ -147,149 +147,151 @@ class LowSkyAIChat {
         <!-- 右侧聊天主区域 -->
         <div class="ai-chat-main">
           <div class="ai-chat-header">
-          <div class="ai-chat-header-left">
-            <h3><img src="/static/images/AI-icon-Black.png" alt="AI" style="width: 20px; height: 20px; margin-right: 8px;"> LowSkyAI 智能助手</h3>
-          </div>
-          <div class="ai-chat-controls">
-            <button class="ai-chat-minimize" data-tooltip="最小化">
-              <svg width="10" height="1" viewBox="0 0 10 1">
-                <rect width="10" height="1" fill="currentColor"/>
-              </svg>
-            </button>
-            <button class="ai-chat-maximize" data-tooltip="最大化">
-              <svg width="10" height="10" viewBox="0 0 10 10">
-                <rect x="1" y="1" width="8" height="8" fill="none" stroke="currentColor" stroke-width="1"/>
-              </svg>
-            </button>
-            <button class="ai-chat-close" data-tooltip="关闭">
-              <svg width="10" height="10" viewBox="0 0 10 10">
-                <line x1="0" y1="0" x2="10" y2="10" stroke="currentColor" stroke-width="1"/>
-                <line x1="10" y1="0" x2="0" y2="10" stroke="currentColor" stroke-width="1"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-        <div class="ai-chat-messages" id="ai-chat-messages">
-          <div class="ai-welcome-message">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M2 12h5l2-9 4 18 2-9h5"/>
-            </svg>
-            <h4>欢迎使用 LowSkyAI</h4>
-            <p>我是您的低空旅游智能助手<br>可以为您解答低空旅游相关问题、推荐目的地、解释政策法规等</p>
-            <div class="ai-quick-queries">
-              <div class="ai-quick-query-title">您可以问我：</div>
-              <div class="ai-quick-query-list">
-                <button class="ai-quick-query-item" data-question="查询旅游目的地">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"/>
-                    <path d="m9 12 2 2 4-4"/>
-                  </svg>
-                  <span>查询旅游目的地</span>
-                </button>
-                <button class="ai-quick-query-item" data-question="查询政策法规">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                    <polyline points="14 2 14 8 20 8"/>
-                    <line x1="16" y1="13" x2="8" y2="13"/>
-                    <line x1="16" y1="17" x2="8" y2="17"/>
-                  </svg>
-                  <span>查询政策法规</span>
-                </button>
-                <button class="ai-quick-query-item" data-question="查询统计数据">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="18" y1="20" x2="18" y2="10"/>
-                    <line x1="12" y1="20" x2="12" y2="4"/>
-                    <line x1="6" y1="20" x2="6" y2="14"/>
-                  </svg>
-                  <span>查询统计数据</span>
-                </button>
-                <button class="ai-quick-query-item" data-question="查询安全预警">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
-                    <line x1="12" y1="9" x2="12" y2="13"/>
-                    <line x1="12" y1="17" x2="12.01" y2="17"/>
-                  </svg>
-                  <span>查询安全预警</span>
-                </button>
-                <button class="ai-quick-query-item" data-question="查询新闻资讯">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/>
-                    <path d="M18 14h-8"/>
-                    <path d="M15 18h-5"/>
-                    <path d="M20 6h-4"/>
-                  </svg>
-                  <span>查询新闻资讯</span>
-                </button>
-              </div>
+            <div class="ai-chat-header-left">
+              <h3><img src="/static/images/AI-icon-Black.png" alt="AI" style="width: 20px; height: 20px; margin-right: 8px;"> LowSkyAI 智能助手</h3>
+            </div>
+            <div class="ai-chat-controls">
+              <button class="ai-chat-minimize" data-tooltip="最小化">
+                <svg width="10" height="1" viewBox="0 0 10 1">
+                  <rect width="10" height="1" fill="currentColor"/>
+                </svg>
+              </button>
+              <button class="ai-chat-maximize" data-tooltip="最大化">
+                <svg width="10" height="10" viewBox="0 0 10 10">
+                  <rect x="1" y="1" width="8" height="8" fill="none" stroke="currentColor" stroke-width="1"/>
+                </svg>
+              </button>
+              <button class="ai-chat-close" data-tooltip="关闭">
+                <svg width="10" height="10" viewBox="0 0 10 10">
+                  <line x1="0" y1="0" x2="10" y2="10" stroke="currentColor" stroke-width="1"/>
+                  <line x1="10" y1="0" x2="0" y2="10" stroke="currentColor" stroke-width="1"/>
+                </svg>
+              </button>
             </div>
           </div>
-        </div>
-        <div class="ai-chat-input-area">
-          <div class="ai-tool-mode-bar" id="ai-tool-mode-bar" style="display:none;"></div>
-          <div class="ai-chat-input-wrapper">
-            <div class="ai-chat-input-container">
-              <textarea 
-                class="ai-chat-input" 
-                id="ai-chat-input" 
-                placeholder="有问题，尽管问，shift+enter换行"
-                rows="1"
-              ></textarea>
-              <div class="ai-chat-input-actions">
-                <div class="ai-tool-menu-wrap">
-                  <button class="ai-tool-btn" id="ai-tool-btn" data-tooltip="选择工具模式">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
-                    </svg>
-                  </button>
-                  <div class="ai-tool-menu" id="ai-tool-menu">
-                    <div class="ai-tool-menu-item active" data-mode="auto">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
-                      </svg>
-                      <div>
-                        <div class="ai-tool-menu-title">默认模式</div>
-                        <div class="ai-tool-menu-desc">解答低空旅游相关信息</div>
-                      </div>
-                    </div>
-                     <div class="ai-tool-menu-item" data-mode="web_only">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <div class="ai-chat-content">
+            <div class="ai-chat-messages" id="ai-chat-messages">
+              <div class="ai-welcome-message">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M2 12h5l2-9 4 18 2-9h5"/>
+                </svg>
+                <h4>欢迎使用 LowSkyAI</h4>
+                <p>我是您的低空旅游智能助手<br>可以为您解答低空旅游相关问题、推荐目的地、解释政策法规等</p>
+                <div class="ai-quick-queries">
+                  <div class="ai-quick-query-title">您可以问我：</div>
+                  <div class="ai-quick-query-list">
+                    <button class="ai-quick-query-item" data-question="查询旅游目的地">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="12" r="10"/>
-                        <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/>
-                        <path d="M2 12h20"/>
+                        <path d="m9 12 2 2 4-4"/>
                       </svg>
-                      <div>
-                        <div class="ai-tool-menu-title">联网搜索</div>
-                        <div class="ai-tool-menu-desc">搜索互联网最新信息</div>
-                      </div>
-                    </div>
-                    <div class="ai-tool-menu-item" data-mode="db_only">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <ellipse cx="12" cy="5" rx="9" ry="3"/>
-                        <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
-                        <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+                      <span>查询旅游目的地</span>
+                    </button>
+                    <button class="ai-quick-query-item" data-question="查询政策法规">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                        <line x1="16" y1="13" x2="8" y2="13"/>
+                        <line x1="16" y1="17" x2="8" y2="17"/>
                       </svg>
-                      <div>
-                        <div class="ai-tool-menu-title">数据库查询</div>
-                        <div class="ai-tool-menu-desc">查询系统数据库信息</div>
-                      </div>
-                    </div>
+                      <span>查询政策法规</span>
+                    </button>
+                    <button class="ai-quick-query-item" data-question="查询统计数据">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="20" x2="18" y2="10"/>
+                        <line x1="12" y1="20" x2="12" y2="4"/>
+                        <line x1="6" y1="20" x2="6" y2="14"/>
+                      </svg>
+                      <span>查询统计数据</span>
+                    </button>
+                    <button class="ai-quick-query-item" data-question="查询安全预警">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+                        <line x1="12" y1="9" x2="12" y2="13"/>
+                        <line x1="12" y1="17" x2="12.01" y2="17"/>
+                      </svg>
+                      <span>查询安全预警</span>
+                    </button>
+                    <button class="ai-quick-query-item" data-question="查询新闻资讯">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/>
+                        <path d="M18 14h-8"/>
+                        <path d="M15 18h-5"/>
+                        <path d="M20 6h-4"/>
+                      </svg>
+                      <span>查询新闻资讯</span>
+                    </button>
                   </div>
                 </div>
-                <button class="ai-chat-send" id="ai-chat-send">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="m5 12 7-7 7 7"/>
-                    <path d="M12 19V5"/>
-                  </svg>
-                </button>
-                <button class="ai-chat-stop" id="ai-chat-stop" style="display: none;">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                    <rect x="6" y="6" width="12" height="12" rx="1"/>
-                  </svg>
-                </button>
+              </div>
+            </div>
+            <div class="ai-chat-input-area">
+              <div class="ai-tool-mode-bar" id="ai-tool-mode-bar" style="display:none;"></div>
+              <div class="ai-chat-input-wrapper">
+                <div class="ai-chat-input-container">
+                  <textarea 
+                    class="ai-chat-input" 
+                    id="ai-chat-input" 
+                    placeholder="有问题，尽管问，shift+enter换行"
+                    rows="1"
+                  ></textarea>
+                  <div class="ai-chat-input-actions">
+                    <div class="ai-tool-menu-wrap">
+                      <button class="ai-tool-btn" id="ai-tool-btn" data-tooltip="选择工具模式">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+                        </svg>
+                      </button>
+                      <div class="ai-tool-menu" id="ai-tool-menu">
+                        <div class="ai-tool-menu-item active" data-mode="auto">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
+                          </svg>
+                          <div>
+                            <div class="ai-tool-menu-title">默认模式</div>
+                            <div class="ai-tool-menu-desc">解答低空旅游相关信息</div>
+                          </div>
+                        </div>
+                         <div class="ai-tool-menu-item" data-mode="web_only">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/>
+                            <path d="M2 12h20"/>
+                          </svg>
+                          <div>
+                            <div class="ai-tool-menu-title">联网搜索</div>
+                            <div class="ai-tool-menu-desc">搜索互联网最新信息</div>
+                          </div>
+                        </div>
+                        <div class="ai-tool-menu-item" data-mode="db_only">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <ellipse cx="12" cy="5" rx="9" ry="3"/>
+                            <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+                            <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+                          </svg>
+                          <div>
+                            <div class="ai-tool-menu-title">数据库查询</div>
+                            <div class="ai-tool-menu-desc">查询系统数据库信息</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <button class="ai-chat-send" id="ai-chat-send">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="m5 12 7-7 7 7"/>
+                        <path d="M12 19V5"/>
+                      </svg>
+                    </button>
+                    <button class="ai-chat-stop" id="ai-chat-stop" style="display: none;">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <rect x="6" y="6" width="12" height="12" rx="1"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
         <!-- 窗口大小调整手柄 -->
         <div class="resize-handle resize-nw" data-direction="nw"></div>
         <div class="resize-handle resize-ne" data-direction="ne"></div>
