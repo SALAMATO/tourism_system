@@ -1072,11 +1072,17 @@ class LowSkyAIChat {
     this.abortController = new AbortController();
     
     try {
+      // 获取认证Token
+      const token = localStorage.getItem('auth_token');
+      console.log('🔑 AI聊天请求 - Token状态:', token ? '已获取' : '未找到');
+      console.log('🔑 Token值:', token ? token.substring(0, 20) + '...' : 'N/A');
+      
       // 使用流式API
       const response = await fetch('/api/ai/chat_stream/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Token ${token}` })  // 添加Token认证
         },
         body: JSON.stringify({
           message: message,
@@ -1088,6 +1094,11 @@ class LowSkyAIChat {
           }
         }),
         signal: this.abortController.signal
+      });
+      
+      console.log('📤 请求Headers:', {
+        'Content-Type': 'application/json',
+        'Authorization': token ? 'Token ***' : '未设置'
       });
       
       if (!response.ok) {
@@ -1451,7 +1462,8 @@ class LowSkyAIChat {
     if (role === 'user') {
       contentDiv.textContent = content;
     } else {
-      contentDiv.innerHTML = content;
+      // AI消息需要经过Markdown解析（包括表格）
+      contentDiv.innerHTML = this.parseMarkdown(content);
     }
     
     messageDiv.appendChild(avatar);
