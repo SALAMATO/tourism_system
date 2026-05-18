@@ -447,10 +447,26 @@ class LowSkyAIChat {
 
         // 计算位置，显示在按钮正下方
         const rect = btn.getBoundingClientRect();
-        const tooltipRect = globalTooltip.getBoundingClientRect();
+        const viewportWidth = window.innerWidth;
+        const tooltipWidth = globalTooltip.offsetWidth || 100; // 估算宽度
+        
+        // 计算水平位置，确保不超出视口边界
+        let leftPosition = rect.left + rect.width / 2 + window.scrollX;
+        
+        // 检查是否会超出左边界
+        if (leftPosition - tooltipWidth / 2 < 10) {
+          // 如果会超出左边界，调整为左对齐并留出边距
+          leftPosition = 10 + tooltipWidth / 2;
+        }
+        
+        // 检查是否会超出右边界
+        if (leftPosition + tooltipWidth / 2 > viewportWidth - 10) {
+          // 如果会超出右边界，调整为右对齐并留出边距
+          leftPosition = viewportWidth - 10 - tooltipWidth / 2;
+        }
         
         globalTooltip.style.top = (rect.bottom + 8 + window.scrollY) + 'px';
-        globalTooltip.style.left = (rect.left + rect.width / 2 + window.scrollX) + 'px';
+        globalTooltip.style.left = leftPosition + 'px';
         globalTooltip.style.transform = 'translateX(-50%) translateY(-8px)';
 
         // 使用requestAnimationFrame确保样式应用后添加show类
