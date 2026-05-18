@@ -349,7 +349,8 @@ class LowSkyAIChat {
           return;
         }
         
-        this.createNewConversation();
+        // 不创建数据库记录，只清空UI进入空白对话状态
+        this.startNewEmptyConversation();
       };
     }
     
@@ -1293,6 +1294,17 @@ class LowSkyAIChat {
         
         // 注意：不再需要前端保存，后端chat_stream已自动保存AI回复
         // await this.saveAssistantMessage(fullContent);  // 已移除，避免重复保存
+        
+        // 如果是第一条消息，优化会话标题
+        const messageCount = this.messagesContainer.querySelectorAll('.ai-message').length;
+        if (messageCount === 2 && this.currentConversationId) { // 用户消息 + AI回复 = 2
+          console.log('🎯 检测到第一条对话，开始优化标题...');
+          // 获取用户的第一条消息
+          const firstUserMsg = this.messages.find(m => m.role === 'user');
+          if (firstUserMsg) {
+            this.optimizeConversationTitle(this.currentConversationId, firstUserMsg.content, fullContent);
+          }
+        }
       } else {
         contentDiv.innerHTML = this.parseMarkdown('抱歉，AI没有返回任何内容。');
       }
@@ -1606,7 +1618,69 @@ class LowSkyAIChat {
   // ========== 会话管理方法 ==========
   
   /**
-   * 创建新会话
+   * 开始新的空白对话（不创建数据库记录）
+   */
+  startNewEmptyConversation() {
+    console.log('🆕 开始新的空白对话');
+    
+    // 清空当前会话ID和标题
+    this.currentConversationId = null;
+    this.currentConversationTitle = '新对话';
+    
+    // 清空消息区域
+    this.clearHistory();
+    
+    // 显示欢迎界面
+    this.showWelcomeScreen();
+    
+    // 更新UI状态
+    this.renderConversationList();
+    
+    console.log('✅ 已进入空白对话状态');
+  }
+  
+  /**
+   * 优化会话标题（在AI回复完成后调用）
+   */
+  async optimizeConversationTitle(conversationId, firstUserMessage, aiResponse) {
+    try {
+      const token = localStorage.getItem('auth_token');
+      if (!token || !conversationId) return;
+      
+      console.log('🎯 开始优化会话标题...');
+      
+      // 新的API不需要传递参数，后端会从数据库获取
+      const response = await fetch(`/api/ai-conversations/${conversationId}/optimize_title/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Token ${token}`
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ 标题优化成功:', data.title);
+        
+        // 更新前端显示
+        this.currentConversationTitle = data.title;
+        
+        // 更新会话列表中的标题
+        const conversation = this.conversations.find(c => c.id === conversationId);
+        if (conversation) {
+          conversation.title = data.title;
+          this.renderConversationList();
+        }
+      } else {
+        console.error('❌ 标题优化失败:', response.status);
+      }
+    } catch (error) {
+      console.error('❌ 标题优化异常:', error);
+    }
+  }
+  
+  /**
+   * 创建新会话（在用户发送第一条消息时调用）
    */
   async createNewConversation(firstMessage = null) {
     try {
@@ -1614,8 +1688,8 @@ class LowSkyAIChat {
       console.trace('调用堆栈:'); // 打印调用堆栈，看看是谁调用的
       console.log('📝 firstMessage:', firstMessage ? `有 (${firstMessage.substring(0, 30)})` : '无');
       
-      // 如果有第一条消息，使用它作为标题
-      const title = firstMessage ? (firstMessage.substring(0, 30) + (firstMessage.length > 30 ? '...' : '')) : '新对话';
+      // 如果有第一条消息，使用它作为临时标题（后续会被优化）
+      const title = firstMessage ? (firstMessage.substring(0, 50) + (firstMessage.length > 50 ? '...' : '')) : '新对话';
       console.log('📝 会话标题:', title);
       
       // 直接创建服务器端会话（不再使用临时ID）

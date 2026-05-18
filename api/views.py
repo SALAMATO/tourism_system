@@ -1896,6 +1896,64 @@ class AIConversationViewSet(viewsets.ModelViewSet):
         # 级联删除消息（Django会自动处理，因为设置了on_delete=CASCADE）
         print(f"✅ 正在删除会话 {instance.id} 及其所有消息")
         instance.delete()
+    
+    @action(detail=True, methods=['post'])
+    def optimize_title(self, request, pk=None):
+        """优化会话标题（基于第一条用户消息和AI回复）"""
+        conversation = self.get_object()
+        
+        # 获取会话中的第一条用户消息和第一条AI回复
+        first_user_message = conversation.messages.filter(role='user').first()
+        first_ai_response = conversation.messages.filter(role='assistant').first()
+        
+        if not first_user_message:
+            return Response({'error': '会话中没有用户消息'}, status=400)
+        
+        try:
+            from ai.ai import lowsky_ai
+            
+            # 构造优化标题的请求
+            title_prompt = f"""请根据以下对话内容，生成一个简洁的会话标题（不超过20个字）：
+
+用户问题：{first_user_message.content}
+
+AI回复：{first_ai_response.content if first_ai_response else '无'}
+
+请直接返回标题文本，不要添加任何解释或引号。"""
+            
+            # 调用AI生成标题（使用非流式模式）
+            response = lowsky_ai.chat(title_prompt, {}, stream=False, request=request)
+            
+            if response.get('success') and response.get('content'):
+                new_title = response['content'].strip()
+                # 限制标题长度
+                if len(new_title) > 50:
+                    new_title = new_title[:50] + '...'
+                
+                # 更新会话标题
+                conversation.title = new_title
+                conversation.save()
+                
+                print(f"✅ 会话标题已优化: {new_title}")
+                return Response({
+                    'success': True,
+                    'title': new_title
+                })
+            else:
+                print(f"⚠️ AI标题优化失败: {response.get('error', '未知错误')}")
+                return Response({
+                    'success': False,
+                    'error': 'AI标题优化失败'
+                }, status=500)
+                
+        except Exception as e:
+            print(f"❌ 优化标题异常: {e}")
+            import traceback
+            traceback.print_exc()
+            return Response({
+                'success': False,
+                'error': str(e)
+            }, status=500)
 
 
 class AIConversationMessageViewSet(viewsets.ModelViewSet):
