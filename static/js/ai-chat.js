@@ -118,7 +118,7 @@ class LowSkyAIChat {
     modal.innerHTML = `
       <div class="ai-chat-container">
         <!-- 侧边栏收起/展开按钮 - 固定在左上角 -->
-        <button class="ai-sidebar-toggle-btn" id="ai-sidebar-toggle-btn" data-tooltip="收起侧边栏">
+        <button class="ai-sidebar-toggle-btn" id="ai-sidebar-toggle-btn" data-tooltip="收起侧栏">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
             <line x1="9" y1="3" x2="9" y2="21"/>
@@ -1883,7 +1883,7 @@ class LowSkyAIChat {
       this.sidebar.classList.remove('collapsed');
       // 更新按钮图标和提示
       if (toggleBtn) {
-        toggleBtn.dataset.tooltip = '收起侧边栏';
+        toggleBtn.dataset.tooltip = '收起侧栏';
         toggleBtn.innerHTML = `
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
@@ -1898,7 +1898,7 @@ class LowSkyAIChat {
       this.sidebar.classList.add('collapsed');
       // 更新按钮图标和提示
       if (toggleBtn) {
-        toggleBtn.dataset.tooltip = '打开侧边栏';
+        toggleBtn.dataset.tooltip = '打开侧栏';
         toggleBtn.innerHTML = `
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
