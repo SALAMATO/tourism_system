@@ -428,12 +428,16 @@ class LowSkyAIChat {
     globalTooltip.style.display = 'none';
     document.body.appendChild(globalTooltip);
     
-    // 用于管理tooltip显示/隐藏的定时器
+    // 用于管理tooltip显示/隐藏的定时器和状态
     let hideTooltipTimer = null;
+    let isHoveringButton = false; // 标记是否有按钮正在被悬停
 
     const tooltipButtons = this.modal.querySelectorAll('[data-tooltip]');
     tooltipButtons.forEach(btn => {
       btn.addEventListener('mouseenter', (e) => {
+        // 标记为正在悬停
+        isHoveringButton = true;
+        
         // 清除之前的隐藏定时器，防止闪烁
         if (hideTooltipTimer) {
           clearTimeout(hideTooltipTimer);
@@ -477,15 +481,24 @@ class LowSkyAIChat {
       });
 
       btn.addEventListener('mouseleave', () => {
+        // 标记为不再悬停
+        isHoveringButton = false;
+        
         // 延迟隐藏，给鼠标移动到下一个按钮留出时间
         hideTooltipTimer = setTimeout(() => {
-          globalTooltip.classList.remove('show');
-          globalTooltip.style.transform = 'translateX(-50%) translateY(-8px)';
-          setTimeout(() => {
-            globalTooltip.style.display = 'none';
-          }, 200);
+          // 再次检查，确保没有新的按钮被悬停
+          if (!isHoveringButton) {
+            globalTooltip.classList.remove('show');
+            globalTooltip.style.transform = 'translateX(-50%) translateY(-8px)';
+            setTimeout(() => {
+              // 最终确认，仍然没有悬停才隐藏
+              if (!isHoveringButton) {
+                globalTooltip.style.display = 'none';
+              }
+            }, 200);
+          }
           hideTooltipTimer = null;
-        }, 100); // 缩短延迟时间到100ms，减少闪烁
+        }, 150); // 稍微延长到150ms，提高稳定性
       });
     });
       
