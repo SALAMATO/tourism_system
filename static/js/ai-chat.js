@@ -337,7 +337,20 @@ class LowSkyAIChat {
     // 新建对话按钮
     const newConversationBtn = this.modal.querySelector('#ai-new-conversation-btn');
     if (newConversationBtn) {
-      newConversationBtn.onclick = () => this.createNewConversation();
+      newConversationBtn.onclick = () => {
+        // 判断是否已处于新对话状态（没有会话ID或消息为空）
+        const isNewConversation = !this.currentConversationId || 
+          (this.currentConversationTitle === '新对话' && 
+           this.messagesContainer.querySelectorAll('.ai-message').length === 0);
+        
+        if (isNewConversation) {
+          // 已处于新对话状态，不执行任何操作
+          console.log('⚠️ 当前已处于新对话状态');
+          return;
+        }
+        
+        this.createNewConversation();
+      };
     }
     
     // 侧边栏收起/展开按钮
