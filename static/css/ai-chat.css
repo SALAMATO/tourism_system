@@ -218,13 +218,19 @@
 
 .ai-chat-header {
   height: 48px;
-  padding: 0 24px 0 96px;
+  padding: 0 24px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   cursor: default;
   user-select: none;
   border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  transition: padding 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 侧边栏收起时，标题栏增加左侧留白 */
+.ai-chat-sidebar.collapsed ~ .ai-chat-main .ai-chat-header {
+  padding-left: 96px;
 }
 
 .ai-chat-header-left {
