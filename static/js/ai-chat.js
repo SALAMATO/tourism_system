@@ -21,6 +21,20 @@ class LowSkyAIChat {
     this.conversations = []; // 会话列表
     this.currentConversationTitle = '新对话'; // 当前会话标题
     
+    // 检查是否是关闭浏览器后重新打开（使用sessionStorage）
+    // sessionStorage在关闭标签页后会自动清除
+    const hasVisitedBefore = sessionStorage.getItem('ai-chat-visited');
+    if (!hasVisitedBefore) {
+      // 首次访问（关闭浏览器后重新打开），清空当前会话ID
+      console.log('🔄 检测到是新会话，将创建新对话');
+      this.currentConversationId = null;
+      // 设置标记，表示已经访问过
+      sessionStorage.setItem('ai-chat-visited', 'true');
+    } else {
+      // F5刷新，保持当前会话ID不变（如果有的话）
+      console.log('♻️ 检测到是页面刷新，保持当前会话');
+    }
+    
     // 拖拽相关
     this.isDragging = false;
     this.dragOffsetX = 0;  // 鼠标相对于容器左上角的X偏移
@@ -104,22 +118,32 @@ class LowSkyAIChat {
         <div class="ai-chat-sidebar" id="ai-chat-sidebar">
           <div class="ai-sidebar-header">
             <h3>对话历史</h3>
-            <button class="ai-new-conversation-btn" id="ai-new-conversation-btn" title="新建对话">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M12 5v14M5 12h14"/>
-              </svg>
-              新对话
-            </button>
+            <div class="ai-sidebar-actions">
+              <button class="ai-new-conversation-btn" id="ai-new-conversation-btn" title="新建对话">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 5v14M5 12h14"/>
+                </svg>
+                新对话
+              </button>
+            </div>
           </div>
           <div class="ai-conversation-list" id="ai-conversation-list">
             <!-- 会话列表将在这里动态生成 -->
           </div>
         </div>
         
-        <!-- 右侧聊天区域 -->
+        <!-- 右侧聊天主区域 -->
         <div class="ai-chat-main">
           <div class="ai-chat-header">
-          <h3><img src="/static/images/AI-icon-Black.png" alt="AI" style="width: 20px; height: 20px; margin-right: 8px;"> LowSkyAI 智能助手</h3>
+          <div class="ai-chat-header-left">
+            <button class="ai-sidebar-toggle-btn" id="ai-sidebar-toggle-btn" title="收起侧边栏">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                <line x1="9" y1="3" x2="9" y2="21"/>
+              </svg>
+            </button>
+            <h3><img src="/static/images/AI-icon-Black.png" alt="AI" style="width: 20px; height: 20px; margin-right: 8px;"> LowSkyAI 智能助手</h3>
+          </div>
           <div class="ai-chat-controls">
             <button class="ai-chat-minimize" title="最小化">
               <svg width="10" height="1" viewBox="0 0 10 1">
@@ -308,6 +332,13 @@ class LowSkyAIChat {
     const newConversationBtn = this.modal.querySelector('#ai-new-conversation-btn');
     if (newConversationBtn) {
       newConversationBtn.onclick = () => this.createNewConversation();
+    }
+    
+    // 侧边栏收起/展开按钮
+    const sidebarToggleBtn = this.modal.querySelector('#ai-sidebar-toggle-btn');
+    
+    if (sidebarToggleBtn) {
+      sidebarToggleBtn.onclick = () => this.toggleSidebar();
     }
       
     // 快速查询按钮
@@ -753,21 +784,27 @@ class LowSkyAIChat {
   
   openChat() {
     const container = this.modal.querySelector('.ai-chat-container');
-    
+      
     // 检查是否是页面加载后第一次打开
     const isFirstOpenAfterRefresh = !this.hasOpenedBefore;
-    
+      
     if (isFirstOpenAfterRefresh) {
       // 页面刷新后第一次打开，强制重置为正常状态
       this.isMaximized = false;
       container.classList.remove('maximized');
-      
+        
       // 重置最大化按钮图标
       const maximizeBtn = this.modal.querySelector('.ai-chat-maximize svg');
       maximizeBtn.innerHTML = '<rect x="1" y="1" width="8" height="8" fill="none" stroke="currentColor" stroke-width="1"/>';
-      
+        
       // 标记已经打开过一次
       this.hasOpenedBefore = true;
+        
+      // 如果是关闭浏览器后重新打开（currentConversationId为null），自动创建新对话
+      if (!this.currentConversationId) {
+        console.log('🆕 首次打开，自动创建新对话');
+        this.createNewConversation();
+      }
     } else {
       // 非首次打开，恢复上次最大化状态（仅桌面端）
       if (window.innerWidth > 768) {
@@ -782,7 +819,7 @@ class LowSkyAIChat {
         }
       }
     }
-    
+      
     // 如果不是最大化状态，保持上次的位置和尺寸
     if (!this.isMaximized) {
       // 如果已经有位置信息，保持不变；否则使用默认居中
@@ -800,26 +837,57 @@ class LowSkyAIChat {
         container.style.height = '';
       }
     }
-    
+      
     // 初始化快速查询选项的显示状态（只在 db_only 模式显示）
     const quickQueries = this.messagesContainer.querySelector('.ai-quick-queries');
     if (quickQueries) {
       quickQueries.style.display = this.toolMode === 'db_only' ? 'block' : 'none';
     }
-    
+      
     // 加载会话列表
     this.loadConversations();
     
+    // 恢复侧边栏状态（仅桌面端）
+    if (window.innerWidth > 768) {
+      const savedCollapsed = localStorage.getItem('ai-sidebar-collapsed');
+      const toggleBtn = this.modal.querySelector('#ai-sidebar-toggle-btn');
+      
+      if (savedCollapsed === 'true' && this.sidebar) {
+        this.sidebar.classList.add('collapsed');
+        // 更新按钮图标和提示
+        if (toggleBtn) {
+          toggleBtn.title = '打开侧边栏';
+          toggleBtn.innerHTML = `
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+              <line x1="9" y1="3" x2="9" y2="21"/>
+            </svg>
+          `;
+        }
+      } else {
+        // 展开状态，更新按钮图标
+        if (toggleBtn) {
+          toggleBtn.title = '收起侧边栏';
+          toggleBtn.innerHTML = `
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+              <line x1="9" y1="3" x2="9" y2="21"/>
+            </svg>
+          `;
+        }
+      }
+    }
+      
     // 移动端使用淡入动画，桌面端使用缩放动画
     const isMobile = window.innerWidth <= 768;
-    
+      
     if (isMobile) {
       // 移动端：直接显示，使用CSS opacity过渡
       this.modal.classList.add('show');
     } else {
       // 桌面端：设置初始缩放状态（从当前位置缩小）
       container.style.transform = 'scale(0.95)';
-      
+        
       // 强制重绘后显示
       requestAnimationFrame(() => {
         this.modal.classList.add('show');
@@ -829,7 +897,7 @@ class LowSkyAIChat {
         });
       });
     }
-    
+      
     this.isOpen = true;
     this.input.focus();
   }
@@ -1624,6 +1692,48 @@ class LowSkyAIChat {
       }
     } catch (error) {
       console.error('保存会话异常:', error);
+    }
+  }
+  
+  /**
+   * 切换侧边栏收起/展开状态
+   */
+  toggleSidebar() {
+    if (!this.sidebar) return;
+    
+    const isCollapsed = this.sidebar.classList.contains('collapsed');
+    const toggleBtn = this.modal.querySelector('#ai-sidebar-toggle-btn');
+    
+    if (isCollapsed) {
+      // 展开侧边栏
+      this.sidebar.classList.remove('collapsed');
+      // 更新按钮图标和提示
+      if (toggleBtn) {
+        toggleBtn.title = '收起侧边栏';
+        toggleBtn.innerHTML = `
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+            <line x1="9" y1="3" x2="9" y2="21"/>
+          </svg>
+        `;
+      }
+      // 保存状态到localStorage
+      localStorage.setItem('ai-sidebar-collapsed', 'false');
+    } else {
+      // 收起侧边栏
+      this.sidebar.classList.add('collapsed');
+      // 更新按钮图标和提示
+      if (toggleBtn) {
+        toggleBtn.title = '打开侧边栏';
+        toggleBtn.innerHTML = `
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+            <line x1="9" y1="3" x2="9" y2="21"/>
+          </svg>
+        `;
+      }
+      // 保存状态到localStorage
+      localStorage.setItem('ai-sidebar-collapsed', 'true');
     }
   }
   
