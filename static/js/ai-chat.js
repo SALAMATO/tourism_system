@@ -1027,6 +1027,15 @@ class LowSkyAIChat {
     // 保存用户消息到服务器
     await this.saveUserMessage(message);
     
+    // 确保会话ID已经不是临时的
+    if (this.currentConversationId && this.currentConversationId.startsWith('temp_')) {
+      console.warn('会话ID仍是临时ID，等待其更新...');
+      // 再等待一下，确保会话ID已更新
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+    
+    console.log('发送AI请求，会话ID:', this.currentConversationId);
+    
     // 清空输入框
     this.input.value = '';
     this.input.style.height = 'auto';
@@ -1143,6 +1152,16 @@ class LowSkyAIChat {
       if (fullContent) {
         contentDiv.innerHTML = this.parseMarkdown(fullContent);
         this.smoothScrollToBottom();
+        
+        // 调试：检查会话ID
+        console.log('AI回复完成，当前会话ID:', this.currentConversationId);
+        console.log('会话ID是否是临时的:', this.currentConversationId.startsWith('temp_'));
+        
+        // 如果会话ID仍然是临时的，说明有问题
+        if (this.currentConversationId.startsWith('temp_')) {
+          console.error('⚠️ 警告：AI回复完成时会话ID仍是临时ID！');
+          console.error('这可能导致AI回复没有被保存到数据库');
+        }
       } else {
         contentDiv.innerHTML = this.parseMarkdown('抱歉，AI没有返回任何内容。');
       }

@@ -1521,6 +1521,14 @@ class LowSkyAIViewSet(viewsets.ViewSet):
             
         if not message:
             return Response({'error': '消息不能为空'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # 调试日志：记录请求信息
+        print(f"\n=== AI聊天请求 ===")
+        print(f"用户: {request.user.username if request.user.is_authenticated else '未登录'}")
+        print(f"会话ID: {conversation_id}")
+        print(f"会话ID是否是临时的: {conversation_id.startswith('temp_') if conversation_id else 'N/A'}")
+        print(f"消息内容: {message[:50]}...")
+        print(f"==================\n")
                 
         def event_stream():
             try:
@@ -1550,22 +1558,32 @@ class LowSkyAIViewSet(viewsets.ViewSet):
                         
                     # 保存AI回复
                     if request.user.is_authenticated and conversation_id:
-                        try:
-                            from .models import AIConversation, AIConversationMessage
-                            conversation = AIConversation.objects.get(
-                                id=conversation_id,
-                                user=request.user
-                            )
-                            AIConversationMessage.objects.create(
-                                conversation=conversation,
-                                role='assistant',
-                                content=full_response
-                            )
-                            # 更新会话的更新时间
-                            conversation.save()
-                            print(f"✅ 已保存AI回复到会话 {conversation_id}")
-                        except Exception as e:
-                            print(f"❌ 保存AI回复失败: {e}")
+                        # 检查是否是临时ID
+                        if conversation_id.startswith('temp_'):
+                            print(f"⚠️ 会话ID是临时ID: {conversation_id}，跳过保存AI回复")
+                        else:
+                            try:
+                                from .models import AIConversation, AIConversationMessage
+                                print(f"尝试保存AI回复到会话 {conversation_id}, 内容长度: {len(full_response)}")
+                                
+                                conversation = AIConversation.objects.get(
+                                    id=conversation_id,
+                                    user=request.user
+                                )
+                                AIConversationMessage.objects.create(
+                                    conversation=conversation,
+                                    role='assistant',
+                                    content=full_response
+                                )
+                                # 更新会话的更新时间
+                                conversation.save()
+                                print(f"✅ 已保存AI回复到会话 {conversation_id}")
+                            except AIConversation.DoesNotExist:
+                                print(f"❌ 会话不存在或不属于当前用户: {conversation_id}")
+                            except Exception as e:
+                                print(f"❌ 保存AI回复失败: {e}")
+                                import traceback
+                                traceback.print_exc()
                     return
                     
                 # ── 联网搜索模式：在消息前加强制指令（使用系统级标记，不会被显示） ─
@@ -1585,23 +1603,33 @@ class LowSkyAIViewSet(viewsets.ViewSet):
                     
                 # 保存AI回复到数据库
                 if request.user.is_authenticated and conversation_id:
-                    try:
-                        from .models import AIConversation, AIConversationMessage
-                        full_response = ''.join(full_response_parts)
-                        conversation = AIConversation.objects.get(
-                            id=conversation_id,
-                            user=request.user
-                        )
-                        AIConversationMessage.objects.create(
-                            conversation=conversation,
-                            role='assistant',
-                            content=full_response
-                        )
-                        # 更新会话的更新时间
-                        conversation.save()
-                        print(f"✅ 已保存AI回复到会话 {conversation_id}")
-                    except Exception as e:
-                        print(f"❌ 保存AI回复失败: {e}")
+                    # 检查是否是临时ID
+                    if conversation_id.startswith('temp_'):
+                        print(f"⚠️ 会话ID是临时ID: {conversation_id}，跳过保存AI回复")
+                    else:
+                        try:
+                            from .models import AIConversation, AIConversationMessage
+                            full_response = ''.join(full_response_parts)
+                            print(f"尝试保存AI回复到会话 {conversation_id}, 内容长度: {len(full_response)}")
+                            
+                            conversation = AIConversation.objects.get(
+                                id=conversation_id,
+                                user=request.user
+                            )
+                            AIConversationMessage.objects.create(
+                                conversation=conversation,
+                                role='assistant',
+                                content=full_response
+                            )
+                            # 更新会话的更新时间
+                            conversation.save()
+                            print(f"✅ 已保存AI回复到会话 {conversation_id}")
+                        except AIConversation.DoesNotExist:
+                            print(f"❌ 会话不存在或不属于当前用户: {conversation_id}")
+                        except Exception as e:
+                            print(f"❌ 保存AI回复失败: {e}")
+                            import traceback
+                            traceback.print_exc()
             except Exception as e:
                 yield f"data: {json.dumps({'error': str(e)})}\n\n"
             
