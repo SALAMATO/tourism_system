@@ -2610,16 +2610,25 @@ class LowSkyAIChat {
       this.modal.insertBefore(mobileHistoryPage, chatContainer);
       document.body.style.overflow = 'hidden';
       
-      // 阻止空白区域的点击穿透到下层（使用冒泡阶段）
+      // 绑定点击事件：点击历史页面的空白区域或聊天窗口可见区域时关闭历史页面
       mobileHistoryPage.addEventListener('click', (e) => {
-        // 如果点击的是按钮或其子元素，不阻止
+        // 如果点击的是按钮或其子元素，不关闭
         if (e.target.closest('.ai-mobile-history-new-btn') || 
             e.target.closest('.ai-conversation-item')) {
           return;
         }
-        // 阻止空白区域的点击
-        e.stopPropagation();
-        e.preventDefault();
+        
+        // 获取点击位置
+        const clickX = e.clientX;
+        const viewportWidth = window.innerWidth;
+        
+        // 如果点击在聊天窗口的可见区域内（右侧25%），关闭历史页面
+        // 聊天窗口向右移动了75%，所以可见区域是从 25% 到 100%
+        if (clickX > viewportWidth * 0.25) {
+          // 点击在聊天窗口可见区域，关闭历史页面
+          this.closeMobileHistoryPage(chatContainer, mobileHistoryPage);
+          this.currentLevel = 0; // 返回主聊天页面
+        }
       });
       
       // 绑定新对话按钮事件（在父容器事件之后绑定）
