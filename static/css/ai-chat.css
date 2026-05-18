@@ -218,7 +218,7 @@
 
 .ai-chat-header {
   height: 48px;
-  padding: 0 24px;
+  padding: 0 24px 0 96px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -897,7 +897,7 @@
 }
 
 .ai-sidebar-header {
-  padding: 16px;
+  padding: 56px 16px 16px;
   display: flex;
   justify-content: space-between;
   align-items: center;
