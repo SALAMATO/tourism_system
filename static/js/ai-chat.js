@@ -938,7 +938,7 @@ class LowSkyAIChat {
         this.sidebar.classList.add('collapsed');
         // 更新按钮图标和提示
         if (toggleBtn) {
-          toggleBtn.title = '打开侧边栏';
+          toggleBtn.dataset.tooltip = '打开侧边栏';
           toggleBtn.innerHTML = `
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
@@ -949,7 +949,7 @@ class LowSkyAIChat {
       } else {
         // 展开状态，更新按钮图标
         if (toggleBtn) {
-          toggleBtn.title = '收起侧边栏';
+          toggleBtn.dataset.tooltip = '收起侧边栏';
           toggleBtn.innerHTML = `
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
@@ -1860,10 +1860,11 @@ class LowSkyAIChat {
     const isCollapsed = this.sidebar.classList.contains('collapsed');
     const toggleBtn = this.modal.querySelector('#ai-sidebar-toggle-btn');
     
-    // 移除当前可能正在显示的tooltip，避免显示旧的文字
-    const existingTooltip = document.querySelector('.ai-tooltip');
-    if (existingTooltip) {
-      existingTooltip.remove();
+    // 立即隐藏当前tooltip，避免显示旧的文字
+    const globalTooltip = document.querySelector('.ai-tooltip');
+    if (globalTooltip) {
+      globalTooltip.style.display = 'none';
+      globalTooltip.classList.remove('show');
     }
     
     if (isCollapsed) {
