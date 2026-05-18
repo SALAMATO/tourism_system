@@ -1331,12 +1331,25 @@ body.ai-chat-maximized {
     flex-direction: column;
     pointer-events: auto; /* 确保能接收点击事件 */
     transform: translateX(0); /* 历史页面始终在原始位置 */
-    opacity: 0;
-    transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 1;
   }
   
-  .ai-mobile-history-page.visible {
-    opacity: 1;
+  /* 历史页面上的遮罩层 - iOS风格的暗色背景 */
+  .ai-mobile-history-page::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0);
+    transition: background 0.35s cubic-bezier(0.25, 0.1, 0.25, 1);
+    pointer-events: none;
+    z-index: -1;
+  }
+  
+  .ai-mobile-history-page.visible::before {
+     /* iOS风格的遮罩透明度 */
   }
   
   .ai-mobile-history-header {
@@ -1393,15 +1406,19 @@ body.ai-chat-maximized {
     padding-top: 70px; /* 为左上角新对话胶囊按钮留出空间 */
   }
   
-  /* 移动端聊天窗口动画 - 覆盖在对话历史页面上 */
+  /* 移动端聊天窗口动画 - iOS风格侧边栏覆盖 */
   .ai-chat-container {
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    transition: transform 0.35s cubic-bezier(0.25, 0.1, 0.25, 1), 
+                border-radius 0.35s cubic-bezier(0.25, 0.1, 0.25, 1),
+                box-shadow 0.35s cubic-bezier(0.25, 0.1, 0.25, 1) !important;
+    border-radius: 0;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   }
   
   .ai-chat-container.history-visible {
-    transform: translateX(30%) !important; /* 向右移动，露出下层历史页面 */
-    box-shadow: -10px 0 40px rgba(0, 0, 0, 0.2) !important; /* 左侧阴影增强层次感 */
+    transform: translateX(75%) !important; /* 向右移动75%，露出左侧25% */
+    border-radius: 0 20px 20px 0 !important; /* 右侧圆角 */
+    box-shadow: -5px 0 30px rgba(0, 0, 0, 0.15) !important; /* 左侧阴影 */
   }
   
   /* 移动端：隐藏整个标题栏 - 彻底移除大白条 */
