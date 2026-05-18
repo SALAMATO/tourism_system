@@ -2523,10 +2523,9 @@ class LowSkyAIChat {
   }
   
   /**
-   * 移动端切换侧栏显示状态 - 使用全屏页面切换（对话历史在中间层）
-   * Level 0: 主页面（最底层）
-   * Level 1: 历史页面（中间层）
-   * Level 2: 聊天页面（最上层）
+   * 移动端切换侧栏显示状态 - 使用全屏页面切换（聊天页面覆盖历史页面）
+   * Level 0: 历史页面（最底层）
+   * Level 1: 聊天页面（最上层）
    */
   toggleMobileSidebar() {
     // 在移动端，创建一个全屏的对话历史页面（位于聊天窗口下层）
@@ -2540,7 +2539,7 @@ class LowSkyAIChat {
     if (mobileHistoryPage) {
       // 如果已经存在，关闭它（聊天窗口滑回覆盖）
       this.closeMobileHistoryPage(chatContainer, mobileHistoryPage);
-      this.currentLevel = 0; // 返回主页面
+      this.currentLevel = 0; // 返回历史页面
     } else {
       // 创建移动端对话历史页面（插入到聊天容器之前，确保在下层）
       mobileHistoryPage = document.createElement('div');
@@ -2632,20 +2631,16 @@ class LowSkyAIChat {
           this.startNewEmptyConversation();
           console.log('✅ startNewEmptyConversation 调用完成');
           this.closeMobileHistoryPage(chatContainer, mobileHistoryPage);
-          this.currentLevel = 0; // 返回主页面
+          this.currentLevel = 0; // 返回历史页面
         });
       } else {
         console.error('❌ 未找到新对话按钮');
       }
       
-      // 触发动画：历史页面滑入 + 聊天窗口向右移动
+      // 触发动画：聊天窗口向右移动，露出历史页面
       requestAnimationFrame(() => {
-        mobileHistoryPage.classList.add('slide-in');
-        setTimeout(() => {
-          mobileHistoryPage.classList.add('darken');
-          chatContainer.classList.add('history-visible');
-          this.currentLevel = 1; // 进入历史页面层级
-        }, 50);
+        chatContainer.classList.add('history-visible');
+        this.currentLevel = 1; // 进入聊天页面层级
       });
       
       // 绑定会话点击事件
@@ -2660,169 +2655,18 @@ class LowSkyAIChat {
             await this.switchConversation(conversationId);
             // 关闭历史页面
             this.closeMobileHistoryPage(chatContainer, mobileHistoryPage);
-            this.currentLevel = 2; // 进入聊天页面层级
+            this.currentLevel = 1; // 保持在聊天页面层级
           }
         });
       });
-      
-      // 添加左右滑动支持
-      this.bindSwipeEvents(mobileHistoryPage, chatContainer);
     }
   }
   closeMobileHistoryPage(chatContainer, mobileHistoryPage) {
     chatContainer.classList.remove('history-visible');
-    mobileHistoryPage.classList.remove('darken');
     setTimeout(() => {
-      mobileHistoryPage.classList.remove('slide-in');
-      setTimeout(() => {
-        mobileHistoryPage.remove();
-        document.body.style.overflow = '';
-      }, 350);
-    }, 50);
-  }
-  
-  /**
-   * 绑定左右滑动事件 - 支持三层页面切换
-   * Level 0: 主页面（最底层）
-   * Level 1: 历史页面（中间层）
-   * Level 2: 聊天页面（最上层）
-   * 从左往右滑 = 降低层级 (2→1→0)
-   * 从右往左滑 = 增加层级 (0→1→2)
-   */
-  bindSwipeEvents(mobileHistoryPage, chatContainer) {
-    let startX = 0;
-    let startY = 0;
-    let currentX = 0;
-    let isSwiping = false;
-    const threshold = 50; // 滑动阈值
-    
-    // 触摸开始
-    mobileHistoryPage.addEventListener('touchstart', (e) => {
-      startX = e.touches[0].clientX;
-      startY = e.touches[0].clientY;
-      currentX = startX;
-      isSwiping = true;
-      
-      // 禁用过渡动画，实现实时跟随（手势打断）
-      chatContainer.style.transition = 'none';
-      mobileHistoryPage.style.transition = 'none';
-    }, { passive: true });
-    
-    // 触摸移动
-    mobileHistoryPage.addEventListener('touchmove', (e) => {
-      if (!isSwiping) return;
-      
-      currentX = e.touches[0].clientX;
-      const deltaX = currentX - startX;
-      const deltaY = Math.abs(e.touches[0].clientY - startY);
-      
-      // 如果垂直移动大于水平移动，不处理（避免干扰滚动）
-      if (deltaY > Math.abs(deltaX)) return;
-      
-      // 根据当前层级计算滑动
-      const screenWidth = window.innerWidth;
-      
-      if (deltaX > 0) {
-        // 从左往右滑 = 降低层级
-        if (this.currentLevel === 2) {
-          // Level 2 → Level 1: 聊天窗口向左滑回
-          const progress = Math.min(deltaX / (screenWidth * 0.75), 1);
-          const translateX = 75 * (1 - progress);
-          chatContainer.style.transform = `translateX(${translateX}%)`;
-          
-          // 阴影变化
-          const shadowBlur = 30 * progress;
-          chatContainer.style.boxShadow = `-${5 * (1-progress)}px 0 ${shadowBlur}px rgba(0, 0, 0, ${0.15 * (1-progress)})`;
-        } else if (this.currentLevel === 1) {
-          // Level 1 → Level 0: 历史页面向左滑出
-          const progress = Math.min(deltaX / (screenWidth * 0.75), 1);
-          const translateX = -100 * progress;
-          mobileHistoryPage.style.transform = `translateX(${translateX}%)`;
-        }
-      } else {
-        // 从右往左滑 = 增加层级
-        if (this.currentLevel === 0 && this.isChatOpen) {
-          // Level 0 → Level 2: 聊天窗口向右滑出
-          const progress = Math.min(Math.abs(deltaX) / (screenWidth * 0.75), 1);
-          const translateX = 75 * progress;
-          chatContainer.style.transform = `translateX(${translateX}%)`;
-          
-          // 阴影变化
-          const shadowBlur = 30 * progress;
-          chatContainer.style.boxShadow = `-${5 * progress}px 0 ${shadowBlur}px rgba(0, 0, 0, ${0.15 * progress})`;
-        } else if (this.currentLevel === 1) {
-          // Level 1 → Level 2: 聊天窗口向右滑出
-          const progress = Math.min(Math.abs(deltaX) / (screenWidth * 0.75), 1);
-          const translateX = 75 * progress;
-          chatContainer.style.transform = `translateX(${translateX}%)`;
-          
-          // 阴影变化
-          const shadowBlur = 30 * progress;
-          chatContainer.style.boxShadow = `-${5 * progress}px 0 ${shadowBlur}px rgba(0, 0, 0, ${0.15 * progress})`;
-        }
-      }
-      
-      e.preventDefault();
-    }, { passive: false });
-    
-    // 触摸结束
-    mobileHistoryPage.addEventListener('touchend', (e) => {
-      if (!isSwiping) return;
-      isSwiping = false;
-      
-      // 恢复过渡动画
-      chatContainer.style.transition = 'transform 0.35s cubic-bezier(0.25, 0.1, 0.25, 1), box-shadow 0.35s cubic-bezier(0.25, 0.1, 0.25, 1)';
-      mobileHistoryPage.style.transition = 'transform 0.35s cubic-bezier(0.25, 0.1, 0.25, 1)';
-      chatContainer.style.boxShadow = ''; // 清除inline样式，使用CSS类
-      mobileHistoryPage.style.transform = ''; // 清除inline样式
-      
-      const deltaX = currentX - startX;
-      
-      if (Math.abs(deltaX) > threshold) {
-        if (deltaX > 0) {
-          // 从左往右滑超过阈值 = 降低层级
-          if (this.currentLevel === 2) {
-            // Level 2 → Level 1: 不应该发生，因为Level 2时历史页面已关闭
-            console.log('⚠️ Level 2 不应该有手势操作');
-          } else if (this.currentLevel === 1) {
-            // Level 1 → Level 0: 关闭历史页面
-            this.closeMobileHistoryPage(chatContainer, mobileHistoryPage);
-            this.currentLevel = 0;
-          }
-        } else {
-          // 从右往左滑超过阈值 = 增加层级
-          if (this.currentLevel === 1) {
-            // Level 1 → Level 2: 关闭历史页面，进入聊天页面
-            chatContainer.classList.remove('history-visible');
-            mobileHistoryPage.classList.remove('slide-in');
-            mobileHistoryPage.classList.remove('darken');
-            setTimeout(() => {
-              mobileHistoryPage.remove();
-              document.body.style.overflow = '';
-            }, 300);
-            this.currentLevel = 2;
-          }
-        }
-      } else {
-        // 未达到阈值，恢复到当前层级状态
-        this.restoreToCurrentLevel(chatContainer, mobileHistoryPage);
-      }
-    });
-  }
-  
-  /**
-   * 恢复到当前层级的状态
-   */
-  restoreToCurrentLevel(chatContainer, mobileHistoryPage) {
-    if (this.currentLevel === 2) {
-      chatContainer.classList.add('history-visible');
-    } else if (this.currentLevel === 1) {
-      chatContainer.classList.remove('history-visible');
-      mobileHistoryPage.classList.add('slide-in');
-      mobileHistoryPage.classList.add('darken');
-    } else {
-      chatContainer.classList.remove('history-visible');
-    }
+      mobileHistoryPage.remove();
+      document.body.style.overflow = '';
+    }, 350);
   }
 }
 

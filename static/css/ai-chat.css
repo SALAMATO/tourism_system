@@ -1318,7 +1318,7 @@ body.ai-chat-maximized {
     height: 16px;
   }
   
-  /* 移动端对话历史页面 - 中间层 */
+  /* 移动端对话历史页面 - 底层 */
   .ai-mobile-history-page {
     position: fixed;
     top: 0;
@@ -1326,17 +1326,17 @@ body.ai-chat-maximized {
     right: 0;
     bottom: 0;
     background: #f8f9fa;
-    z-index: 10002; /* 中间层 */
+    z-index: 10001; /* 底层 */
     display: flex;
     flex-direction: column;
     pointer-events: auto;
-    transform: translateX(-100%); /* 初始在左侧外面 */
+    transform: translateX(0); /* 初始在正常位置 */
     transition: transform 0.35s cubic-bezier(0.25, 0.1, 0.25, 1);
   }
   
-  /* 历史页面滑入状态 */
-  .ai-mobile-history-page.slide-in {
-    transform: translateX(0);
+  /* 历史页面滑出状态 */
+  .ai-mobile-history-page.slide-out {
+    transform: translateX(-100%); /* 向左滑出 */
   }
   
   /* 历史页面上的遮罩层 - iOS风格的暗色背景 */
@@ -1353,7 +1353,9 @@ body.ai-chat-maximized {
     z-index: -1;
   }
   
-  .ai-mobile-history-page.darken::before
+  .ai-mobile-history-page.darken::before {
+    background: rgba(0, 0, 0, 0.3); /* 添加暗色背景 */
+  }
   
   .ai-mobile-history-header {
     display: none !important;
@@ -1416,6 +1418,7 @@ body.ai-chat-maximized {
                 box-shadow 0.35s cubic-bezier(0.25, 0.1, 0.25, 1) !important;
     border-radius: 0;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    transform: translateX(0); /* 默认位置 */
   }
   
   .ai-chat-container.history-visible {
