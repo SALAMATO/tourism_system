@@ -1489,6 +1489,26 @@ body.ai-chat-maximized {
     width: 16px;
     height: 16px;
   }
+  
+  /* 移动端：隐藏AI头像和用户头像 */
+  .ai-message-avatar {
+    display: none !important;
+  }
+  
+  /* 移动端：调整消息内容布局，移除头像后的间距 */
+  .ai-message {
+    gap: 0;
+  }
+  
+  /* 移动端：用户消息气泡圆角调整 */
+  .ai-message.user .ai-message-content {
+    border-radius: 16px 16px 4px 16px;
+  }
+  
+  /* 移动端：AI消息气泡圆角调整 */
+  .ai-message.assistant .ai-message-content {
+    border-radius: 16px 16px 16px 4px;
+  }
 }
 
 /* 超小屏幕移动端适配 */
