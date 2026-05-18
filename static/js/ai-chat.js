@@ -427,38 +427,49 @@ class LowSkyAIChat {
     globalTooltip.className = 'ai-tooltip';
     globalTooltip.style.display = 'none';
     document.body.appendChild(globalTooltip);
+    
+    // 用于管理tooltip显示/隐藏的定时器
+    let hideTooltipTimer = null;
 
     const tooltipButtons = this.modal.querySelectorAll('[data-tooltip]');
     tooltipButtons.forEach(btn => {
       btn.addEventListener('mouseenter', (e) => {
-        // 清除可能存在的旧tooltip
-        if (globalTooltip.parentNode) {
-          globalTooltip.style.display = 'block';
-          globalTooltip.classList.remove('show');
-          globalTooltip.textContent = btn.dataset.tooltip;
-
-          // 计算位置，显示在按钮正下方
-          const rect = btn.getBoundingClientRect();
-          const tooltipRect = globalTooltip.getBoundingClientRect();
-          
-          globalTooltip.style.top = (rect.bottom + 8 + window.scrollY) + 'px';
-          globalTooltip.style.left = (rect.left + rect.width / 2 + window.scrollX) + 'px';
-          globalTooltip.style.transform = 'translateX(-50%) translateY(-8px)';
-
-          // 使用requestAnimationFrame确保样式应用后添加show类
-          requestAnimationFrame(() => {
-            globalTooltip.style.transform = 'translateX(-50%) translateY(0)';
-            globalTooltip.classList.add('show');
-          });
+        // 清除之前的隐藏定时器，防止闪烁
+        if (hideTooltipTimer) {
+          clearTimeout(hideTooltipTimer);
+          hideTooltipTimer = null;
         }
+        
+        // 立即显示新的tooltip
+        globalTooltip.style.display = 'block';
+        globalTooltip.classList.remove('show');
+        globalTooltip.textContent = btn.dataset.tooltip;
+
+        // 计算位置，显示在按钮正下方
+        const rect = btn.getBoundingClientRect();
+        const tooltipRect = globalTooltip.getBoundingClientRect();
+        
+        globalTooltip.style.top = (rect.bottom + 8 + window.scrollY) + 'px';
+        globalTooltip.style.left = (rect.left + rect.width / 2 + window.scrollX) + 'px';
+        globalTooltip.style.transform = 'translateX(-50%) translateY(-8px)';
+
+        // 使用requestAnimationFrame确保样式应用后添加show类
+        requestAnimationFrame(() => {
+          globalTooltip.style.transform = 'translateX(-50%) translateY(0)';
+          globalTooltip.classList.add('show');
+        });
       });
 
       btn.addEventListener('mouseleave', () => {
-        globalTooltip.classList.remove('show');
-        globalTooltip.style.transform = 'translateX(-50%) translateY(-8px)';
-        setTimeout(() => {
-          globalTooltip.style.display = 'none';
-        }, 200);
+        // 延迟隐藏，给鼠标移动到下一个按钮留出时间
+        hideTooltipTimer = setTimeout(() => {
+          globalTooltip.classList.remove('show');
+          globalTooltip.style.transform = 'translateX(-50%) translateY(-8px)';
+          setTimeout(() => {
+            globalTooltip.style.display = 'none';
+          }, 200);
+          hideTooltipTimer = null;
+        }, 100); // 缩短延迟时间到100ms，减少闪烁
       });
     });
       
@@ -938,7 +949,7 @@ class LowSkyAIChat {
         this.sidebar.classList.add('collapsed');
         // 更新按钮图标和提示
         if (toggleBtn) {
-          toggleBtn.dataset.tooltip = '打开侧边栏';
+          toggleBtn.dataset.tooltip = '打开侧栏';
           toggleBtn.innerHTML = `
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
@@ -949,7 +960,7 @@ class LowSkyAIChat {
       } else {
         // 展开状态，更新按钮图标
         if (toggleBtn) {
-          toggleBtn.dataset.tooltip = '收起侧边栏';
+          toggleBtn.dataset.tooltip = '收起侧栏';
           toggleBtn.innerHTML = `
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
