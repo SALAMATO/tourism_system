@@ -1080,6 +1080,8 @@ class LowSkyAIChat {
     if (isMobile) {
       // 移动端：直接显示，使用CSS opacity过渡
       this.modal.classList.add('show');
+      // 移动端打开AI窗口时禁止背景滚动
+      document.body.classList.add('ai-chat-maximized');
     } else {
       // 桌面端：设置初始缩放状态（从当前位置缩小）
       container.style.transform = 'scale(0.95)';
@@ -1127,6 +1129,8 @@ class LowSkyAIChat {
       // 移动端：直接隐藏modal，使用CSS opacity过渡
       this.modal.classList.remove('show');
       this.isOpen = false;
+      // 移动端关闭AI窗口时恢复背景滚动
+      document.body.classList.remove('ai-chat-maximized');
         
       // 等待动画完成后再清理状态（与CSS动画时间一致）
       setTimeout(() => {
