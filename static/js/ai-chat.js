@@ -2522,60 +2522,119 @@ class LowSkyAIChat {
   }
   
   /**
-   * 移动端切换侧栏显示状态
+   * 移动端切换侧栏显示状态 - 使用全屏页面切换（对话历史在下层）
    */
   toggleMobileSidebar() {
-    // 在移动端，侧栏默认是隐藏的（display: none）
-    // 这里可以创建一个覆盖层来显示侧栏内容
+    // 在移动端，创建一个全屏的对话历史页面（位于聊天窗口下层）
     const sidebar = this.modal.querySelector('#ai-chat-sidebar');
     if (!sidebar) return;
     
-    // 检查是否已经有移动端侧栏覆盖层
-    let mobileOverlay = this.modal.querySelector('.ai-mobile-sidebar-overlay');
+    // 检查是否已经有移动端对话历史页面
+    let mobileHistoryPage = this.modal.querySelector('.ai-mobile-history-page');
+    const chatContainer = this.modal.querySelector('.ai-chat-container');
     
-    if (mobileOverlay) {
-      // 如果已经存在，关闭它
-      mobileOverlay.remove();
-      document.body.style.overflow = '';
+    if (mobileHistoryPage) {
+      // 如果已经存在，关闭它（聊天窗口滑回覆盖）
+      chatContainer.classList.remove('history-visible');
+      setTimeout(() => {
+        mobileHistoryPage.remove();
+        document.body.style.overflow = '';
+      }, 300);
     } else {
-      // 创建移动端侧栏覆盖层
-      mobileOverlay = document.createElement('div');
-      mobileOverlay.className = 'ai-mobile-sidebar-overlay';
-      mobileOverlay.innerHTML = `
-        <div class="ai-mobile-sidebar-content">
-          <div class="ai-mobile-sidebar-header">
-            <h3>对话历史</h3>
-            <button class="ai-mobile-sidebar-close">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="18" y1="6" x2="6" y2="18"/>
-                <line x1="6" y1="6" x2="18" y2="18"/>
-              </svg>
-            </button>
-          </div>
-          <div class="ai-mobile-sidebar-list">
-            ${this.conversationList.innerHTML}
-          </div>
+      // 创建移动端对话历史页面（插入到聊天容器之前，确保在下层）
+      mobileHistoryPage = document.createElement('div');
+      mobileHistoryPage.className = 'ai-mobile-history-page';
+      
+      // 生成会话列表HTML
+      const conversationsHtml = this.conversations.length === 0 
+        ? '<div class="ai-empty-conversations">暂无对话历史</div>'
+        : this.conversations.map(conv => {
+            const time = conv.updated_at ? this.formatTime(conv.updated_at) : '';
+            const isActive = conv.id === this.currentConversationId ? ' active' : '';
+            return `
+              <div class="ai-conversation-item${isActive}" data-id="${conv.id}">
+                <div class="ai-conversation-item-content">
+                  <div class="ai-conversation-title">${conv.title || '新对话'}</div>
+                  <div class="ai-conversation-time">${time}</div>
+                </div>
+                <div class="ai-conversation-actions">
+                  <div class="dropdown-menu">
+                    <button class="dropdown-toggle" onclick="event.stopPropagation(); window.lowSkyAI.toggleConversationDropdown('${conv.id}')">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <circle cx="12" cy="5" r="2"/>
+                        <circle cx="12" cy="12" r="2"/>
+                        <circle cx="12" cy="19" r="2"/>
+                      </svg>
+                    </button>
+                    <div class="dropdown-content" id="conversation-menu-${conv.id}">
+                      <button class="dropdown-item" onclick="event.stopPropagation(); window.lowSkyAI.editConversationName('${conv.id}')">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                        编辑名称
+                      </button>
+                      <button class="dropdown-item danger" onclick="event.stopPropagation(); window.lowSkyAI.deleteConversation('${conv.id}')">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <polyline points="3 6 5 6 21 6"/>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                        </svg>
+                        删除对话
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            `;
+          }).join('');
+      
+      mobileHistoryPage.innerHTML = `
+        <div class="ai-mobile-history-list">
+          ${conversationsHtml}
         </div>
       `;
       
-      // 添加关闭按钮事件
-      const closeBtn = mobileOverlay.querySelector('.ai-mobile-sidebar-close');
-      closeBtn.onclick = () => {
-        mobileOverlay.remove();
-        document.body.style.overflow = '';
-      };
+      // 添加到modal中，但在聊天容器之前（确保在下层）
+      this.modal.insertBefore(mobileHistoryPage, chatContainer);
+      document.body.style.overflow = 'hidden';
       
-      // 点击覆盖层背景关闭
-      mobileOverlay.onclick = (e) => {
-        if (e.target === mobileOverlay) {
-          mobileOverlay.remove();
-          document.body.style.overflow = '';
+      // 阻止所有点击和触摸事件穿透到下层
+      const preventPenetration = (e) => {
+        e.stopPropagation();
+        if (e.cancelable) {
+          e.preventDefault();
         }
       };
       
-      // 添加到modal中
-      this.modal.appendChild(mobileOverlay);
-      document.body.style.overflow = 'hidden';
+      mobileHistoryPage.addEventListener('click', preventPenetration, true);
+      mobileHistoryPage.addEventListener('touchstart', preventPenetration, true);
+      mobileHistoryPage.addEventListener('touchend', preventPenetration, true);
+      mobileHistoryPage.addEventListener('mousedown', preventPenetration, true);
+      
+      // 触发动画：聊天窗口向右滑出，露出下层的对话历史
+      requestAnimationFrame(() => {
+        chatContainer.classList.add('history-visible');
+      });
+      
+      // 绑定会话点击事件
+      const conversationItems = mobileHistoryPage.querySelectorAll('.ai-conversation-item-content');
+      conversationItems.forEach(item => {
+        item.addEventListener('click', async (e) => {
+          e.stopPropagation(); // 阻止事件冒泡
+          e.preventDefault(); // 阻止默认行为
+          
+          const conversationId = item.parentElement.dataset.id;
+          if (conversationId) {
+            await this.switchConversation(conversationId);
+            // 关闭历史页面（聊天窗口滑回覆盖）
+            chatContainer.classList.remove('history-visible');
+            setTimeout(() => {
+              mobileHistoryPage.remove();
+              document.body.style.overflow = '';
+            }, 300);
+          }
+        });
+      });
     }
   }
 }
