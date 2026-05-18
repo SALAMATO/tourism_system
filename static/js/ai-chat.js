@@ -422,39 +422,43 @@ class LowSkyAIChat {
     });
     
     // 初始化自定义tooltip（无文本按钮提示框）
+    // 创建一个全局的tooltip元素，避免反复创建/销毁导致残余
+    const globalTooltip = document.createElement('div');
+    globalTooltip.className = 'ai-tooltip';
+    globalTooltip.style.display = 'none';
+    document.body.appendChild(globalTooltip);
+
     const tooltipButtons = this.modal.querySelectorAll('[data-tooltip]');
     tooltipButtons.forEach(btn => {
-      let tooltip = null;
+      btn.addEventListener('mouseenter', (e) => {
+        // 清除可能存在的旧tooltip
+        if (globalTooltip.parentNode) {
+          globalTooltip.style.display = 'block';
+          globalTooltip.classList.remove('show');
+          globalTooltip.textContent = btn.dataset.tooltip;
 
-      btn.addEventListener('mouseenter', () => {
-        tooltip = document.createElement('div');
-        tooltip.className = 'ai-tooltip';
-        tooltip.textContent = btn.dataset.tooltip;
-        document.body.appendChild(tooltip);
+          // 计算位置，显示在按钮正下方
+          const rect = btn.getBoundingClientRect();
+          const tooltipRect = globalTooltip.getBoundingClientRect();
+          
+          globalTooltip.style.top = (rect.bottom + 8 + window.scrollY) + 'px';
+          globalTooltip.style.left = (rect.left + rect.width / 2 + window.scrollX) + 'px';
+          globalTooltip.style.transform = 'translateX(-50%) translateY(-8px)';
 
-        // 计算位置，显示在按钮正下方
-        const rect = btn.getBoundingClientRect();
-        const tooltipRect = tooltip.getBoundingClientRect();
-        tooltip.style.top = (rect.bottom + 8) + 'px';
-        tooltip.style.left = (rect.left + rect.width / 2 - tooltipRect.width / 2) + 'px';
-
-        // 使用requestAnimationFrame确保样式应用后添加show类
-        requestAnimationFrame(() => {
-          tooltip.classList.add('show');
-        });
+          // 使用requestAnimationFrame确保样式应用后添加show类
+          requestAnimationFrame(() => {
+            globalTooltip.style.transform = 'translateX(-50%) translateY(0)';
+            globalTooltip.classList.add('show');
+          });
+        }
       });
 
       btn.addEventListener('mouseleave', () => {
-        if (tooltip) {
-          tooltip.classList.remove('show');
-          // 等待transition结束后移除元素
-          setTimeout(() => {
-            if (tooltip && tooltip.parentNode) {
-              tooltip.parentNode.removeChild(tooltip);
-            }
-            tooltip = null;
-          }, 200); // 对应CSS中的transition时间
-        }
+        globalTooltip.classList.remove('show');
+        globalTooltip.style.transform = 'translateX(-50%) translateY(-8px)';
+        setTimeout(() => {
+          globalTooltip.style.display = 'none';
+        }, 200);
       });
     });
       
@@ -1856,12 +1860,18 @@ class LowSkyAIChat {
     const isCollapsed = this.sidebar.classList.contains('collapsed');
     const toggleBtn = this.modal.querySelector('#ai-sidebar-toggle-btn');
     
+    // 移除当前可能正在显示的tooltip，避免显示旧的文字
+    const existingTooltip = document.querySelector('.ai-tooltip');
+    if (existingTooltip) {
+      existingTooltip.remove();
+    }
+    
     if (isCollapsed) {
       // 展开侧边栏
       this.sidebar.classList.remove('collapsed');
       // 更新按钮图标和提示
       if (toggleBtn) {
-        toggleBtn.title = '收起侧边栏';
+        toggleBtn.dataset.tooltip = '收起侧边栏';
         toggleBtn.innerHTML = `
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
@@ -1876,7 +1886,7 @@ class LowSkyAIChat {
       this.sidebar.classList.add('collapsed');
       // 更新按钮图标和提示
       if (toggleBtn) {
-        toggleBtn.title = '打开侧边栏';
+        toggleBtn.dataset.tooltip = '打开侧边栏';
         toggleBtn.innerHTML = `
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
