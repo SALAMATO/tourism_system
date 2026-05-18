@@ -30,9 +30,10 @@
   max-width: 40vw;
   height: 80vh;
   max-height: 700px;
-  background: var(--ai-chat-bg);
-  backdrop-filter: var(--ai-chat-blur);
-  -webkit-backdrop-filter: var(--ai-chat-blur);
+  background:white;
+  /*background: var(--ai-chat-bg);*/
+  /*backdrop-filter: var(--ai-chat-blur);*/
+  /*-webkit-backdrop-filter: var(--ai-chat-blur);*/
   border-radius: 20px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   display: flex;
