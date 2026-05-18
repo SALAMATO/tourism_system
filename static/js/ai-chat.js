@@ -62,6 +62,9 @@ class LowSkyAIChat {
     this.resizeStartLeft = 0;
     this.resizeStartTop = 0;
     
+    // 待保存的消息（用于会话ID更新后重试）
+    this.pendingUserMessage = null;
+    
     this.init();
   }
   
@@ -800,10 +803,13 @@ class LowSkyAIChat {
       // 标记已经打开过一次
       this.hasOpenedBefore = true;
         
-      // 如果是关闭浏览器后重新打开（currentConversationId为null），自动创建新对话
+      // 如果是关闭浏览器后重新打开（currentConversationId为null），不自动创建对话
+      // 等待用户发送第一条消息时再创建，避免无效会话占用数据库
       if (!this.currentConversationId) {
-        console.log('🆕 首次打开，自动创建新对话');
-        this.createNewConversation();
+        console.log('🆕 首次打开，currentConversationId为null，等待用户发送消息');
+        // 不调用 createNewConversation()，保持 currentConversationId 为 null
+      } else {
+        console.log('🔄 恢复之前的会话ID:', this.currentConversationId);
       }
     } else {
       // 非首次打开，恢复上次最大化状态（仅桌面端）
@@ -1087,20 +1093,48 @@ class LowSkyAIChat {
     const message = this.input.value.trim();
     if (!message || this.isGenerating) return;
     
-    // 如果没有当前会话，先创建一个新会话
-    if (!this.currentConversationId) {
+    console.log('📤 sendMessage 被调用');
+    console.log('📤 当前会话ID:', this.currentConversationId);
+    console.log('📤 消息内容:', message.substring(0, 50));
+    
+    // 如果没有当前会话，或当前是临时ID，创建新会话
+    if (!this.currentConversationId || this.currentConversationId.startsWith('temp_')) {
+      console.log('🆕 需要创建新会话（当前ID:', this.currentConversationId || 'null', ')');
       await this.createNewConversation(message);
+      console.log('✅ createNewConversation 完成，当前会话ID:', this.currentConversationId);
     }
     
-    // 保存用户消息到服务器
-    await this.saveUserMessage(message);
-    
-    // 确保会话ID已经不是临时的
+    // 如果当前会话ID是临时的，等待它更新为真实ID（最多等待5秒）
     if (this.currentConversationId && this.currentConversationId.startsWith('temp_')) {
-      console.warn('会话ID仍是临时ID，等待其更新...');
-      // 再等待一下，确保会话ID已更新
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      console.log('⏳ 等待会话ID更新...');
+      let waitTime = 0;
+      const maxWaitTime = 5000;
+      const checkInterval = 100;
+      
+      while (this.currentConversationId.startsWith('temp_') && waitTime < maxWaitTime) {
+        await new Promise(resolve => setTimeout(resolve, checkInterval));
+        waitTime += checkInterval;
+        
+        // 每1秒输出一次日志
+        if (waitTime % 1000 === 0) {
+          console.log(`⏳ 已等待 ${waitTime}ms...`);
+        }
+      }
+      
+      if (this.currentConversationId.startsWith('temp_')) {
+        console.error('❌ 等待会话ID更新超时');
+        console.error('❌ 最终会话ID:', this.currentConversationId);
+        // 即使超时，也继续执行，但标记需要重试
+        this.pendingUserMessage = message;
+      } else {
+        console.log('✅ 会话ID已更新:', this.currentConversationId);
+      }
     }
+    
+    // 保存用户消息到服务器（后台执行）
+    this.saveUserMessage(message).catch(err => {
+      console.error('保存用户消息失败:', err);
+    });
     
     console.log('发送AI请求，会话ID:', this.currentConversationId);
     
@@ -1238,8 +1272,21 @@ class LowSkyAIChat {
         
         // 如果会话ID仍然是临时的，说明有问题
         if (this.currentConversationId.startsWith('temp_')) {
-          console.error('⚠️ 警告：AI回复完成时会话ID仍是临时ID！');
-          console.error('这可能导致AI回复没有被保存到数据库');
+          console.warn('⚠️ 警告：AI回复完成时会话ID仍是临时ID！');
+          console.warn('这可能导致AI回复没有被保存到数据库');
+          // 尝试重新保存用户消息和AI回复
+          setTimeout(() => {
+            if (this.pendingUserMessage) {
+              console.log('尝试重新保存用户消息...');
+              this.saveUserMessage(this.pendingUserMessage).catch(err => {
+                console.error('重试保存用户消息失败:', err);
+              });
+              this.pendingUserMessage = null;
+            }
+          }, 1000);
+        } else {
+          // 正常情况：保存AI回复到服务器
+          await this.saveAssistantMessage(fullContent);
         }
       } else {
         contentDiv.innerHTML = this.parseMarkdown('抱歉，AI没有返回任何内容。');
@@ -1558,11 +1605,17 @@ class LowSkyAIChat {
    */
   async createNewConversation(firstMessage = null) {
     try {
+      console.log('📝 createNewConversation 被调用');
+      console.trace('调用堆栈:'); // 打印调用堆栈，看看是谁调用的
+      console.log('📝 firstMessage:', firstMessage ? `有 (${firstMessage.substring(0, 30)})` : '无');
+      
       // 生成一个临时ID用于前端显示
       const tempId = 'temp_' + Date.now();
+      console.log('📝 生成临时ID:', tempId);
       
       // 如果有第一条消息，使用它作为标题
       const title = firstMessage ? (firstMessage.substring(0, 30) + (firstMessage.length > 30 ? '...' : '')) : '新对话';
+      console.log('📝 会话标题:', title);
       
       // 添加到前端列表（乐观更新）
       const tempConversation = {
@@ -1578,6 +1631,8 @@ class LowSkyAIChat {
       this.currentConversationId = tempId;
       this.currentConversationTitle = title;
       
+      console.log('📝 已设置 currentConversationId:', this.currentConversationId);
+      
       // 更新UI
       this.renderConversationList();
       
@@ -1586,14 +1641,24 @@ class LowSkyAIChat {
         this.clearHistory();
       }
       
-      // 异步保存到服务器，并等待完成
+      // 异步保存到服务器，不等待完成（提升响应速度）
+      // 只有当有firstMessage时（即用户真正开始对话），才创建会话
       if (firstMessage) {
-        await this.saveConversationToServer(tempId, title);
+        console.log('📝 开始后台创建会话:', title);
+        this.saveConversationToServer(tempId, title).then(() => {
+          console.log('✅ 会话创建流程完成');
+        }).catch(err => {
+          console.error('❌ 后台保存会话失败:', err);
+        });
+      } else {
+        console.log('ℹ️ 空对话，暂不创建会话（等待用户发送第一条消息）');
       }
       
+      console.log('📝 createNewConversation 即将返回');
       return tempId;
     } catch (error) {
-      console.error('创建会话失败:', error);
+      console.error('❌ 创建会话失败:', error);
+      console.error('错误堆栈:', error.stack);
     }
   }
   
@@ -1605,27 +1670,15 @@ class LowSkyAIChat {
       const token = localStorage.getItem('auth_token');
       if (!token || !this.currentConversationId) return; // 未登录或没有会话ID不保存
       
-      // 如果是临时ID，等待会话创建完成
+      // 如果还是临时ID，说明等待超时了
       if (this.currentConversationId.startsWith('temp_')) {
-        console.log('等待会话创建完成...');
-        // 最多等待5秒，每次检查间隔100ms
-        let waitTime = 0;
-        const maxWaitTime = 5000;
-        const checkInterval = 100;
-        
-        while (this.currentConversationId.startsWith('temp_') && waitTime < maxWaitTime) {
-          await new Promise(resolve => setTimeout(resolve, checkInterval));
-          waitTime += checkInterval;
-        }
-        
-        // 如果还是临时ID，说明会话创建失败
-        if (this.currentConversationId.startsWith('temp_')) {
-          console.error('会话创建超时，无法保存用户消息');
-          return;
-        }
-        
-        console.log('会话创建完成，继续保存消息');
+        console.warn('⚠️ 会话ID仍是临时ID，无法立即保存');
+        // 标记待重试，稍后会话ID更新后再保存
+        this.pendingUserMessage = content;
+        return;
       }
+      
+      console.log('💾 正在保存用户消息...');
       
       const response = await fetch(`/api/ai-conversations/${this.currentConversationId}/messages/`, {
         method: 'POST',
@@ -1640,12 +1693,12 @@ class LowSkyAIChat {
       });
       
       if (!response.ok) {
-        console.error('保存用户消息失败:', response.status, await response.text());
+        console.error('❌ 保存用户消息失败:', response.status, await response.text());
       } else {
-        console.log('用户消息保存成功');
+        console.log('✅ 用户消息保存成功');
       }
     } catch (error) {
-      console.error('保存用户消息异常:', error);
+      console.error('❌ 保存用户消息异常:', error);
     }
   }
   
@@ -1655,12 +1708,15 @@ class LowSkyAIChat {
   async saveConversationToServer(tempId, title) {
     try {
       const token = localStorage.getItem('auth_token');
+      console.log('🔑 检查Token:', token ? '已获取' : '未找到');
+      
       if (!token) {
-        console.warn('未登录，跳过保存会话');
+        console.warn('⚠️ 未登录，跳过保存会话');
         return;
       }
       
-      console.log('正在创建会话:', title);
+      console.log('📤 正在创建会话:', title);
+      console.log('📤 请求URL: /api/ai-conversations/');
       
       const response = await fetch('/api/ai-conversations/', {
         method: 'POST',
@@ -1673,25 +1729,89 @@ class LowSkyAIChat {
         })
       });
       
+      console.log('📥 响应状态:', response.status);
+      
       if (response.ok) {
         const data = await response.json();
-        console.log('会话创建成功，ID:', data.id);
+        console.log('✅ 会话创建成功，ID:', data.id);
+        console.log('🔄 当前临时ID:', tempId);
+        console.log('🔄 当前会话ID:', this.currentConversationId);
         
         // 替换临时ID为真实ID
         const index = this.conversations.findIndex(c => c.id === tempId);
+        console.log('🔍 查找临时ID索引:', index);
+        
         if (index !== -1) {
           this.conversations[index] = data;
+          console.log('✅ 已更新会话列表中的会话');
+          
           if (this.currentConversationId === tempId) {
             this.currentConversationId = data.id;
-            console.log('已更新当前会话ID为:', data.id);
+            console.log('✅ 已更新当前会话ID为:', data.id);
+            
+            // 会话ID更新后，检查是否有待保存的消息
+            if (this.pendingUserMessage) {
+              console.log('🔄 检测到待保存的用户消息，立即保存...');
+              setTimeout(() => {
+                this.saveUserMessage(this.pendingUserMessage).catch(err => {
+                  console.error('重试保存用户消息失败:', err);
+                });
+                this.pendingUserMessage = null;
+              }, 500);
+            }
+          } else {
+            console.warn('⚠️ 当前会话ID与临时ID不匹配');
+            console.warn('   currentConversationId:', this.currentConversationId);
+            console.warn('   tempId:', tempId);
           }
           this.renderConversationList();
+        } else {
+          console.error('❌ 未找到临时ID在会话列表中');
         }
       } else {
-        console.error('创建会话失败:', response.status, await response.text());
+        const errorText = await response.text();
+        console.error('❌ 创建会话失败:', response.status, errorText);
       }
     } catch (error) {
-      console.error('保存会话异常:', error);
+      console.error('❌ 保存会话异常:', error);
+      console.error('错误详情:', error.message);
+      console.error('错误堆栈:', error.stack);
+    }
+  }
+  
+  /**
+   * 保存AI助手消息到服务器
+   */
+  async saveAssistantMessage(content) {
+    try {
+      const token = localStorage.getItem('auth_token');
+      if (!token || !this.currentConversationId) return;
+      
+      // 如果是临时ID，不保存
+      if (this.currentConversationId.startsWith('temp_')) {
+        console.warn('⚠️ 会话ID仍是临时ID，无法保存AI回复');
+        return;
+      }
+      
+      const response = await fetch(`/api/ai-conversations/${this.currentConversationId}/messages/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Token ${token}`
+        },
+        body: JSON.stringify({
+          role: 'assistant',
+          content: content
+        })
+      });
+      
+      if (!response.ok) {
+        console.error('保存AI消息失败:', response.status, await response.text());
+      } else {
+        console.log('✅ AI消息保存成功');
+      }
+    } catch (error) {
+      console.error('保存AI消息异常:', error);
     }
   }
   
@@ -1922,11 +2042,60 @@ class LowSkyAIChat {
   
   clearHistory() {
     this.messages = [];
+    const quickQueriesDisplay = this.toolMode === 'db_only' ? 'block' : 'none';
     this.messagesContainer.innerHTML = `
       <div class="ai-welcome-message">
-        <i class="fas fa-plane-departure"></i>
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M2 12h5l2-9 4 18 2-9h5"/>
+        </svg>
         <h4>欢迎使用 LowSkyAI</h4>
         <p>我是您的低空旅游智能助手<br>可以为您解答低空旅游相关问题、推荐目的地、解释政策法规等</p>
+        <div class="ai-quick-queries" style="display: ${quickQueriesDisplay};">
+          <div class="ai-quick-query-title">您可以问我：</div>
+          <div class="ai-quick-query-list">
+            <button class="ai-quick-query-item" data-question="查询旅游目的地">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="m9 12 2 2 4-4"/>
+              </svg>
+              <span>查询旅游目的地</span>
+            </button>
+            <button class="ai-quick-query-item" data-question="查询政策法规">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+              </svg>
+              <span>查询政策法规</span>
+            </button>
+            <button class="ai-quick-query-item" data-question="查询统计数据">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="20" x2="18" y2="10"/>
+                <line x1="12" y1="20" x2="12" y2="4"/>
+                <line x1="6" y1="20" x2="6" y2="14"/>
+              </svg>
+              <span>查询统计数据</span>
+            </button>
+            <button class="ai-quick-query-item" data-question="查询安全预警">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/>
+                <line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg>
+              <span>查询安全预警</span>
+            </button>
+            <button class="ai-quick-query-item" data-question="查询新闻资讯">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/>
+                <path d="M18 14h-8"/>
+                <path d="M15 18h-5"/>
+                <path d="M20 6h-4"/>
+              </svg>
+              <span>查询新闻资讯</span>
+            </button>
+          </div>
+        </div>
       </div>
     `;
   }
