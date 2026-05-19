@@ -1428,7 +1428,7 @@ body.ai-chat-maximized {
   
   /* 移动端历史页面 - 会话标题优化 */
   .ai-mobile-history-page .ai-conversation-title {
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 500;
     line-height: 1.4;
     margin-bottom: 0; /* 去掉底部边距，因为没有时间显示了 */
