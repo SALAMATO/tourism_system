@@ -893,14 +893,16 @@ body.ai-chat-maximized {
 .ai-sidebar-more-btn {
   background: transparent;
   border: none;
-  padding: 6px 12px;
+  padding: 4px;
   cursor: pointer;
-  border-radius: 20px;
+  border-radius: 50%;
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--text-secondary);
+  width: 28px;
+  height: 28px;
 }
 
 .ai-sidebar-more-btn:hover {
@@ -966,12 +968,19 @@ body.ai-chat-maximized {
 
 /* 分组模式下的卡片样式 - 更紧凑 */
 .ai-conversation-list.has-groups .ai-conversation-item {
-  padding: 6px 12px;
-  min-height: 32px;
+  padding: 5px 10px;
+  min-height: 28px;
 }
 
 .ai-conversation-list.has-groups .ai-conversation-title {
   margin-bottom: 0;
+}
+
+/* 分组模式下的三点按钮样式优化 */
+.ai-conversation-list.has-groups .dropdown-toggle {
+  width: 24px;
+  height: 24px;
+  padding: 4px;
 }
 
 .ai-conversation-title {
@@ -1003,14 +1012,16 @@ body.ai-chat-maximized {
 .dropdown-toggle {
   background: #f5f5f7;
   border: none;
-  padding: 6px 12px;
+  padding: 6px;
   cursor: pointer;
-  border-radius: 20px;
+  border-radius: 50%;
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--text-secondary);
+  width: 28px;
+  height: 28px;
 }
 
 .dropdown-toggle:hover {
