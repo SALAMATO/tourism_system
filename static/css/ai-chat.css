@@ -362,8 +362,7 @@ body.ai-chat-maximized {
 .ai-chat-messages {
   flex: 1;
   padding: 24px;
-  padding-bottom: 160px; /* 为浮动输入区域留出空间 */
-  overflow: visible;
+  /*overflow: visible;*/
   background: transparent;
   width: 100%;
   max-width: 50vw; /* 消息区域限宽50vw */
@@ -638,15 +637,23 @@ body.ai-chat-maximized {
 }
 
 .ai-chat-input-area {
-  position: absolute;
+  position: sticky;
   bottom: 0;
-  left: 50%; /* 从中间开始 */
-  transform: translateX(-50%); /* 居中对齐 */
+
   width: 100%;
   max-width: 50vw; /* 输入区域限宽50vw */
+
+  margin-left: auto;
+  margin-right: auto;
+
   padding: 16px 20px;
-  background: transparent;
-  border-top: none;
+
+  background: linear-gradient(
+    to top,
+    rgba(255,255,255,1) 70%,
+    rgba(255,255,255,0)
+  );
+
   z-index: 100; /* 提高z-index，确保在所有内容之上 */
   transition: padding-left 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* 添加过渡动画 */
 }
@@ -1037,6 +1044,7 @@ body.ai-chat-maximized {
   /*overflow: hidden;*/
   overflow-y: auto;
   position: relative;
+  min-height: 0;
 }
 
 /* 侧边栏收起时，主内容区域不需要特别处理，因为侧边栏使用了transform滑出 */
