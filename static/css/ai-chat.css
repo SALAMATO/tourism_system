@@ -1603,6 +1603,24 @@ body.ai-chat-maximized {
   }
 }
 
+/* ============================================
+   平板端适配（UA为移动端但屏幕宽度>768px）
+   ============================================ */
+body.tablet-device .ai-chat-content {
+  max-width: 100% !important;
+  width: 100% !important;
+}
+
+body.tablet-device .ai-chat-messages {
+  width: 75% !important;
+  max-width: 100% !important;
+}
+
+body.tablet-device .ai-chat-input-area {
+  width: 75% !important;
+  max-width: 100% !important;
+}
+
 /* 超小屏幕移动端适配 */
 @media (max-width: 480px) {
   /* 保持导航栏隐藏状态 */

@@ -76,6 +76,12 @@ class LowSkyAIChat {
   }
   
   init() {
+    // 检测是否为平板端（UA为移动端但屏幕宽度>768px）
+    this.isTablet = this.detectTablet();
+    if (this.isTablet) {
+      document.body.classList.add('tablet-device');
+    }
+    
     // 创建AI助手按钮
     this.createAIButton();
     
@@ -84,6 +90,16 @@ class LowSkyAIChat {
     
     // 绑定事件
     this.bindEvents();
+  }
+  
+  // 检测是否为平板端设备
+  detectTablet() {
+    const ua = navigator.userAgent;
+    const isMobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+    const isWideScreen = window.innerWidth > 768;
+    
+    // 平板端定义：UA显示为移动设备，但屏幕宽度大于768px
+    return isMobileUA && isWideScreen;
   }
   
   createAIButton() {
