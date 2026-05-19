@@ -879,6 +879,7 @@ body.ai-chat-maximized {
   display: flex;
   align-items: center;
   gap: 8px;
+  position: relative;
 }
 
 .ai-sidebar-header h3 {
@@ -886,6 +887,34 @@ body.ai-chat-maximized {
   font-weight: 600;
   color: var(--text-primary);
   margin: 0;
+}
+
+/* 侧边栏更多选项按钮 */
+.ai-sidebar-more-btn {
+  background: transparent;
+  border: none;
+  padding: 6px 12px;
+  cursor: pointer;
+  border-radius: 20px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+}
+
+.ai-sidebar-more-btn:hover {
+  background: rgba(102, 126, 234, 0.1);
+  color: var(--text-primary);
+}
+
+/* 侧边栏下拉菜单定位 */
+.ai-sidebar-dropdown {
+  position: absolute;
+  right: 16px;
+  top: 100%;
+  margin-top: 8px;
+  min-width: 180px;
 }
 
 .ai-conversation-list {
@@ -922,6 +951,27 @@ body.ai-chat-maximized {
   flex: 1;
   min-width: 0;
   overflow: hidden;
+}
+
+/* 分组标题样式 - 桌面端和移动端通用 */
+.ai-conversation-group-title {
+  font-size: 12px;
+  font-weight: 500;
+  color: #999;
+  padding: 12px 12px 6px;
+  margin-top: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* 分组模式下的卡片样式 - 更紧凑 */
+.ai-conversation-list.has-groups .ai-conversation-item {
+  padding: 6px 12px;
+  min-height: 32px;
+}
+
+.ai-conversation-list.has-groups .ai-conversation-title {
+  margin-bottom: 0;
 }
 
 .ai-conversation-title {
@@ -1349,18 +1399,20 @@ body.ai-chat-maximized {
   .ai-conversation-item {
     max-width: calc(85% - 24px); /* 限制最大宽度为85%减去左右padding */
     padding: 10px 12px; /* 减小内边距 */
-    margin-bottom: 0px; /* 增加卡片间距 */
+    margin-bottom: 2px; /* 增加卡片间距 */
     border-radius: 18px; /* 增加圆角曲率 */
     min-height: 30px; /* 设置最小高度 */
   }
   
   /* 移动端历史页面 - 年月分组标题 */
   .ai-conversation-group-title {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text-secondary);
-    padding: 16px 12px 8px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #999;
+    padding: 12px 12px 6px;
     margin-top: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
   }
   
   /* 移动端历史页面 - 会话标题优化 */

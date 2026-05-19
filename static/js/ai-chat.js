@@ -28,6 +28,9 @@ class LowSkyAIChat {
     // 编辑名称相关
     this.editConversationId = null; // 当前正在编辑的会话ID
     
+    // 时间格式设置
+    this.useGroupedTimeFormat = true; // true=按年月分组，false=详细时间
+    
     // 检查是否是关闭浏览器后重新打开（使用sessionStorage）
     // sessionStorage在关闭标签页后会自动清除
     const hasVisitedBefore = sessionStorage.getItem('ai-chat-visited');
@@ -168,6 +171,24 @@ class LowSkyAIChat {
         <div class="ai-chat-sidebar" id="ai-chat-sidebar">
           <div class="ai-sidebar-header">
             <h3>对话历史</h3>
+            <div class="ai-sidebar-actions">
+              <button class="ai-sidebar-more-btn" id="ai-sidebar-more-btn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <circle cx="12" cy="5" r="2"/>
+                  <circle cx="12" cy="12" r="2"/>
+                  <circle cx="12" cy="19" r="2"/>
+                </svg>
+              </button>
+              <div class="dropdown-content ai-sidebar-dropdown" id="ai-sidebar-dropdown">
+                <button class="dropdown-item" id="toggle-time-format">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="12 6 12 12 16 14"/>
+                  </svg>
+                  <span id="time-format-text">切换为列表模式</span>
+                </button>
+              </div>
+            </div>
           </div>
           <div class="ai-conversation-list" id="ai-conversation-list">
             <!-- 会话列表将在这里动态生成 -->
@@ -395,6 +416,32 @@ class LowSkyAIChat {
     
     if (sidebarToggleBtn) {
       sidebarToggleBtn.onclick = () => this.toggleSidebar();
+    }
+    
+    // 侧边栏更多选项按钮
+    const sidebarMoreBtn = this.modal.querySelector('#ai-sidebar-more-btn');
+    if (sidebarMoreBtn) {
+      sidebarMoreBtn.onclick = (e) => {
+        e.stopPropagation();
+        const dropdown = this.modal.querySelector('#ai-sidebar-dropdown');
+        if (dropdown) {
+          dropdown.classList.toggle('show');
+        }
+      };
+    }
+    
+    // 切换时间格式按钮
+    const toggleTimeFormatBtn = this.modal.querySelector('#toggle-time-format');
+    if (toggleTimeFormatBtn) {
+      toggleTimeFormatBtn.onclick = (e) => {
+        e.stopPropagation();
+        this.toggleTimeFormat();
+        // 关闭下拉菜单
+        const dropdown = this.modal.querySelector('#ai-sidebar-dropdown');
+        if (dropdown) {
+          dropdown.classList.remove('show');
+        }
+      };
     }
     
     // 移动端侧栏按钮
@@ -2168,6 +2215,152 @@ class LowSkyAIChat {
       return;
     }
     
+    // 根据时间格式设置选择不同的渲染方式
+    if (this.useGroupedTimeFormat) {
+      // 按年月分组显示
+      this.renderGroupedConversationsInSidebar();
+    } else {
+      // 详细时间显示
+      this.renderDetailedConversationsInSidebar();
+    }
+  }
+  
+  /**
+   * 在侧边栏中按年月分组渲染会话
+   */
+  renderGroupedConversationsInSidebar() {
+    // 添加 has-groups 类以应用紧凑样式
+    this.conversationList.classList.add('has-groups');
+    
+    // 按时间范围分组：今天、本周、按月年分组
+    const groups = {};
+    
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const weekStart = todayStart - (now.getDay() === 0 ? 6 : now.getDay() - 1) * 86400000; // 本周一开始
+    
+    this.conversations.forEach(conv => {
+      if (!conv.updated_at) {
+        // 没有日期的归为"更早"
+        if (!groups['更早']) {
+          groups['更早'] = [];
+        }
+        groups['更早'].push(conv);
+        return;
+      }
+      
+      const updateTime = new Date(conv.updated_at).getTime();
+      const updateDate = new Date(conv.updated_at);
+      
+      if (updateTime >= todayStart) {
+        // 今天
+        if (!groups['今天']) {
+          groups['今天'] = [];
+        }
+        groups['今天'].push(conv);
+      } else if (updateTime >= weekStart) {
+        // 本周（不包括今天）
+        if (!groups['本周']) {
+          groups['本周'] = [];
+        }
+        groups['本周'].push(conv);
+      } else {
+        // 按年月分组
+        const year = updateDate.getFullYear();
+        const month = updateDate.getMonth() + 1;
+        const groupKey = `${year}年${month}月`;
+        
+        if (!groups[groupKey]) {
+          groups[groupKey] = [];
+        }
+        groups[groupKey].push(conv);
+      }
+    });
+    
+    // 按时间顺序排列分组键：今天、本周、然后年月倒序
+    const sortedKeys = Object.keys(groups).sort((a, b) => {
+      // 今天在第一位
+      if (a === '今天') return -1;
+      if (b === '今天') return 1;
+      
+      // 本周在第二位
+      if (a === '本周') return -1;
+      if (b === '本周') return 1;
+      
+      // 更早在最后
+      if (a === '更早') return 1;
+      if (b === '更早') return -1;
+      
+      // 年月分组按时间倒序
+      const parseGroupKey = (key) => {
+        const match = key.match(/(\d{4})年(\d{1,2})月/);
+        if (match) {
+          return parseInt(match[1]) * 100 + parseInt(match[2]);
+        }
+        return 0;
+      };
+      
+      return parseGroupKey(b) - parseGroupKey(a);
+    });
+    
+    // 生成HTML
+    sortedKeys.forEach(groupKey => {
+      if (groups[groupKey].length === 0) return; // 跳过空组
+      
+      const groupTitle = document.createElement('div');
+      groupTitle.className = 'ai-conversation-group-title';
+      groupTitle.textContent = groupKey;
+      this.conversationList.appendChild(groupTitle);
+      
+      groups[groupKey].forEach(conv => {
+        const item = document.createElement('div');
+        item.className = 'ai-conversation-item' + (conv.id === this.currentConversationId ? ' active' : '');
+        item.dataset.id = conv.id;
+        
+        item.innerHTML = `
+          <div class="ai-conversation-item-content" onclick="window.lowSkyAI.switchConversation('${conv.id}')">
+            <div class="ai-conversation-title">${conv.title || '新对话'}</div>
+          </div>
+          <div class="ai-conversation-actions">
+            <div class="dropdown-menu">
+              <button class="dropdown-toggle" onclick="event.stopPropagation(); window.lowSkyAI.toggleConversationDropdown('${conv.id}')">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <circle cx="12" cy="5" r="2"/>
+                  <circle cx="12" cy="12" r="2"/>
+                  <circle cx="12" cy="19" r="2"/>
+                </svg>
+              </button>
+              <div class="dropdown-content" id="conversation-menu-${conv.id}">
+                <button class="dropdown-item" onclick="event.stopPropagation(); window.lowSkyAI.editConversationName('${conv.id}')">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                  </svg>
+                  编辑名称
+                </button>
+                <button class="dropdown-item danger" onclick="event.stopPropagation(); window.lowSkyAI.deleteConversation('${conv.id}')">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                  </svg>
+                  删除对话
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+        
+        this.conversationList.appendChild(item);
+      });
+    });
+  }
+  
+  /**
+   * 在侧边栏中详细时间渲染会话
+   */
+  renderDetailedConversationsInSidebar() {
+    // 移除 has-groups 类
+    this.conversationList.classList.remove('has-groups');
+    
     this.conversations.forEach(conv => {
       const item = document.createElement('div');
       item.className = 'ai-conversation-item' + (conv.id === this.currentConversationId ? ' active' : '');
@@ -2208,8 +2401,26 @@ class LowSkyAIChat {
         </div>
       `;
       
-      listElement.appendChild(item);
+      this.conversationList.appendChild(item);
     });
+  }
+  
+  /**
+   * 切换时间格式
+   */
+  toggleTimeFormat() {
+    this.useGroupedTimeFormat = !this.useGroupedTimeFormat;
+    
+    // 更新按钮文本
+    const timeFormatText = document.getElementById('time-format-text');
+    if (timeFormatText) {
+      timeFormatText.textContent = this.useGroupedTimeFormat ? '切换为列表模式' : '切换为分组模式';
+    }
+    
+    // 重新渲染会话列表
+    this.renderConversationList();
+    
+    console.log(`⏰ 时间格式已切换为: ${this.useGroupedTimeFormat ? '分组模式' : '列表模式'}`);
   }
   
   /**
