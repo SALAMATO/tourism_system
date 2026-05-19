@@ -2242,6 +2242,95 @@ class LowSkyAIChat {
     // 否则显示日期
     return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
   }
+  
+  /**
+   * 按年月分组渲染会话列表（移动端历史页面）
+   */
+  renderGroupedConversations() {
+    // 按年月分组
+    const groups = {};
+    this.conversations.forEach(conv => {
+      if (!conv.updated_at) {
+        // 没有日期的归为"更早"
+        if (!groups['更早']) {
+          groups['更早'] = [];
+        }
+        groups['更早'].push(conv);
+        return;
+      }
+      
+      const date = new Date(conv.updated_at);
+      const year = date.getFullYear();
+      const month = date.getMonth() + 1; // 月份从0开始，需要+1
+      const groupKey = `${year}年${month}月`;
+      
+      if (!groups[groupKey]) {
+        groups[groupKey] = [];
+      }
+      groups[groupKey].push(conv);
+    });
+    
+    // 按时间倒序排列分组键
+    const sortedKeys = Object.keys(groups).sort((a, b) => {
+      if (a === '更早') return 1;
+      if (b === '更早') return -1;
+      
+      // 解析年月进行比较
+      const parseGroupKey = (key) => {
+        const match = key.match(/(\d{4})年(\d{1,2})月/);
+        if (match) {
+          return parseInt(match[1]) * 100 + parseInt(match[2]);
+        }
+        return 0;
+      };
+      
+      return parseGroupKey(b) - parseGroupKey(a);
+    });
+    
+    // 生成HTML
+    let html = '';
+    sortedKeys.forEach(groupKey => {
+      html += `<div class="ai-conversation-group-title">${groupKey}</div>`;
+      
+      groups[groupKey].forEach(conv => {
+        const isActive = conv.id === this.currentConversationId ? ' active' : '';
+        html += `
+          <div class="ai-conversation-item${isActive}" data-id="${conv.id}">
+            <div class="ai-conversation-item-content">
+              <div class="ai-conversation-title">${conv.title || '新对话'}</div>
+            </div>
+            <div class="ai-conversation-actions">
+              <!-- 下拉菜单：编辑名称、删除对话 -->
+              <button class="dropdown-toggle" onclick="event.stopPropagation(); window.lowSkyAI.toggleConversationDropdown('${conv.id}', true)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <circle cx="12" cy="5" r="2"/>
+                  <circle cx="12" cy="12" r="2"/>
+                  <circle cx="12" cy="19" r="2"/>
+                </svg>
+              </button>
+              <div class="dropdown-content" id="mobile-dropdown-${conv.id}">
+                <button class="dropdown-item" onclick="event.stopPropagation(); window.lowSkyAI.editConversationName('${conv.id}')">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
+                  </svg>
+                  编辑名称
+                </button>
+                <button class="dropdown-item danger" onclick="event.stopPropagation(); window.lowSkyAI.deleteConversation('${conv.id}')">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="3 6 5 6 21 6"/>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                  </svg>
+                  删除对话
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+    });
+    
+    return html;
+  }
     
   /**
    * 切换会话下拉菜单
@@ -2575,46 +2664,10 @@ class LowSkyAIChat {
       mobileHistoryPage = document.createElement('div');
       mobileHistoryPage.className = 'ai-mobile-history-page';
       
-      // 生成会话列表HTML
+      // 生成会话列表HTML - 按年月分组
       const conversationsHtml = this.conversations.length === 0 
         ? '<div class="ai-empty-conversations">暂无对话历史</div>'
-        : this.conversations.map(conv => {
-            const time = conv.updated_at ? this.formatTime(conv.updated_at) : '';
-            const isActive = conv.id === this.currentConversationId ? ' active' : '';
-            return `
-              <div class="ai-conversation-item${isActive}" data-id="${conv.id}">
-                <div class="ai-conversation-item-content">
-                  <div class="ai-conversation-title">${conv.title || '新对话'}</div>
-                  <div class="ai-conversation-time">${time}</div>
-                </div>
-                <div class="ai-conversation-actions">
-                  <!-- 下拉菜单：编辑名称、删除对话 -->
-                  <button class="dropdown-toggle" onclick="event.stopPropagation(); window.lowSkyAI.toggleConversationDropdown('${conv.id}', true)">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <circle cx="12" cy="12" r="1"/>
-                      <circle cx="19" cy="12" r="1"/>
-                      <circle cx="5" cy="12" r="1"/>
-                    </svg>
-                  </button>
-                  <div class="dropdown-content" id="mobile-dropdown-${conv.id}">
-                    <button class="dropdown-item" onclick="event.stopPropagation(); window.lowSkyAI.editConversationName('${conv.id}')">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
-                      </svg>
-                      编辑名称
-                    </button>
-                    <button class="dropdown-item danger" onclick="event.stopPropagation(); window.lowSkyAI.deleteConversation('${conv.id}')">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="3 6 5 6 21 6"/>
-                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                      </svg>
-                      删除对话
-                    </button>
-                  </div>
-                </div>
-              </div>
-            `;
-          }).join('');
+        : this.renderGroupedConversations();
       
       mobileHistoryPage.innerHTML = `
         <div class="ai-mobile-history-new-conversation-capsule">

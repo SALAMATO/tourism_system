@@ -1346,6 +1346,44 @@ body.ai-chat-maximized {
   /* 移动端历史页面会话项宽度限制 - 避免被聊天窗口覆盖 */
   .ai-conversation-item {
     max-width: calc(85% - 24px); /* 限制最大宽度为85%减去左右padding */
+    padding: 10px 12px; /* 减小内边距 */
+    margin-bottom: 0px; /* 增加卡片间距 */
+    border-radius: 18px; /* 增加圆角曲率 */
+    min-height: 30px; /* 设置最小高度 */
+  }
+  
+  /* 移动端历史页面 - 年月分组标题 */
+  .ai-conversation-group-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    padding: 16px 12px 8px;
+    margin-top: 8px;
+  }
+  
+  /* 移动端历史页面 - 会话标题优化 */
+  .ai-mobile-history-page .ai-conversation-title {
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.4;
+    margin-bottom: 0; /* 去掉底部边距，因为没有时间显示了 */
+  }
+  
+  /* 移动端历史页面 - 下拉菜单按钮胶囊形状 */
+  .ai-mobile-history-page .dropdown-toggle {
+    background: #f5f5f7;
+    border-radius: 20px;
+    padding: 6px 12px;
+    transition: all 0.2s ease;
+  }
+  
+  .ai-mobile-history-page .dropdown-toggle:hover {
+    background: rgba(102, 126, 234, 0.1);
+  }
+  
+  .ai-mobile-history-page .dropdown-toggle svg {
+    width: 14px;
+    height: 14px;
   }
   
   /* 移动端历史页面下拉菜单层级提升 - 确保不被聊天窗口覆盖 */
