@@ -1010,9 +1010,9 @@ body.ai-chat-maximized {
 }
 
 .ai-chat-container .dropdown-toggle {
-  background: #f5f5f7;
+  background: transparent;
   border: none;
-  padding: 6px;
+  padding: 2px;
   cursor: pointer;
   border-radius: 50%;
   transition: all 0.2s ease;
@@ -1020,8 +1020,8 @@ body.ai-chat-maximized {
   align-items: center;
   justify-content: center;
   color: var(--text-secondary);
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
 }
 
 .ai-chat-container .dropdown-toggle:hover {
