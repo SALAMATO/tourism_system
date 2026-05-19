@@ -895,9 +895,9 @@ body.ai-chat-maximized {
 }
 
 .ai-conversation-item {
-  padding: 12px;
-  margin-bottom: 4px;
-  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 6px;
+  border-radius: 12px;
   cursor: pointer;
   transition: all 0.2s ease;
   border: 1px solid transparent;
@@ -905,6 +905,7 @@ body.ai-chat-maximized {
   justify-content: space-between;
   align-items: center;
   gap: 8px;
+  min-height: 44px;
 }
 
 .ai-conversation-item:hover {
@@ -927,10 +928,11 @@ body.ai-chat-maximized {
   font-size: 14px;
   font-weight: 500;
   color: var(--text-primary);
-  margin-bottom: 4px;
+  margin-bottom: 0; /* 去掉底部边距，因为没有时间显示了 */
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  line-height: 1.4;
 }
 
 .ai-conversation-time {
@@ -949,11 +951,11 @@ body.ai-chat-maximized {
 }
 
 .dropdown-toggle {
-  background: transparent;
+  background: #f5f5f7;
   border: none;
-  padding: 4px 8px;
+  padding: 6px 12px;
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: 20px;
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
