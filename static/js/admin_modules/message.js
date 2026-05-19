@@ -93,7 +93,7 @@ AdminApp.Modules.Message = {
                     </button>
                     
                     <div class="dropdown-menu">
-                        <button class="dropdown-toggle" onclick="AdminApp.Modules.Message.toggleAdminDropdown('admin-msg-menu-${msg.id}')">
+                        <button class="dropdown-toggle" onclick="event.stopPropagation(); AdminApp.Modules.Message.toggleAdminDropdown('admin-msg-menu-${msg.id}')">
                             <i class="fas fa-ellipsis-v"></i>
                         </button>
                         <div class="dropdown-content" id="admin-msg-menu-${msg.id}">
@@ -353,7 +353,7 @@ AdminApp.Modules.Message = {
                                         ${formatDateTime(comment.created_at)}
                                     </div>
                                     <div class="dropdown-menu">
-                                        <button class="dropdown-toggle" onclick="AdminApp.Modules.Message.toggleAdminDropdown('admin-comment-menu-${comment.id}')" style="padding: 4px 8px; font-size: 14px;">
+                                        <button class="dropdown-toggle" onclick="event.stopPropagation(); AdminApp.Modules.Message.toggleAdminDropdown('admin-comment-menu-${comment.id}')" style="padding: 4px 8px; font-size: 14px;">
                                             <i class="fas fa-ellipsis-v"></i>
                                         </button>
                                         <div class="dropdown-content" id="admin-comment-menu-${comment.id}">

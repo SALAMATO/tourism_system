@@ -268,7 +268,7 @@ async function loadMyMessages() {
             查看评论 (${msg.comments_count || 0})
           </button>
           <div class="dropdown-menu">
-            <button class="dropdown-toggle" onclick="toggleDropdown('post-menu-${msg.id}')">
+            <button class="dropdown-toggle" onclick="event.stopPropagation(); toggleDropdown('post-menu-${msg.id}')">
               <i class="fas fa-ellipsis-v"></i>
             </button>
             <div class="dropdown-content" id="post-menu-${msg.id}">
@@ -328,7 +328,7 @@ async function loadPostComments(messageId) {
                 <div class="comment-time">${formatRelativeTime(new Date(comment.created_at).getTime())}</div>
                 ${user && user.is_staff ? `
                   <div class="dropdown-menu">
-                    <button class="dropdown-toggle" onclick="toggleDropdown('comment-menu-${comment.id}')" style="padding: 4px 8px; font-size: 14px;">
+                    <button class="dropdown-toggle" onclick="event.stopPropagation(); toggleDropdown('comment-menu-${comment.id}')" style="padding: 4px 8px; font-size: 14px;">
                       <i class="fas fa-ellipsis-v"></i>
                     </button>
                     <div class="dropdown-content" id="comment-menu-${comment.id}">
