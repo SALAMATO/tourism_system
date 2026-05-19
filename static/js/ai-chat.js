@@ -776,19 +776,23 @@ class LowSkyAIChat {
     // 4. 计算窗口位置：让鼠标落在标题栏的安全区域内
     // Windows风格：使用最大化时的百分比位置映射到restore后的窗口
     const headerRect = this.modal.querySelector('.ai-chat-header').getBoundingClientRect();
+    const containerRect = container.getBoundingClientRect();
       
     // Windows风格的HitTest区域：只排除右侧控制按钮区（138px）
     const RIGHT_SAFE_ZONE = 138; // 控制按钮区域
     
-    // 基于鼠标在最大化标题栏中的相对位置计算offset
-    let offsetX = targetWidth * this.maximizeHeaderPercentX;
+    // 关键修复：计算鼠标在容器中的偏移量
+    // 最大化时标题栏占满全屏，恢复后标题栏在主区域（可能有侧边栏）
+    // 所以偏移量 = 侧边栏宽度 + 鼠标在标题栏中的相对位置
+    const sidebarWidth = containerRect.width - headerRect.width; // 侧边栏宽度（如果展开）
+    let offsetX = sidebarWidth + (headerRect.width * this.maximizeHeaderPercentX);
     let offsetY = headerRect.height * this.maximizeHeaderPercentY;
     
     // Windows风格微调：轻微向中间吸附，避免贴边
     offsetX = offsetX * 0.92;
       
     // 自动避开右侧按钮区域（关键！确保鼠标不会落到按钮上）
-    offsetX = Math.min(offsetX, targetWidth - RIGHT_SAFE_ZONE);
+    offsetX = Math.min(offsetX, containerRect.width - RIGHT_SAFE_ZONE);
       
     // 计算窗口左上角位置
     let targetLeft = e.clientX - offsetX;
