@@ -228,13 +228,13 @@ async function loadMessages(reset = false) {
         }
       } else {
         if (reset) {
-          container.innerHTML = '<div class="loading"><div>暂无动态</div></div>';
+          container.innerHTML = '<div class="loading"><div>暂无留言</div></div>';
         }
         hasMore = false;
       }
     } else {
       if (reset) {
-        container.innerHTML = '<div class="loading"><div>暂无动态</div></div>';
+        container.innerHTML = '<div class="loading"><div>暂无留言</div></div>';
       }
       hasMore = false;
     }
@@ -723,8 +723,8 @@ function toggleDropdown(event, messageId) {
 // 删除留言
 async function deleteMessage(messageId) {
   const confirmed = await showConfirm({
-    title: '删除动态',
-    message: '确定要删除这条动态吗？删除后将无法恢复。',
+    title: '删除留言',
+    message: '确定要删除这条留言吗？删除后将无法恢复。',
     confirmText: '删除',
     cancelText: '取消',
     type: 'danger'

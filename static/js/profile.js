@@ -272,8 +272,8 @@ async function loadMyMessages() {
               <i class="fas fa-ellipsis-v"></i>
             </button>
             <div class="dropdown-content" id="post-menu-${msg.id}">
-              <button class="dropdown-item danger" onclick="deleteMyPost('${msg.id}')">
-                <i class="fas fa-trash"></i> 删除帖子
+              <button class="dropdown-item danger" onclick="event.stopPropagation(); deleteMyPost('${msg.id}')">
+                <i class="fas fa-trash"></i> 删除留言
               </button>
             </div>
           </div>
@@ -305,7 +305,7 @@ async function togglePostComments(messageId) {
   }
 }
 
-// 加载帖子的评论
+// 加载留言的评论
 async function loadPostComments(messageId) {
   const container = document.getElementById(`post-comments-${messageId}`);
   if (!container) return;
@@ -332,7 +332,7 @@ async function loadPostComments(messageId) {
                       <i class="fas fa-ellipsis-v"></i>
                     </button>
                     <div class="dropdown-content" id="comment-menu-${comment.id}">
-                      <button class="dropdown-item danger" onclick="deletePostComment('${comment.id}', '${messageId}')">
+                      <button class="dropdown-item danger" onclick="event.stopPropagation(); deletePostComment('${comment.id}', '${messageId}')">
                         <i class="fas fa-trash"></i> 删除评论
                       </button>
                     </div>
@@ -356,11 +356,22 @@ async function loadPostComments(messageId) {
 
 
 
-// 删除自己的帖子
+// 删除自己的留言
 async function deleteMyPost(messageId) {
-  if (!confirm('确定要删除这条帖子吗？删除后无法恢复。')) {
-    return;
-  }
+  // 立即关闭所有下拉菜单
+  document.querySelectorAll('.dropdown-content').forEach(menu => {
+    menu.classList.remove('show');
+  });
+  
+  const confirmed = await showConfirm({
+    title: '删除留言',
+    message: '确定要删除这条留言吗？删除后将无法恢复。',
+    confirmText: '删除',
+    cancelText: '取消',
+    type: 'danger'
+  });
+  
+  if (!confirmed) return;
   
   try {
     await api.deleteMessage(messageId);
@@ -374,9 +385,20 @@ async function deleteMyPost(messageId) {
 
 // 删除评论
 async function deletePostComment(commentId, messageId) {
-  if (!confirm('确定要删除这条评论吗？')) {
-    return;
-  }
+  // 立即关闭所有下拉菜单
+  document.querySelectorAll('.dropdown-content').forEach(menu => {
+    menu.classList.remove('show');
+  });
+  
+  const confirmed = await showConfirm({
+    title: '删除评论',
+    message: '确定要删除这条评论吗？删除后将无法恢复。',
+    confirmText: '删除',
+    cancelText: '取消',
+    type: 'danger'
+  });
+  
+  if (!confirmed) return;
   
   try {
     await api.deleteComment(commentId);
