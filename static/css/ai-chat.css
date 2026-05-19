@@ -354,17 +354,21 @@ body.ai-chat-maximized {
 
 .ai-chat-container.maximized .ai-chat-content {
   width: 100%;
-  max-width: 50vw !important;
-  margin-left: auto !important;
-  margin-right: auto !important;
+  max-width: 100vw !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
 }
 
 .ai-chat-messages {
   flex: 1;
   padding: 24px;
   padding-bottom: 160px; /* 为浮动输入区域留出空间 */
-  overflow-y: auto;
+  overflow: visible;
   background: transparent;
+  width: 100%;
+  max-width: 50vw; /* 消息区域限宽50vw */
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .ai-message {
@@ -636,8 +640,10 @@ body.ai-chat-maximized {
 .ai-chat-input-area {
   position: absolute;
   bottom: 0;
-  left: 0;
-  right: 0;
+  left: 50%; /* 从中间开始 */
+  transform: translateX(-50%); /* 居中对齐 */
+  width: 100%;
+  max-width: 50vw; /* 输入区域限宽50vw */
   padding: 16px 20px;
   background: transparent;
   border-top: none;
@@ -1025,10 +1031,11 @@ body.ai-chat-maximized {
   display: flex;
   flex-direction: column;
   width: 100%;
-  max-width: 50vw;
+  max-width: 100vw; /* 桌面端全宽 */
   margin-left: auto;
   margin-right: auto;
-  overflow: hidden;
+  /*overflow: hidden;*/
+  overflow-y: auto;
   position: relative;
 }
 
