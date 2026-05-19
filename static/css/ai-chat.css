@@ -1485,7 +1485,9 @@ body.ai-chat-maximized {
   
   /* 移动端：消息区域底部留白 */
   .ai-chat-messages {
-    padding-bottom: 140px;
+    padding: 24px !important; /* 重置桌面端的padding */
+    padding-bottom: 140px !important;
+    padding-top: 70px !important; /* 为顶部胶囊按钮和关闭按钮留出空间 */
   }
 }
 
