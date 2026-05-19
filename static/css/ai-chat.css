@@ -408,11 +408,15 @@ body.ai-chat-maximized {
 }
 
 .ai-message-content {
-  max-width: 70%;
   padding: 12px 16px;
   border-radius: 16px;
   line-height: 1.6;
   font-size: 15px;
+}
+
+.ai-message.user .ai-message-content {
+  max-width: 66%;
+  margin-left: auto;
 }
 
 .ai-message.user .ai-message-content {
@@ -1559,6 +1563,18 @@ body.ai-chat-maximized {
   /* 移动端：调整消息内容布局，移除头像后的间距 */
   .ai-message {
     gap: 0;
+  }
+  
+  /* 移动端：用户消息靠右对齐，最多占85%宽度 */
+  .ai-message.user .ai-message-content {
+    max-width: 85% !important;
+    margin-left: auto;
+  }
+  
+  /* 移动端：AI消息铺满整个区域 */
+  .ai-message.assistant .ai-message-content {
+    max-width: 100% !important;
+    width: 100%;
   }
   
   /* 移动端：用户消息气泡圆角调整 */
