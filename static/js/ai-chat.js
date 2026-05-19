@@ -674,6 +674,35 @@ class LowSkyAIChat {
       }
     });
     
+    // 触摸开始事件（平板端支持）
+    header.addEventListener('touchstart', (e) => {
+      // 如果点击的是按钮，不启动拖拽
+      if (e.target.closest('.ai-chat-controls')) {
+        return;
+      }
+
+      // 阻止默认行为以防止页面滚动
+      e.preventDefault();
+
+      const touch = e.touches[0];
+      const headerRect = header.getBoundingClientRect();
+      
+      // 记录触摸开始的位置
+      this.dragStartX = touch.clientX;
+      this.dragStartY = touch.clientY;
+      this.dragThresholdExceeded = false;
+      
+      // 关键：如果是最大化状态，记录触摸点在标题栏中的百分比位置
+      if (this.isMaximized) {
+        this.pendingMaximizeRestore = true;
+        // 记录触摸点在标题栏宽度/高度中的百分比（0-1）
+        this.maximizeHeaderPercentX = (touch.clientX - headerRect.left) / headerRect.width;
+        this.maximizeHeaderPercentY = (touch.clientY - headerRect.top) / headerRect.height;
+      } else {
+        this.startDragging(touch, container, header);
+      }
+    }, { passive: false });
+    
     // 鼠标移动事件 - 直接同步位置，不使用RAF以获得最佳响应
     document.addEventListener('mousemove', (e) => {
       // 如果正在等待检测拖动阈值（最大化状态）
@@ -721,6 +750,57 @@ class LowSkyAIChat {
       container.style.top = newTop + 'px';
     });
     
+    // 触摸移动事件（平板端支持）
+    document.addEventListener('touchmove', (e) => {
+      if (!this.isDragging) return;
+      
+      const touch = e.touches[0];
+      
+      // 如果正在等待检测拖动阈值（最大化状态）
+      if (this.pendingMaximizeRestore && !this.dragThresholdExceeded) {
+        const deltaX = Math.abs(touch.clientX - this.dragStartX);
+        const deltaY = Math.abs(touch.clientY - this.dragStartY);
+        
+        // Windows 11风格：移动超过5像素才认为是拖动
+        if (deltaX > 5 || deltaY > 5) {
+          this.dragThresholdExceeded = true;
+          
+          // 获取当前容器的引用
+          const currentContainer = this.modal.querySelector('.ai-chat-container');
+          const currentHeader = this.modal.querySelector('.ai-chat-header');
+          
+          // 直接从最大化进入normal state并启动拖拽（不先restore）
+          this.restoreFromMaximizeForDrag(touch, currentContainer);
+          this.startDraggingFromMaximize(touch, currentContainer, currentHeader);
+        }
+        return;
+      }
+      
+      // 直接计算新位置：触摸点位置 - 偏移量
+      let newLeft = touch.clientX - this.dragOffsetX;
+      let newTop = touch.clientY - this.dragOffsetY;
+      
+      // 边界检查
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      
+      // 限制左边界
+      if (newLeft < 0) newLeft = 0;
+      // 限制右边界（至少保留100px在视野内）
+      if (newLeft > viewportWidth - 100) newLeft = viewportWidth - 100;
+      // 限制上边界
+      if (newTop < 0) newTop = 0;
+      // 限制下边界（至少保留100px在视野内）
+      if (newTop > viewportHeight - 100) newTop = viewportHeight - 100;
+      
+      // 直接更新位置，不使用RAF，确保即时响应
+      container.style.left = newLeft + 'px';
+      container.style.top = newTop + 'px';
+      
+      // 阻止默认行为以防止页面滚动
+      e.preventDefault();
+    }, { passive: false });
+    
     // 鼠标释放事件
     document.addEventListener('mouseup', () => {
       // 清除待处理的最大化恢复标志
@@ -730,6 +810,24 @@ class LowSkyAIChat {
       if (this.isDragging) {
         this.isDragging = false;
         header.style.cursor = 'default';
+        // 移除拖拽类，恢复过渡动画
+        container.classList.remove('dragging');
+      }
+      
+      if (this.isResizing) {
+        this.isResizing = false;
+        container.classList.remove('resizing');
+      }
+    });
+    
+    // 触摸结束事件（平板端支持）
+    document.addEventListener('touchend', () => {
+      // 清除待处理的最大化恢复标志
+      this.pendingMaximizeRestore = false;
+      this.dragThresholdExceeded = false;
+      
+      if (this.isDragging) {
+        this.isDragging = false;
         // 移除拖拽类，恢复过渡动画
         container.classList.remove('dragging');
       }
@@ -894,6 +992,7 @@ class LowSkyAIChat {
     const handles = container.querySelectorAll('.resize-handle');
     
     handles.forEach(handle => {
+      // 鼠标事件
       handle.addEventListener('mousedown', (e) => {
         // 最大化状态下不允许调整大小
         if (this.isMaximized) return;
@@ -901,75 +1000,124 @@ class LowSkyAIChat {
         e.preventDefault();
         e.stopPropagation();
         
-        this.isResizing = true;
-        this.resizeDirection = handle.dataset.direction;
-        
-        // 获取当前的实际渲染尺寸（包括CSS限制后的尺寸）
-        const rect = container.getBoundingClientRect();
-        
-        // 先设置当前的实际尺寸，避免清除max限制时跳变
-        container.style.width = rect.width + 'px';
-        container.style.height = rect.height + 'px';
-        container.style.left = rect.left + 'px';
-        container.style.top = rect.top + 'px';
-        
-        // 记录初始状态（使用设置后的值）
-        this.resizeStartX = e.clientX;
-        this.resizeStartY = e.clientY;
-        this.resizeStartWidth = rect.width;
-        this.resizeStartHeight = rect.height;
-        this.resizeStartLeft = rect.left;
-        this.resizeStartTop = rect.top;
-        
-        // 清除CSS限制，允许自由调整大小
-        container.style.maxWidth = 'none';
-        container.style.maxHeight = 'none';
-        
-        container.classList.add('resizing');
+        this.startResizing(e, container, handle);
       });
+      
+      // 触摸事件（平板端支持）
+      handle.addEventListener('touchstart', (e) => {
+        // 最大化状态下不允许调整大小
+        if (this.isMaximized) return;
+        
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const touch = e.touches[0];
+        this.startResizing(touch, container, handle);
+      }, { passive: false });
     });
     
     // 鼠标移动事件 - 调整窗口大小
     document.addEventListener('mousemove', (e) => {
       if (!this.isResizing) return;
       
-      const deltaX = e.clientX - this.resizeStartX;
-      const deltaY = e.clientY - this.resizeStartY;
-      
-      let newWidth = this.resizeStartWidth;
-      let newHeight = this.resizeStartHeight;
-      let newLeft = this.resizeStartLeft;
-      let newTop = this.resizeStartTop;
-      
-      const minWidth = 400;  // 最小宽度
-      const minHeight = 300; // 最小高度
-      const maxWidth = window.innerWidth;
-      const maxHeight = window.innerHeight;
-      
-      // 根据拖拽方向计算新尺寸和位置
-      if (this.resizeDirection.includes('e')) {
-        newWidth = Math.max(minWidth, Math.min(maxWidth, this.resizeStartWidth + deltaX));
-      }
-      if (this.resizeDirection.includes('w')) {
-        newWidth = Math.max(minWidth, Math.min(maxWidth, this.resizeStartWidth - deltaX));
-        newLeft = this.resizeStartLeft + (this.resizeStartWidth - newWidth);
-      }
-      if (this.resizeDirection.includes('s')) {
-        newHeight = Math.max(minHeight, Math.min(maxHeight, this.resizeStartHeight + deltaY));
-      }
-      if (this.resizeDirection.includes('n')) {
-        newHeight = Math.max(minHeight, Math.min(maxHeight, this.resizeStartHeight - deltaY));
-        newTop = this.resizeStartTop + (this.resizeStartHeight - newHeight);
-      }
-      
-      // 应用新尺寸和位置
-      container.style.width = newWidth + 'px';
-      container.style.height = newHeight + 'px';
-      container.style.left = newLeft + 'px';
-      container.style.top = newTop + 'px';
-      container.style.maxWidth = 'none'; // 移除max-width限制
-      container.style.maxHeight = 'none'; // 移除max-height限制
+      this.handleResize(e, container);
     });
+    
+    // 触摸移动事件（平板端支持）
+    document.addEventListener('touchmove', (e) => {
+      if (!this.isResizing) return;
+      
+      const touch = e.touches[0];
+      this.handleResize(touch, container);
+      
+      // 阻止默认行为以防止页面滚动
+      e.preventDefault();
+    }, { passive: false });
+    
+    // 鼠标释放事件
+    document.addEventListener('mouseup', () => {
+      if (this.isResizing) {
+        this.isResizing = false;
+        container.classList.remove('resizing');
+      }
+    });
+    
+    // 触摸结束事件（平板端支持）
+    document.addEventListener('touchend', () => {
+      if (this.isResizing) {
+        this.isResizing = false;
+        container.classList.remove('resizing');
+      }
+    });
+  }
+  
+  // 开始调整大小的辅助方法
+  startResizing(e, container, handle) {
+    this.isResizing = true;
+    this.resizeDirection = handle.dataset.direction;
+    
+    // 获取当前的实际渲染尺寸（包括CSS限制后的尺寸）
+    const rect = container.getBoundingClientRect();
+    
+    // 先设置当前的实际尺寸，避免清除max限制时跳变
+    container.style.width = rect.width + 'px';
+    container.style.height = rect.height + 'px';
+    container.style.left = rect.left + 'px';
+    container.style.top = rect.top + 'px';
+    
+    // 记录初始状态（使用设置后的值）
+    this.resizeStartX = e.clientX;
+    this.resizeStartY = e.clientY;
+    this.resizeStartWidth = rect.width;
+    this.resizeStartHeight = rect.height;
+    this.resizeStartLeft = rect.left;
+    this.resizeStartTop = rect.top;
+    
+    // 清除CSS限制，允许自由调整大小
+    container.style.maxWidth = 'none';
+    container.style.maxHeight = 'none';
+    
+    container.classList.add('resizing');
+  }
+  
+  // 处理调整大小的辅助方法
+  handleResize(e, container) {
+    const deltaX = e.clientX - this.resizeStartX;
+    const deltaY = e.clientY - this.resizeStartY;
+    
+    let newWidth = this.resizeStartWidth;
+    let newHeight = this.resizeStartHeight;
+    let newLeft = this.resizeStartLeft;
+    let newTop = this.resizeStartTop;
+    
+    const minWidth = 400;  // 最小宽度
+    const minHeight = 300; // 最小高度
+    const maxWidth = window.innerWidth;
+    const maxHeight = window.innerHeight;
+    
+    // 根据拖拽方向计算新尺寸和位置
+    if (this.resizeDirection.includes('e')) {
+      newWidth = Math.max(minWidth, Math.min(maxWidth, this.resizeStartWidth + deltaX));
+    }
+    if (this.resizeDirection.includes('w')) {
+      newWidth = Math.max(minWidth, Math.min(maxWidth, this.resizeStartWidth - deltaX));
+      newLeft = this.resizeStartLeft + (this.resizeStartWidth - newWidth);
+    }
+    if (this.resizeDirection.includes('s')) {
+      newHeight = Math.max(minHeight, Math.min(maxHeight, this.resizeStartHeight + deltaY));
+    }
+    if (this.resizeDirection.includes('n')) {
+      newHeight = Math.max(minHeight, Math.min(maxHeight, this.resizeStartHeight - deltaY));
+      newTop = this.resizeStartTop + (this.resizeStartHeight - newHeight);
+    }
+    
+    // 应用新尺寸和位置
+    container.style.width = newWidth + 'px';
+    container.style.height = newHeight + 'px';
+    container.style.left = newLeft + 'px';
+    container.style.top = newTop + 'px';
+    container.style.maxWidth = 'none'; // 移除max-width限制
+    container.style.maxHeight = 'none'; // 移除max-height限制
   }
   
   setToolMode(mode) {
