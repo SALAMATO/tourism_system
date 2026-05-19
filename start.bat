@@ -3,7 +3,7 @@ cd /d %~dp0
 
 call .venv\Scripts\activate
 
-start http://127.0.0.1:9000
+start http://0.0.0.0:9000
 
 python manage.py runserver
 
